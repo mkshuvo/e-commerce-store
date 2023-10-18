@@ -1,0 +1,64 @@
+version: '3.8'
+
+services:
+  server:
+    build:
+      context: ./server
+      dockerfile: Dockerfile
+    container_name: ecommerce_server
+    ports:
+      - "3005:3005"
+    networks:
+      - ecommerce_network
+    depends_on:
+      - postgres
+      - rabbitmq
+    volumes:
+      - server_data:/app/data
+
+  client:
+    build:
+      context: ./client
+      dockerfile: Dockerfile
+    container_name: ecommerce_client
+    ports:
+      - "80:3000"
+    networks:
+      - ecommerce_network
+    depends_on:
+      - server
+    volumes:
+      - client_data:/app/data
+
+  postgres:
+    image: postgres:latest
+    container_name: ecommerce_postgres
+    environment:
+      POSTGRES_DB: ecommerce_db
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password
+    networks:
+      - ecommerce_network
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:management
+    container_name: ecommerce_rabbitmq
+    ports:
+      - "15672:15672"
+      - "5672:5672"
+    networks:
+      - ecommerce_network
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+
+networks:
+  ecommerce_network:
+    driver: bridge
+
+volumes:
+  server_data:
+  client_data:
+  postgres_data:
+  rabbitmq_data:
