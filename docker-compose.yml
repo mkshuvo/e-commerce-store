@@ -15,6 +15,7 @@ services:
       - rabbitmq
     volumes:
       - server_data:/app/data
+      - shared_packages:/app/packages
 
   client:
     build:
@@ -22,14 +23,15 @@ services:
       dockerfile: Dockerfile
     container_name: ecommerce_client
     ports:
-      - "80:3000"
+      - "80:3001"
     networks:
       - ecommerce_network
     depends_on:
       - server
     volumes:
       - client_data:/app/data
-
+      - shared_packages:/app/packages
+      
   postgres:
     image: postgres:latest
     container_name: ecommerce_postgres
@@ -46,8 +48,8 @@ services:
     image: rabbitmq:management
     container_name: ecommerce_rabbitmq
     ports:
-      - "15672:15672"
-      - "5672:5672"
+      - "15673:15672"
+      - "5673:5672"
     networks:
       - ecommerce_network
     volumes:
@@ -62,3 +64,4 @@ volumes:
   client_data:
   postgres_data:
   rabbitmq_data:
+  shared_packages:
