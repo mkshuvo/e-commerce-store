@@ -7,7 +7,7 @@ This guide provides comprehensive instructions for setting up and running the E-
 The application consists of the following services:
 
 ### Core Services
-- **PostgreSQL Database** (Port: 15432) - Primary data storage
+- **PostgreSQL Database** (Port: 5433) - Primary data storage
 - **Redis Cache** (Port: 16379) - Caching and session storage
 - **RabbitMQ** (Port: 15672) - Message broker for async communication
 
@@ -125,7 +125,7 @@ All services use unique 5-digit ports to avoid conflicts:
 
 | Service | Port | Protocol | Description |
 |---------|------|----------|-------------|
-| PostgreSQL | 15432 | TCP | Database connection |
+| PostgreSQL | 5433 | TCP | Database connection |
 | Redis | 16379 | TCP | Cache connection |
 | RabbitMQ Management | 15672 | HTTP | Management UI |
 | RabbitMQ AMQP | 15671 | TCP | Message broker |

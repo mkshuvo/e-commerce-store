@@ -9,7 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Http.Resilience" Version="8.0.0" />
-    <PackageReference Include="Microsoft.Extensions.ServiceDiscovery" Version="9.4.1" />
+    <PackageReference Include="Microsoft.Extensions.ServiceDiscovery" Version="9.4.2" />
     <!-- OpenTelemetry packages removed - Aspire handles OpenTelemetry automatically -->
     <!-- <PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.12.0" /> -->
     <!-- <PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.12.0" /> -->

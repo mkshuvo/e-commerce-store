@@ -55,7 +55,7 @@ A modern, scalable e-commerce platform built with .NET 8, Aspire orchestration, 
 1. **Database Setup**
    ```bash
    # Using Docker
-   docker run --name ecommerce-postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 -d postgres:15
+   docker run --name ecommerce-postgres -e POSTGRES_PASSWORD=postgres -p 5433:5432 -d postgres:15
    
    # Using Docker Compose
    docker-compose up -d postgres redis

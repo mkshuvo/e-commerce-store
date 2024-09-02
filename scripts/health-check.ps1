@@ -19,7 +19,7 @@ function Write-Info { param($Message) Write-Host $Message -ForegroundColor Cyan 
 $Services = @{
     "postgres" = @{
         "name" = "PostgreSQL Database"
-        "port" = 15432
+        "port" = 5433
         "health_endpoint" = $null
         "check_type" = "tcp"
     }

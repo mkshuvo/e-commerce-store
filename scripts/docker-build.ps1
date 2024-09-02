@@ -57,7 +57,7 @@ function Show-Help {
     Write-Host "  .\scripts\docker-build.ps1 -Service auth-api -Detached"
     Write-Host ""
     Write-ColorOutput "Port Assignments:" $Yellow
-    Write-Host "  PostgreSQL:        15432"
+    Write-Host "  PostgreSQL:        5433"
     Write-Host "  Redis:             16379"
     Write-Host "  RabbitMQ Mgmt:     15672"
     Write-Host "  RabbitMQ AMQP:     25672"

@@ -193,9 +193,9 @@ function Start-TestEnvironment {
     elseif ($Environment -eq 'local') {
         Write-Info "Using local environment for testing"
         # Check if local services are running
-        $postgresRunning = Test-NetConnection -ComputerName localhost -Port 15432 -InformationLevel Quiet -WarningAction SilentlyContinue
+        $postgresRunning = Test-NetConnection -ComputerName localhost -Port 5433 -InformationLevel Quiet -WarningAction SilentlyContinue
         if (-not $postgresRunning) {
-            Write-Warning "PostgreSQL not detected on port 15432. Some integration tests may fail."
+            Write-Warning "PostgreSQL not detected on port 5433. Some integration tests may fail."
         }
     }
 }

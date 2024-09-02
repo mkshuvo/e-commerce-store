@@ -25,7 +25,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
         ports:
-          - 5432:5432
+          - 5433:5432
       
       redis:
         image: redis:7-alpine
@@ -68,7 +68,7 @@ jobs:
     - name: Test
       run: dotnet test --no-build --configuration Release --verbosity normal --collect:"XPlat Code Coverage"
       env:
-        ConnectionStrings__DefaultConnection: "Host=localhost;Port=5432;Database=ecommerce_store;Username=ecommerce_user;Password=ecommerce_password123"
+        ConnectionStrings__DefaultConnection: "Host=localhost;Port=5433;Database=ecommerce_store;Username=ecommerce_user;Password=ecommerce_password123"
         Redis__ConnectionString: "localhost:6379"
         RabbitMQ__ConnectionString: "amqp://ecommerce:ecommerce123@localhost:5672/"
     
@@ -140,7 +140,7 @@ jobs:
           --health-timeout 5s
           --health-retries 5
         ports:
-          - 5432:5432
+          - 5433:5432
       
       redis:
         image: redis:7-alpine

@@ -136,7 +136,7 @@ All containers are connected to a shared Docker network:
 ### Service Discovery
 
 Services communicate using container names as hostnames:
-- Database: `ecommerce-postgres:5432`
+- Database: `ecommerce-postgres:5433`
 - Redis: `ecommerce-redis:6379`
 - RabbitMQ: `ecommerce-rabbitmq:5672`
 

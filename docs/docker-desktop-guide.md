@@ -57,7 +57,7 @@ docker rm $(docker ps -aq --filter label=aspire.project=ecommerce-store)
 
 | Container Name | Service Type | Default Port | Health Check |
 |----------------|--------------|--------------|-------------|
-| ecommerce-postgres | database | 5432 | ✅ Connection test |
+| ecommerce-postgres | database | 5433 | ✅ Connection test |
 | ecommerce-redis | cache | 6379 | ✅ PING command |
 | ecommerce-rabbitmq | messaging | 5672, 15672 | ✅ Management API |
 | ecommerce-pgadmin | admin | 8080 | ✅ HTTP endpoint |

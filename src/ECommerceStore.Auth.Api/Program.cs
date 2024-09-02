@@ -20,17 +20,22 @@ var builder = WebApplication.CreateBuilder(args);
 // Add service defaults & Aspire components.
 builder.AddServiceDefaults();
 
-// Configure database - use Aspire if available, otherwise fallback to connection string
-try
-{
-    builder.AddNpgsqlDbContext<AuthDbContext>("ecommercedb", settings => settings.DisableHealthChecks = true);
-}
-catch
-{
-    // Fallback to traditional connection string when not running in Aspire
-    builder.Services.AddDbContext<AuthDbContext>(options =>
-        options.UseNpgsql(builder.Configuration.GetConnectionString("ecommercedb")));
-}
+// Configure database - use traditional connection string for debugging
+// Temporarily disabled Aspire configuration to isolate database connection issues
+builder.Services.AddDbContext<AuthDbContext>(options =>
+    options.UseNpgsql(builder.Configuration.GetConnectionString("ecommercedb")));
+
+// TODO: Re-enable Aspire configuration after fixing database connection
+// try
+// {
+//     builder.AddNpgsqlDbContext<AuthDbContext>("ecommercedb", settings => settings.DisableHealthChecks = true);
+// }
+// catch
+// {
+//     // Fallback to traditional connection string when not running in Aspire
+//     builder.Services.AddDbContext<AuthDbContext>(options =>
+//         options.UseNpgsql(builder.Configuration.GetConnectionString("ecommercedb")));
+// }
 
 try
 {
