@@ -1,67 +1,313 @@
 version: '3.8'
 
 services:
-  server:
-    build:
-      context: ./server
-      dockerfile: Dockerfile
-    container_name: ecommerce_server
-    ports:
-      - "3005:3005"
-    networks:
-      - ecommerce_network
-    depends_on:
-      - postgres
-      - rabbitmq
-    volumes:
-      - server_data:/app/data
-      - shared_packages:/app/packages
-
-  client:
-    build:
-      context: ./client
-      dockerfile: Dockerfile
-    container_name: ecommerce_client
-    ports:
-      - "80:3001"
-    networks:
-      - ecommerce_network
-    depends_on:
-      - server
-    volumes:
-      - client_data:/app/data
-      - shared_packages:/app/packages
-      
+  # Database Services
   postgres:
-    image: postgres:latest
-    container_name: ecommerce_postgres
+    image: postgres:16-alpine
+    container_name: ecommerce-postgres
     environment:
-      POSTGRES_DB: ecommerce_db
-      POSTGRES_USER: admin
-      POSTGRES_PASSWORD: password
-    networks:
-      - ecommerce_network
+      POSTGRES_DB: ecommerce_store
+      POSTGRES_USER: ecommerce_user
+      POSTGRES_PASSWORD: ecommerce_password123
+    ports:
+      - "15432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-
-  rabbitmq:
-    image: rabbitmq:management
-    container_name: ecommerce_rabbitmq
-    ports:
-      - "15673:15672"
-      - "5673:5672"
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
     networks:
-      - ecommerce_network
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ecommerce_user -d ecommerce_store"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  redis:
+    image: redis:7.2-alpine
+    container_name: ecommerce-redis
+    ports:
+      - "16379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Message Broker
+  rabbitmq:
+    image: rabbitmq:3.12-management-alpine
+    container_name: ecommerce-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ecommerce_user
+      RABBITMQ_DEFAULT_PASS: ecommerce_password123
+    ports:
+      - "15672:15672"  # Management UI
+      - "25672:5672"   # AMQP port
     volumes:
       - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-networks:
-  ecommerce_network:
-    driver: bridge
+  # Backend Services
+  auth-api:
+    build:
+      context: .
+      dockerfile: src/ECommerceStore.Auth.Api/Dockerfile
+    container_name: ecommerce-auth-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=ecommerce_store;Username=ecommerce_user;Password=ecommerce_password123
+      - ConnectionStrings__Redis=redis:6379
+      - JWT__SecretKey=your-super-secret-jwt-key-here-make-it-long-and-secure
+      - JWT__Issuer=ECommerceStore
+      - JWT__Audience=ECommerceStore.Client
+    ports:
+      - "18001:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  product-api:
+    build:
+      context: .
+      dockerfile: src/ECommerceStore.Product.Api/Dockerfile
+    container_name: ecommerce-product-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=ecommerce_store;Username=ecommerce_user;Password=ecommerce_password123
+      - ConnectionStrings__Redis=redis:6379
+    ports:
+      - "18002:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  basket-api:
+    build:
+      context: .
+      dockerfile: src/ECommerceStore.Basket.Api/Dockerfile
+    container_name: ecommerce-basket-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__Redis=redis:6379
+      - MessageBroker__Host=rabbitmq
+      - MessageBroker__Username=ecommerce_user
+      - MessageBroker__Password=ecommerce_password123
+    ports:
+      - "18003:8080"
+    depends_on:
+      redis:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  payment-api:
+    build:
+      context: .
+      dockerfile: src/ECommerceStore.Payment.Api/Dockerfile
+    container_name: ecommerce-payment-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=ecommerce_store;Username=ecommerce_user;Password=ecommerce_password123
+      - Stripe__SecretKey=${STRIPE_SECRET_KEY}
+      - Stripe__PublishableKey=${STRIPE_PUBLISHABLE_KEY}
+      - Stripe__WebhookSecret=${STRIPE_WEBHOOK_SECRET}
+    ports:
+      - "18004:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  order-api:
+    build:
+      context: .
+      dockerfile: src/ECommerceStore.Order.Api/Dockerfile
+    container_name: ecommerce-order-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=ecommerce_store;Username=ecommerce_user;Password=ecommerce_password123
+      - MessageBroker__Host=rabbitmq
+      - MessageBroker__Username=ecommerce_user
+      - MessageBroker__Password=ecommerce_password123
+    ports:
+      - "18005:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  notification-api:
+    build:
+      context: .
+      dockerfile: src/ECommerceStore.Notification.Api/Dockerfile
+    container_name: ecommerce-notification-api
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=ecommerce_store;Username=ecommerce_user;Password=ecommerce_password123
+      - MessageBroker__Host=rabbitmq
+      - MessageBroker__Username=ecommerce_user
+      - MessageBroker__Password=ecommerce_password123
+      - SendGrid__ApiKey=${SENDGRID_API_KEY}
+      - Twilio__AccountSid=${TWILIO_ACCOUNT_SID}
+      - Twilio__AuthToken=${TWILIO_AUTH_TOKEN}
+    ports:
+      - "18006:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: src/ECommerceStore.ApiGateway/Dockerfile
+    container_name: ecommerce-api-gateway
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Docker
+      - Services__Auth=http://auth-api:8080
+      - Services__Product=http://product-api:8080
+      - Services__Basket=http://basket-api:8080
+      - Services__Payment=http://payment-api:8080
+      - Services__Order=http://order-api:8080
+      - Services__Notification=http://notification-api:8080
+    ports:
+      - "18000:8080"
+    depends_on:
+      - auth-api
+      - product-api
+      - basket-api
+      - payment-api
+      - order-api
+      - notification-api
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: ecommerce-frontend
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:18000
+      - NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${STRIPE_PUBLISHABLE_KEY}
+    ports:
+      - "13000:3000"
+    depends_on:
+      - api-gateway
+    networks:
+      - ecommerce-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Monitoring Services
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: ecommerce-prometheus
+    ports:
+      - "19090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    networks:
+      - ecommerce-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--web.enable-lifecycle'
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: ecommerce-grafana
+    ports:
+      - "13001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+    networks:
+      - ecommerce-network
+    depends_on:
+      - prometheus
 
 volumes:
-  server_data:
-  client_data:
   postgres_data:
+  redis_data:
   rabbitmq_data:
-  shared_packages:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  ecommerce-network:
+    driver: bridge
