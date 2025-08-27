@@ -5,15 +5,12 @@ using Microsoft.EntityFrameworkCore;
 
 namespace ECommerceStore.Auth.Api.Data;
 
-public class AuthDbContext : IdentityDbContext<ApplicationUser>
+public class AuthDbContext(DbContextOptions<AuthDbContext> options) : IdentityDbContext<ApplicationUser>(options)
 {
-    public AuthDbContext(DbContextOptions<AuthDbContext> options) : base(options)
-    {
-    }
 
-    public override DbSet<IdentityUserRole<string>> UserRoles { get; set; }
-    public DbSet<UserRole> CustomUserRoles { get; set; }
-    public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public override DbSet<IdentityUserRole<string>> UserRoles { get; set; } = null!;
+    public DbSet<UserRole> CustomUserRoles { get; set; } = null!;
+    public DbSet<RefreshToken> RefreshTokens { get; set; } = null!;
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

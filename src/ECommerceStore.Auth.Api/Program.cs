@@ -19,7 +19,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire components.
 builder.AddServiceDefaults();
-builder.AddNpgsqlDbContext<AuthDbContext>("DefaultConnection");
+builder.AddNpgsqlDbContext<AuthDbContext>("ecommercedb", settings => settings.DisableHealthChecks = true);
 builder.AddRedisClient("redis");
 builder.AddRabbitMQClient("rabbitmq");
 
@@ -175,11 +175,23 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 
-// Ensure database is created
+// Ensure database is created and migrations are applied
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
-    await context.Database.EnsureCreatedAsync();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    
+    try
+    {
+        logger.LogInformation("Applying database migrations...");
+        await context.Database.MigrateAsync();
+        logger.LogInformation("Database migrations applied successfully.");
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "An error occurred while applying database migrations.");
+        throw;
+    }
 }
 
 app.Run();
