@@ -42,9 +42,7 @@ var authApi = builder.AddProject<Projects.ECommerceStore_Auth_Api>("auth-api")
     .WithReference(sharedDb)
     .WithReference(redis)
     .WithReference(rabbitmq)
-    .WaitFor(sharedDb)
-    .WaitFor(redis)
-    .WaitFor(rabbitmq);
+    .WaitFor(sharedDb);
 
 // API Gateway
 var apiGateway = builder.AddProject<Projects.ECommerceStore_ApiGateway>("api-gateway")

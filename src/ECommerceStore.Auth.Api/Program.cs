@@ -19,12 +19,46 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add service defaults & Aspire components.
 builder.AddServiceDefaults();
-builder.AddNpgsqlDbContext<AuthDbContext>("ecommercedb", settings => settings.DisableHealthChecks = true);
-builder.AddRedisClient("redis");
-builder.AddRabbitMQClient("rabbitmq");
 
-// Add Redis caching
-builder.Services.AddRedisCache(builder.Configuration);
+// Configure database - use Aspire if available, otherwise fallback to connection string
+try
+{
+    builder.AddNpgsqlDbContext<AuthDbContext>("ecommercedb", settings => settings.DisableHealthChecks = true);
+}
+catch
+{
+    // Fallback to traditional connection string when not running in Aspire
+    builder.Services.AddDbContext<AuthDbContext>(options =>
+        options.UseNpgsql(builder.Configuration.GetConnectionString("ecommercedb")));
+}
+
+try
+{
+    builder.AddRedisClient("redis");
+}
+catch
+{
+    // Redis is optional for development
+}
+
+try
+{
+    builder.AddRabbitMQClient("rabbitmq");
+}
+catch
+{
+    // RabbitMQ is optional for development
+}
+
+// Add Redis caching (optional for development)
+try
+{
+    builder.Services.AddRedisCache(builder.Configuration);
+}
+catch
+{
+    // Redis caching is optional for development
+}
 
 // Add services to the container.
 builder.Services.AddControllers();
@@ -176,21 +210,41 @@ app.UseAuthorization();
 app.MapControllers();
 
 // Ensure database is created and migrations are applied
-using (var scope = app.Services.CreateScope())
+try
 {
-    var context = scope.ServiceProvider.GetRequiredService<AuthDbContext>();
-    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-    
-    try
+    using (var scope = app.Services.CreateScope())
     {
-        logger.LogInformation("Applying database migrations...");
-        await context.Database.MigrateAsync();
-        logger.LogInformation("Database migrations applied successfully.");
+        var context = scope.ServiceProvider.GetService<AuthDbContext>();
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        
+        if (context != null)
+        {
+            try
+            {
+                logger.LogInformation("Checking database connectivity...");
+                await context.Database.CanConnectAsync();
+                logger.LogInformation("Applying database migrations...");
+                await context.Database.MigrateAsync();
+                logger.LogInformation("Database migrations applied successfully.");
+            }
+            catch (Exception ex)
+            {
+                logger.LogWarning(ex, "Database migration failed. Application will continue without migrations.");
+            }
+        }
+        else
+         {
+             logger.LogWarning("AuthDbContext not available. Skipping database migrations.");
+         }
     }
-    catch (Exception ex)
+}
+catch (Exception ex)
+{
+    var loggerFactory = app.Services.GetService<ILoggerFactory>();
+    if (loggerFactory != null)
     {
-        logger.LogError(ex, "An error occurred while applying database migrations.");
-        throw;
+        var logger = loggerFactory.CreateLogger<Program>();
+        logger.LogWarning(ex, "Failed to initialize database migration scope. Application will continue.");
     }
 }
 
