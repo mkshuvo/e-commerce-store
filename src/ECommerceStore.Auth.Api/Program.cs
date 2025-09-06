@@ -210,6 +210,10 @@ if (app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseSecurityHeaders();
 app.UseCors("AllowAll");
+
+// Add database connection check middleware before authentication
+app.UseDatabaseConnectionCheck();
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
