@@ -15,80 +15,615 @@ This document outlines the atomic, developer-ready tasks for implementing the Sh
 ### [ ] TASK-001: Project Infrastructure Setup
 **Priority**: High | **Effort**: 4h | **Dependencies**: None
 
+#### **Objective**:
+Establish a robust, scalable, and maintainable foundation for the Shopify Database Replication system using .NET 8, Entity Framework Core, and PostgreSQL with proper containerization, logging, and configuration management.
+
+#### **Expected Outcomes**:
+- Fully functional .NET 8 Web API project with proper structure and dependencies
+- Configured Entity Framework Core 8 with PostgreSQL provider
+- Implemented dependency injection container with service registrations
+- Structured logging system using Serilog with multiple sinks
+- Environment-specific configuration management with secure secret handling
+- Docker containerization with multi-stage builds for optimal performance
+- Basic health checks for system monitoring and diagnostics
+- Clean project architecture following SOLID principles and clean code practices
+
+#### **Constraints & Considerations**:
+- **Technology Stack**: Must use .NET 8 LTS for long-term support and latest features
+- **Database**: PostgreSQL 15+ required for advanced JSON support and performance
+- **Security**: All sensitive configuration must use user secrets or environment variables
+- **Performance**: Docker images must be optimized for production deployment
+- **Monitoring**: Health checks must cover all critical system dependencies
+- **Scalability**: Architecture must support horizontal scaling and microservices patterns
+- **Compliance**: Logging must support audit trails and GDPR compliance requirements
+
+#### **Risk Factors**:
+- **Version Compatibility**: Ensure all NuGet packages are compatible with .NET 8
+- **Database Connectivity**: PostgreSQL connection string must be properly secured
+- **Docker Build**: Multi-stage builds may fail if dependencies are not properly cached
+- **Configuration**: Missing environment variables could cause runtime failures
+
 #### Sub-tasks:
-- [ ] Initialize .NET 8 Web API project with proper structure
-- [ ] Configure Entity Framework Core 8 with PostgreSQL provider
-- [ ] Set up dependency injection container
-- [ ] Configure logging with Serilog
-- [ ] Set up configuration management (appsettings.json, environment variables)
-- [ ] Create basic project structure (Controllers, Services, Models, Data)
-- [ ] Configure Docker containerization
-- [ ] Set up basic health checks
+- [ ] **Initialize .NET 8 Web API project**
+  - [ ] Run `dotnet new webapi -n ShopifyReplication.Api -f net8.0`
+  - [ ] Create solution file: `dotnet new sln -n ShopifyReplication`
+  - [ ] Add project to solution: `dotnet sln add ShopifyReplication.Api`
+  - [ ] Verify project builds: `dotnet build`
+
+- [ ] **Configure Entity Framework Core 8 with PostgreSQL**
+  - [ ] Install packages: `dotnet add package Microsoft.EntityFrameworkCore.Design --version 8.0.0`
+  - [ ] Install: `dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL --version 8.0.0`
+  - [ ] Install: `dotnet add package Microsoft.EntityFrameworkCore.Tools --version 8.0.0`
+  - [ ] Create `Data/ShopifyReplicationContext.cs` with DbContext
+  - [ ] Configure connection string in `appsettings.json`: `"DefaultConnection": "Host=localhost;Database=shopify_replication;Username=postgres;Password=password"`
+
+- [ ] **Set up dependency injection container**
+  - [ ] Configure services in `Program.cs`
+  - [ ] Register DbContext: `builder.Services.AddDbContext<ShopifyReplicationContext>()`
+  - [ ] Add service registrations for repositories and services
+  - [ ] Configure AutoMapper: `builder.Services.AddAutoMapper(typeof(Program))`
+
+- [ ] **Configure logging with Serilog**
+  - [ ] Install: `dotnet add package Serilog.AspNetCore --version 8.0.0`
+  - [ ] Install: `dotnet add package Serilog.Sinks.Console --version 5.0.1`
+  - [ ] Install: `dotnet add package Serilog.Sinks.File --version 5.0.0`
+  - [ ] Configure in `Program.cs`: `builder.Host.UseSerilog()`
+  - [ ] Create `appsettings.json` Serilog configuration with structured logging
+
+- [ ] **Set up configuration management**
+  - [ ] Create `appsettings.Development.json` with dev-specific settings
+  - [ ] Create `appsettings.Production.json` with prod-specific settings
+  - [ ] Configure environment variables support
+  - [ ] Add user secrets: `dotnet user-secrets init`
+  - [ ] Store sensitive config in secrets: `dotnet user-secrets set "Shopify:ApiKey" "your-api-key"`
+
+- [ ] **Create project structure**
+  - [ ] Create `Controllers/` folder
+  - [ ] Create `Services/` folder with interfaces
+  - [ ] Create `Models/Entities/` for database entities
+  - [ ] Create `Models/DTOs/` for data transfer objects
+  - [ ] Create `Data/Repositories/` for data access
+  - [ ] Create `Data/Configurations/` for EF configurations
+  - [ ] Create `Middleware/` for custom middleware
+  - [ ] Create `Extensions/` for service extensions
+
+- [ ] **Configure Docker containerization**
+  - [ ] Create `Dockerfile` with multi-stage build
+  - [ ] Create `.dockerignore` file
+  - [ ] Create `docker-compose.yml` with PostgreSQL service
+  - [ ] Create `docker-compose.override.yml` for development
+  - [ ] Test container build: `docker build -t shopify-replication .`
+
+- [ ] **Set up basic health checks**
+  - [ ] Install: `dotnet add package Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore`
+  - [ ] Configure in `Program.cs`: `builder.Services.AddHealthChecks().AddDbContext<ShopifyReplicationContext>()`
+  - [ ] Add health check endpoint: `app.MapHealthChecks("/health")`
+  - [ ] Create custom health checks for Shopify API connectivity
 
 ### [ ] TASK-002: Database Schema Implementation
 **Priority**: High | **Effort**: 8h | **Dependencies**: TASK-001
 
+#### **Objective**:
+Design and implement a comprehensive database schema that accurately mirrors Shopify's data structure while optimizing for performance, data integrity, and scalability. The schema must support real-time replication, audit trails, and efficient querying patterns.
+
+#### **Expected Outcomes**:
+- Complete Entity Framework DbContext with all Shopify entity mappings
+- Properly configured entity relationships with foreign keys and navigation properties
+- Optimized database indexes for query performance and data retrieval
+- Audit trail implementation for tracking data changes and compliance
+- Data validation attributes and constraints to ensure data integrity
+- Migration scripts for database versioning and deployment
+- Comprehensive entity configurations following EF Core best practices
+- Support for JSON columns for flexible data storage (product options, metadata)
+
+#### **Constraints & Considerations**:
+- **Data Fidelity**: Schema must maintain 1:1 mapping with Shopify API data structures
+- **Performance**: Indexes must be strategically placed to optimize common query patterns
+- **Scalability**: Schema design must support millions of products, customers, and orders
+- **Compliance**: Audit trails required for GDPR, PCI-DSS, and financial regulations
+- **Data Types**: Use appropriate PostgreSQL data types for optimal storage and performance
+- **Relationships**: Maintain referential integrity while allowing for soft deletes
+- **Extensibility**: Schema must accommodate future Shopify API changes and new fields
+
+#### **Risk Factors**:
+- **Data Migration**: Large datasets may require chunked migration strategies
+- **Index Performance**: Over-indexing could impact write performance
+- **Schema Changes**: Shopify API updates may require schema modifications
+- **Data Consistency**: Concurrent updates could lead to data inconsistencies
+- **Storage Growth**: Audit trails and historical data may consume significant storage
+
 #### Sub-tasks:
-- [ ] Create Entity Framework DbContext
-- [ ] Implement core product entities (Products, ProductVariants, ProductOptions)
-- [ ] Implement customer entities (Customers, CustomerAddresses)
-- [ ] Implement order entities (Orders, OrderLineItems, OrderFulfillments)
-- [ ] Implement inventory entities (InventoryItems, InventoryLevels, Locations)
-- [ ] Implement collection entities (Collections, CollectionProducts)
-- [ ] Create database migrations
-- [ ] Add proper indexes and constraints
-- [ ] Implement audit trail functionality
+- [ ] **Create Entity Framework DbContext**
+  - [ ] Create `Data/ShopifyReplicationContext.cs` inheriting from `DbContext`
+  - [ ] Configure connection string in `OnConfiguring()` method
+  - [ ] Add `DbSet<T>` properties for all entities
+  - [ ] Override `OnModelCreating()` for entity configurations
+  - [ ] Add `SaveChangesAsync()` override for audit trail
+
+- [ ] **Implement core product entities**
+  - [ ] Create `Models/Entities/Product.cs` with properties:
+    - [ ] `Id` (long, primary key), `Title` (string, 255), `Handle` (string, 255, unique)
+    - [ ] `BodyHtml` (text), `Vendor` (string, 100), `ProductType` (string, 100)
+    - [ ] `CreatedAt`, `UpdatedAt`, `PublishedAt` (DateTime?), `Status` (enum)
+    - [ ] `Tags` (string), `TemplateSuffix` (string), `ShopifyId` (long, unique)
+  - [ ] Create `Models/Entities/ProductVariant.cs` with properties:
+    - [ ] `Id`, `ProductId` (FK), `Title`, `Price` (decimal 18,2), `CompareAtPrice`
+    - [ ] `Sku` (string, 100), `Barcode`, `Weight` (decimal), `WeightUnit`
+    - [ ] `InventoryQuantity` (int), `InventoryPolicy`, `ShopifyId` (long)
+  - [ ] Create `Models/Entities/ProductOption.cs` with properties:
+    - [ ] `Id`, `ProductId` (FK), `Name` (string, 100), `Position` (int)
+    - [ ] `Values` (JSON array), `ShopifyId` (long)
+
+- [ ] **Implement customer entities**
+  - [ ] Create `Models/Entities/Customer.cs` with properties:
+    - [ ] `Id`, `Email` (string, 255, unique), `FirstName`, `LastName`
+    - [ ] `Phone`, `AcceptsMarketing` (bool), `CreatedAt`, `UpdatedAt`
+    - [ ] `OrdersCount` (int), `TotalSpent` (decimal), `ShopifyId` (long)
+  - [ ] Create `Models/Entities/CustomerAddress.cs` with properties:
+    - [ ] `Id`, `CustomerId` (FK), `FirstName`, `LastName`, `Company`
+    - [ ] `Address1`, `Address2`, `City`, `Province`, `Country`, `Zip`
+    - [ ] `Phone`, `IsDefault` (bool), `ShopifyId` (long)
+
+- [ ] **Implement order entities**
+  - [ ] Create `Models/Entities/Order.cs` with properties:
+    - [ ] `Id`, `OrderNumber` (string, unique), `Email`, `CreatedAt`, `UpdatedAt`
+    - [ ] `TotalPrice` (decimal 18,2), `SubtotalPrice`, `TotalTax`, `Currency`
+    - [ ] `FinancialStatus`, `FulfillmentStatus`, `CustomerId` (FK), `ShopifyId`
+  - [ ] Create `Models/Entities/OrderLineItem.cs` with properties:
+    - [ ] `Id`, `OrderId` (FK), `ProductId` (FK), `VariantId` (FK)
+    - [ ] `Quantity` (int), `Price` (decimal), `Title`, `Sku`, `ShopifyId`
+  - [ ] Create `Models/Entities/OrderFulfillment.cs` with properties:
+    - [ ] `Id`, `OrderId` (FK), `Status`, `TrackingCompany`, `TrackingNumber`
+    - [ ] `CreatedAt`, `UpdatedAt`, `ShopifyId` (long)
+
+- [ ] **Implement inventory entities**
+  - [ ] Create `Models/Entities/InventoryItem.cs` with properties:
+    - [ ] `Id`, `Sku` (string, unique), `CreatedAt`, `UpdatedAt`, `ShopifyId`
+    - [ ] `Cost` (decimal), `Tracked` (bool), `CountryCodeOfOrigin`
+  - [ ] Create `Models/Entities/InventoryLevel.cs` with properties:
+    - [ ] `Id`, `InventoryItemId` (FK), `LocationId` (FK), `Available` (int)
+    - [ ] `UpdatedAt`, composite unique key on (InventoryItemId, LocationId)
+  - [ ] Create `Models/Entities/Location.cs` with properties:
+    - [ ] `Id`, `Name` (string, 255), `Address1`, `City`, `Province`, `Country`
+    - [ ] `Active` (bool), `ShopifyId` (long, unique)
+
+- [ ] **Implement collection entities**
+  - [ ] Create `Models/Entities/Collection.cs` with properties:
+    - [ ] `Id`, `Title` (string, 255), `Handle` (string, unique), `BodyHtml`
+    - [ ] `SortOrder`, `TemplateSuffix`, `CreatedAt`, `UpdatedAt`, `ShopifyId`
+  - [ ] Create `Models/Entities/CollectionProduct.cs` (junction table):
+    - [ ] `CollectionId` (FK), `ProductId` (FK), `Position` (int)
+    - [ ] Composite primary key on (CollectionId, ProductId)
+
+- [ ] **Create database migrations**
+  - [ ] Run: `dotnet ef migrations add InitialCreate`
+  - [ ] Review generated migration in `Migrations/` folder
+  - [ ] Run: `dotnet ef database update` to apply migration
+  - [ ] Verify tables created with: `dotnet ef dbcontext info`
+
+- [ ] **Add proper indexes and constraints**
+  - [ ] Add index on `Product.ShopifyId`: `CREATE INDEX IX_Products_ShopifyId`
+  - [ ] Add index on `Customer.Email`: `CREATE INDEX IX_Customers_Email`
+  - [ ] Add index on `Order.OrderNumber`: `CREATE INDEX IX_Orders_OrderNumber`
+  - [ ] Add composite index on `InventoryLevel`: `CREATE INDEX IX_InventoryLevels_ItemLocation`
+  - [ ] Add foreign key constraints with cascade delete where appropriate
+
+- [ ] **Implement audit trail functionality**
+  - [ ] Create `Models/Entities/AuditLog.cs` with properties:
+    - [ ] `Id`, `EntityName`, `EntityId`, `Action` (enum), `Changes` (JSON)
+    - [ ] `UserId`, `Timestamp`, `IpAddress`
+  - [ ] Override `SaveChangesAsync()` in DbContext to capture changes
+  - [ ] Implement change tracking for all entities
+  - [ ] Add audit log repository and service
 
 ### [ ] TASK-003: Enhanced Entities Implementation
 **Priority**: High | **Effort**: 6h | **Dependencies**: TASK-002
 
+#### **Objective**:
+Extend the core database schema with advanced Shopify entities including metafields, smart collections, transactions, and abandoned checkouts. Implement complex relationships, polymorphic associations, and business rule validations to support comprehensive e-commerce functionality.
+
+#### **Expected Outcomes**:
+- Complete implementation of metafields system with polymorphic owner relationships
+- Smart collections with dynamic rule-based product filtering capabilities
+- Comprehensive transaction tracking for financial reconciliation and reporting
+- Abandoned checkout recovery system with detailed cart preservation
+- Enhanced fulfillment tracking with line-item level granularity
+- Robust business rule validations ensuring data integrity and consistency
+- Optimized database migrations with proper indexing strategies
+- Full support for Shopify's advanced commerce features and workflows
+
+#### **Constraints & Considerations**:
+- **Polymorphic Relationships**: Metafields must support multiple owner types (Product, Customer, Order)
+- **JSON Storage**: Smart collection rules and metafield values require flexible JSON storage
+- **Performance**: Complex queries on smart collections must be optimized with proper indexing
+- **Data Integrity**: Business rules must be enforced at both application and database levels
+- **Migration Safety**: Large table alterations must be performed with minimal downtime
+- **Extensibility**: Schema must accommodate future Shopify API enhancements
+- **Compliance**: Financial transaction data requires audit trails and regulatory compliance
+
+#### **Risk Factors**:
+- **Complex Relationships**: Polymorphic associations may impact query performance
+- **JSON Queries**: PostgreSQL JSON operations require careful optimization
+- **Migration Complexity**: Adding constraints to existing data may cause migration failures
+- **Business Logic**: Complex validation rules may create performance bottlenecks
+- **Data Volume**: Metafields and transactions can generate significant data growth
+
 #### Sub-tasks:
-- [ ] Implement Metafields and MetafieldDefinitions entities
-- [ ] Implement SmartCollections entity
-- [ ] Implement enhanced transaction entities (TransactionsEnhanced)
-- [ ] Implement enhanced fulfillment entities (FulfillmentsEnhanced, FulfillmentLineItems)
-- [ ] Implement enhanced abandoned checkouts (AbandonedCheckoutsEnhanced)
-- [ ] Create corresponding database migrations
-- [ ] Add proper relationships and foreign keys
-- [ ] Implement business rule validations
+- [ ] **Implement Metafields and MetafieldDefinitions entities**
+  - [ ] Create `Models/Entities/Metafield.cs` with properties:
+    - [ ] `Id`, `Namespace` (string, 100), `Key` (string, 100), `Value` (text)
+    - [ ] `Type` (enum: string, integer, json_string), `Description` (string, 500)
+    - [ ] `OwnerId` (long), `OwnerResource` (string, 50), `ShopifyId` (long)
+  - [ ] Create `Models/Entities/MetafieldDefinition.cs` with properties:
+    - [ ] `Id`, `Namespace`, `Key`, `Name`, `Type`, `Description`
+    - [ ] `OwnerType` (enum), `Validations` (JSON), `ShopifyId` (long)
+  - [ ] Add composite unique index on (Namespace, Key, OwnerId, OwnerResource)
+
+- [ ] **Implement SmartCollections entity**
+  - [ ] Create `Models/Entities/SmartCollection.cs` with properties:
+    - [ ] `Id`, `Title` (string, 255), `Handle` (string, unique), `BodyHtml`
+    - [ ] `Rules` (JSON array), `Disjunctive` (bool), `SortOrder`
+    - [ ] `TemplateSuffix`, `CreatedAt`, `UpdatedAt`, `ShopifyId` (long)
+  - [ ] Create `Models/Entities/SmartCollectionRule.cs` for rule details:
+    - [ ] `Id`, `SmartCollectionId` (FK), `Column`, `Relation`, `Condition`
+
+- [ ] **Implement enhanced transaction entities**
+  - [ ] Create `Models/Entities/Transaction.cs` with properties:
+    - [ ] `Id`, `OrderId` (FK), `Kind` (enum), `Gateway`, `Status`
+    - [ ] `Amount` (decimal 18,2), `Currency`, `AuthorizationCode`
+    - [ ] `CreatedAt`, `ProcessedAt`, `DeviceId`, `ParentId` (FK), `ShopifyId`
+  - [ ] Create `Models/Entities/TransactionReceipt.cs` with properties:
+    - [ ] `Id`, `TransactionId` (FK), `TestCase` (bool), `Authorization`
+    - [ ] `Receipt` (JSON), `ShopifyId` (long)
+
+- [ ] **Implement enhanced fulfillment entities**
+  - [ ] Enhance `OrderFulfillment.cs` with additional properties:
+    - [ ] `LocationId` (FK), `Service`, `TrackingUrls` (JSON array)
+    - [ ] `NotifyCustomer` (bool), `Shipment` (JSON), `Receipt` (JSON)
+  - [ ] Create `Models/Entities/FulfillmentLineItem.cs` with properties:
+    - [ ] `Id`, `FulfillmentId` (FK), `LineItemId` (FK), `Quantity` (int)
+    - [ ] Composite unique key on (FulfillmentId, LineItemId)
+
+- [ ] **Implement enhanced abandoned checkouts**
+  - [ ] Create `Models/Entities/AbandonedCheckout.cs` with properties:
+    - [ ] `Id`, `Token` (string, unique), `CartToken`, `Email`
+    - [ ] `CreatedAt`, `UpdatedAt`, `CompletedAt`, `Currency`
+    - [ ] `TotalPrice` (decimal), `SubtotalPrice`, `TotalTax`
+    - [ ] `CustomerId` (FK), `BillingAddress` (JSON), `ShippingAddress` (JSON)
+    - [ ] `ShopifyId` (long, unique)
+  - [ ] Create `Models/Entities/AbandonedCheckoutLineItem.cs` with properties:
+    - [ ] `Id`, `CheckoutId` (FK), `ProductId` (FK), `VariantId` (FK)
+    - [ ] `Quantity` (int), `Price` (decimal), `Title`, `Sku`
+
+- [ ] **Create corresponding database migrations**
+  - [ ] Run: `dotnet ef migrations add EnhancedEntities`
+  - [ ] Review migration for metafields, smart collections, transactions
+  - [ ] Verify foreign key relationships and constraints
+  - [ ] Run: `dotnet ef database update`
+  - [ ] Test migration rollback: `dotnet ef migrations remove`
+
+- [ ] **Add proper relationships and foreign keys**
+  - [ ] Configure one-to-many: Order -> Transactions
+  - [ ] Configure one-to-many: OrderFulfillment -> FulfillmentLineItems
+  - [ ] Configure polymorphic: Metafield -> Owner (Product/Customer/Order)
+  - [ ] Add cascade delete rules for dependent entities
+  - [ ] Configure navigation properties in entity configurations
+
+- [ ] **Implement business rule validations**
+  - [ ] Add validation: Metafield namespace/key combination uniqueness
+  - [ ] Add validation: Transaction amount must be positive
+  - [ ] Add validation: Smart collection rules must be valid JSON
+  - [ ] Add validation: Abandoned checkout email format
+  - [ ] Create custom validation attributes for business rules
+  - [ ] Implement server-side validation in entity configurations
 
 ### [ ] TASK-004: B2B Commerce Entities
 **Priority**: Medium | **Effort**: 4h | **Dependencies**: TASK-003
 
+#### **Objective**:
+Implement comprehensive B2B commerce entities to support business-to-business transactions, including company hierarchies, payment terms, selling plans, and subscription models. Enable advanced B2B features like bulk ordering, custom pricing, and flexible payment schedules.
+
+#### **Expected Outcomes**:
+- Complete company management system with hierarchical structures and locations
+- Flexible payment terms configuration supporting various B2B payment schedules
+- Selling plan groups and individual plans for subscription and recurring billing
+- Company contact management with role-based access and permissions
+- Integration points for B2B-specific pricing and discount structures
+- Support for complex B2B workflows including approval processes and bulk operations
+- Comprehensive audit trails for B2B transaction compliance and reporting
+
+#### **Constraints & Considerations**:
+- **Hierarchy Management**: Company structures must support multi-level hierarchies and locations
+- **Payment Flexibility**: Payment terms must accommodate various B2B billing cycles and schedules
+- **Subscription Models**: Selling plans must support complex recurring billing scenarios
+- **Data Relationships**: Maintain referential integrity between companies, contacts, and customers
+- **Scalability**: Design must handle large enterprise customers with multiple locations
+- **Compliance**: B2B transactions require enhanced audit trails and regulatory compliance
+- **Integration**: Must integrate seamlessly with existing customer and order entities
+
+#### **Risk Factors**:
+- **Complex Relationships**: Multi-level company hierarchies may impact query performance
+- **Payment Processing**: Complex payment terms may require specialized billing logic
+- **Data Consistency**: Maintaining consistency across company locations and contacts
+- **Migration Complexity**: Existing customer data may need careful migration to B2B structures
+- **Performance Impact**: Large company datasets may affect system performance
+
 #### Sub-tasks:
-- [ ] Implement Companies entity with hierarchical structure
-- [ ] Implement B2BPaymentTerms entity
-- [ ] Implement SellingPlanGroups and SellingPlans entities
-- [ ] Implement ProductSellingPlans junction table
-- [ ] Create database migrations for B2B entities
-- [ ] Add credit limit validation logic
-- [ ] Implement payment term enforcement rules
-- [ ] Add proper indexing for B2B queries
+- [ ] **Implement Companies entity with hierarchical structure**
+  - [ ] Create `Models/Entities/Company.cs` with properties:
+    - [ ] `Id`, `Name` (string, 255), `Note` (text), `ExternalId` (string, 100)
+    - [ ] `MainContactId` (FK to Customer), `CreatedAt`, `UpdatedAt`
+    - [ ] `CustomerCount` (int), `ShopifyId` (long, unique)
+  - [ ] Create `Models/Entities/CompanyLocation.cs` with properties:
+    - [ ] `Id`, `CompanyId` (FK), `Name`, `ExternalId`, `Phone`
+    - [ ] `Locale`, `CreatedAt`, `UpdatedAt`, `ShopifyId` (long)
+  - [ ] Create `Models/Entities/CompanyContact.cs` with properties:
+    - [ ] `Id`, `CompanyId` (FK), `CustomerId` (FK), `IsMainContact` (bool)
+    - [ ] `Title`, `CreatedAt`, `UpdatedAt`, `ShopifyId` (long)
+
+- [ ] **Implement B2BPaymentTerms entity**
+  - [ ] Create `Models/Entities/PaymentTerms.cs` with properties:
+    - [ ] `Id`, `CompanyId` (FK), `PaymentTermsName` (string, 100)
+    - [ ] `PaymentSchedules` (JSON array), `CreatedAt`, `UpdatedAt`
+    - [ ] `ShopifyId` (long, unique)
+  - [ ] Create enum `PaymentTermsType`: Net15, Net30, Net60, Net90, DueOnReceipt
+
+- [ ] **Implement SellingPlanGroups and SellingPlans entities**
+  - [ ] Create `Models/Entities/SellingPlanGroup.cs` with properties:
+    - [ ] `Id`, `Name` (string, 255), `MerchantCode` (string, 100)
+    - [ ] `Description` (text), `Options` (JSON array), `Position` (int)
+    - [ ] `CreatedAt`, `UpdatedAt`, `ShopifyId` (long, unique)
+  - [ ] Create `Models/Entities/SellingPlan.cs` with properties:
+    - [ ] `Id`, `SellingPlanGroupId` (FK), `Name`, `Description`
+    - [ ] `Options` (JSON), `Position`, `BillingPolicy` (JSON)
+    - [ ] `DeliveryPolicy` (JSON), `PricingPolicies` (JSON array)
+    - [ ] `CreatedAt`, `UpdatedAt`, `ShopifyId` (long)
+
+- [ ] **Implement ProductSellingPlans junction table**
+  - [ ] Create `Models/Entities/ProductSellingPlan.cs` with properties:
+    - [ ] `ProductId` (FK), `SellingPlanId` (FK), `CreatedAt`
+    - [ ] Composite primary key on (ProductId, SellingPlanId)
+  - [ ] Add navigation properties to Product and SellingPlan entities
+
+- [ ] **Create database migrations for B2B entities**
+  - [ ] Run: `dotnet ef migrations add B2BCommerceEntities`
+  - [ ] Review migration for companies, payment terms, selling plans
+  - [ ] Verify hierarchical relationships and constraints
+  - [ ] Run: `dotnet ef database update`
+  - [ ] Test B2B entity relationships with sample data
+
+- [ ] **Add credit limit validation logic**
+  - [ ] Add `CreditLimit` (decimal) property to Company entity
+  - [ ] Add `CurrentBalance` (decimal) property to Company entity
+  - [ ] Create validation rule: CurrentBalance <= CreditLimit
+  - [ ] Implement credit check before order creation
+  - [ ] Add credit limit exceeded exception handling
+
+- [ ] **Implement payment term enforcement rules**
+  - [ ] Create business rule: Orders must respect company payment terms
+  - [ ] Add validation for payment schedule compliance
+  - [ ] Implement automatic payment term assignment to orders
+  - [ ] Create overdue payment tracking logic
+
+- [ ] **Add proper indexing for B2B queries**
+  - [ ] Add index on `Company.ExternalId`: `CREATE INDEX IX_Companies_ExternalId`
+  - [ ] Add index on `CompanyContact.CustomerId`: `CREATE INDEX IX_CompanyContacts_CustomerId`
+  - [ ] Add index on `SellingPlan.SellingPlanGroupId`: `CREATE INDEX IX_SellingPlans_GroupId`
+  - [ ] Add composite index on ProductSellingPlan for efficient lookups
 
 ### [ ] TASK-005: International Commerce and Markets
 **Priority**: Medium | **Effort**: 3h | **Dependencies**: TASK-003
 
+#### **Objective**:
+Implement international commerce capabilities including market segmentation, multi-currency support, regional configurations, and localized web presence. Enable global e-commerce operations with proper currency handling, regional pricing, and market-specific configurations.
+
+#### **Expected Outcomes**:
+- Complete market management system with regional segmentation capabilities
+- Multi-currency support with real-time exchange rate handling and primary currency designation
+- Market-specific web presence configuration for localized storefronts
+- Regional pricing and availability controls for international commerce
+- Currency conversion and exchange rate management with audit trails
+- Support for market-specific tax rates, shipping zones, and payment methods
+- Comprehensive localization framework for global e-commerce operations
+
+#### **Constraints & Considerations**:
+- **Currency Precision**: Exchange rates must maintain high precision for financial accuracy
+- **Regional Compliance**: Markets must support region-specific legal and tax requirements
+- **Performance**: Currency conversions must be optimized for high-volume transactions
+- **Data Consistency**: Exchange rates must be synchronized and historically tracked
+- **Localization**: Support for multiple languages, currencies, and regional formats
+- **Regulatory**: Compliance with international trade regulations and tax laws
+- **Scalability**: System must handle multiple markets and currencies simultaneously
+
+#### **Risk Factors**:
+- **Exchange Rate Volatility**: Frequent rate changes may impact pricing consistency
+- **Regulatory Changes**: International trade laws may require schema modifications
+- **Performance Impact**: Currency calculations may affect transaction processing speed
+- **Data Synchronization**: Market data consistency across regions and currencies
+- **Compliance Risk**: Incorrect tax or regulatory handling in different markets
+
 #### Sub-tasks:
-- [ ] Implement Markets entity
-- [ ] Implement MarketRegions entity
-- [ ] Create database migrations for international commerce
-- [ ] Add currency validation logic
-- [ ] Implement locale compliance rules
-- [ ] Add proper indexing for market queries
-- [ ] Implement multi-currency support
+- [ ] **Implement Markets entity for international commerce**
+  - [ ] Create `Models/Entities/Market.cs` with properties:
+    - [ ] `Id`, `Name` (string, 255), `Handle` (string, 100, unique)
+    - [ ] `Enabled` (bool), `PrimaryCurrency` (string, 3)
+    - [ ] `CreatedAt`, `UpdatedAt`, `ShopifyId` (long, unique)
+  - [ ] Create `Models/Entities/MarketRegion.cs` with properties:
+    - [ ] `Id`, `MarketId` (FK), `Name` (string, 255)
+    - [ ] `CountryCode` (string, 2), `CreatedAt`, `UpdatedAt`
+    - [ ] `ShopifyId` (long, unique)
+  - [ ] Add navigation properties: Market.Regions, MarketRegion.Market
+
+- [ ] **Implement MarketRegions and MarketCurrencies entities**
+  - [ ] Create `Models/Entities/MarketCurrency.cs` with properties:
+    - [ ] `Id`, `MarketId` (FK), `CurrencyCode` (string, 3)
+    - [ ] `ExchangeRate` (decimal, 18,6), `IsPrimary` (bool)
+    - [ ] `CreatedAt`, `UpdatedAt`
+  - [ ] Create enum `CurrencyCode`: USD, EUR, GBP, CAD, AUD, JPY, etc.
+  - [ ] Add validation: Only one primary currency per market
+  - [ ] Add constraint: ExchangeRate > 0
+
+- [ ] **Implement MarketWebPresence entity**
+  - [ ] Create `Models/Entities/MarketWebPresence.cs` with properties:
+    - [ ] `Id`, `MarketId` (FK), `Domain` (string, 255)
+    - [ ] `SubfolderSuffix` (string, 50), `DefaultLocale` (string, 5)
+    - [ ] `AlternateLocales` (JSON array), `CreatedAt`, `UpdatedAt`
+    - [ ] `ShopifyId` (long, unique)
+  - [ ] Add validation for domain format and locale codes
+  - [ ] Create unique constraint on (MarketId, Domain)
+
+- [ ] **Create database migrations for market entities**
+  - [ ] Run: `dotnet ef migrations add InternationalMarkets`
+  - [ ] Review migration for markets, regions, currencies, web presence
+  - [ ] Verify foreign key relationships and constraints
+  - [ ] Add check constraints for currency codes and exchange rates
+  - [ ] Run: `dotnet ef database update`
+  - [ ] Seed default markets (US, EU, UK, CA, AU)
+
+- [ ] **Add multi-currency support**
+  - [ ] Create `Services/CurrencyService.cs` with methods:
+    - [ ] `ConvertPrice(decimal amount, string fromCurrency, string toCurrency)`
+    - [ ] `GetExchangeRate(string fromCurrency, string toCurrency)`
+    - [ ] `UpdateExchangeRates()` - integration with exchange rate API
+  - [ ] Add `CurrencyCode` property to Product, Order, and Price entities
+  - [ ] Implement currency conversion for price calculations
+  - [ ] Add currency formatting for display purposes
+
+- [ ] **Implement region-based pricing logic**
+  - [ ] Create `Models/Entities/MarketPrice.cs` with properties:
+    - [ ] `Id`, `ProductId` (FK), `MarketId` (FK), `Price` (decimal)
+    - [ ] `CompareAtPrice` (decimal, nullable), `CurrencyCode` (string, 3)
+    - [ ] `CreatedAt`, `UpdatedAt`
+  - [ ] Create business rule: Product prices vary by market
+  - [ ] Implement price lookup by market and currency
+  - [ ] Add fallback to default market pricing
+  - [ ] Create price validation: Price >= 0
+
+- [ ] **Add proper indexing for market queries**
+  - [ ] Add index on `Market.Handle`: `CREATE INDEX IX_Markets_Handle`
+  - [ ] Add index on `MarketRegion.CountryCode`: `CREATE INDEX IX_MarketRegions_CountryCode`
+  - [ ] Add composite index on `MarketPrice.ProductId, MarketId`: `CREATE INDEX IX_MarketPrices_Product_Market`
+  - [ ] Add index on `MarketCurrency.CurrencyCode`: `CREATE INDEX IX_MarketCurrencies_CurrencyCode`
 
 ### [ ] TASK-006: Compliance and Security Entities
 **Priority**: High | **Effort**: 4h | **Dependencies**: TASK-003
 
+#### **Objective**:
+Implement comprehensive compliance and security framework supporting GDPR, PCI-DSS, and other regulatory requirements. Establish robust data protection, consent management, payment security, and audit trail capabilities to ensure legal compliance and data security.
+
+#### **Expected Outcomes**:
+- Complete GDPR compliance system with data processing records and consent management
+- PCI-DSS compliant payment audit logging and security event tracking
+- Comprehensive audit trails for all sensitive data operations and access
+- Automated consent tracking with withdrawal capabilities and legal basis documentation
+- Security event monitoring and incident response logging
+- Data retention policy enforcement with automated cleanup capabilities
+- Compliance reporting and audit trail generation for regulatory requirements
+
+#### **Constraints & Considerations**:
+- **Data Protection**: All personal data must be encrypted at rest and in transit
+- **Audit Requirements**: Complete audit trails must be maintained for compliance verification
+- **Performance**: Security logging must not impact transaction processing performance
+- **Data Retention**: Automated enforcement of data retention policies and right to be forgotten
+- **Access Control**: Strict role-based access to compliance and security data
+- **Regulatory Updates**: System must be adaptable to changing compliance requirements
+- **Cross-Border**: Support for different regional privacy laws and regulations
+
+#### **Risk Factors**:
+- **Compliance Violations**: Inadequate implementation may result in regulatory penalties
+- **Data Breaches**: Security vulnerabilities could expose sensitive customer data
+- **Performance Impact**: Extensive logging and encryption may affect system performance
+- **Legal Changes**: Evolving regulations may require frequent schema updates
+- **Audit Failures**: Incomplete audit trails could result in compliance violations
+
 #### Sub-tasks:
-- [ ] Implement ComplianceData entity for GDPR/PCI DSS tracking
-- [ ] Implement DataRetentionPolicies entity
-- [ ] Create database migrations for compliance entities
-- [ ] Add audit trail maintenance logic
-- [ ] Implement compliance status validation
-- [ ] Add automated data lifecycle management
-- [ ] Implement PCI DSS v4.0.1 compliance features
-- [ ] Add GDPR data protection mechanisms
+- [ ] **Implement GDPR compliance entities**
+  - [ ] Create `Models/Entities/DataProcessingRecord.cs` with properties:
+    - [ ] `Id`, `CustomerId` (FK), `ProcessingPurpose` (string, 500)
+    - [ ] `LegalBasis` (enum: Consent, Contract, LegalObligation, etc.)
+    - [ ] `DataCategories` (JSON array), `ProcessingActivities` (JSON array)
+    - [ ] `RetentionPeriod` (TimeSpan), `CreatedAt`, `UpdatedAt`
+  - [ ] Create `Models/Entities/ConsentRecord.cs` with properties:
+    - [ ] `Id`, `CustomerId` (FK), `ConsentType` (enum: Marketing, Analytics, etc.)
+    - [ ] `ConsentGiven` (bool), `ConsentDate` (DateTime), `WithdrawalDate` (DateTime?)
+    - [ ] `ConsentMethod` (enum: WebForm, Email, Phone), `IpAddress` (string, 45)
+    - [ ] `UserAgent` (string, 500), `CreatedAt`, `UpdatedAt`
+  - [ ] Create enum `GdprLegalBasis`: Consent, Contract, LegalObligation, VitalInterests, PublicTask, LegitimateInterests
+  - [ ] Create enum `ConsentType`: Marketing, Analytics, Cookies, Profiling, ThirdPartySharing
+
+- [ ] **Implement PCI-DSS compliance entities**
+  - [ ] Create `Models/Entities/PaymentAuditLog.cs` with properties:
+    - [ ] `Id`, `OrderId` (FK), `PaymentMethod` (string, 50)
+    - [ ] `TransactionType` (enum: Authorization, Capture, Refund, Void)
+    - [ ] `Amount` (decimal, 18,2), `CurrencyCode` (string, 3)
+    - [ ] `PaymentGateway` (string, 100), `TransactionId` (string, 255)
+    - [ ] `Status` (enum: Success, Failed, Pending), `ErrorCode` (string, 50)
+    - [ ] `IpAddress` (string, 45), `UserAgent` (string, 500)
+    - [ ] `CreatedAt`, `ProcessedAt`
+  - [ ] Create `Models/Entities/SecurityEvent.cs` with properties:
+    - [ ] `Id`, `EventType` (enum: LoginAttempt, PaymentAttempt, DataAccess)
+    - [ ] `Severity` (enum: Low, Medium, High, Critical)
+    - [ ] `UserId` (FK, nullable), `IpAddress` (string, 45)
+    - [ ] `UserAgent` (string, 500), `EventDetails` (JSON)
+    - [ ] `RiskScore` (int, 0-100), `CreatedAt`
+
+- [ ] **Implement KYC/KYB entities**
+  - [ ] Create `Models/Entities/IdentityVerification.cs` with properties:
+    - [ ] `Id`, `CustomerId` (FK), `VerificationType` (enum: Individual, Business)
+    - [ ] `DocumentType` (enum: Passport, DriverLicense, NationalId, BusinessLicense)
+    - [ ] `DocumentNumber` (string, 100, encrypted), `IssuingCountry` (string, 2)
+    - [ ] `ExpiryDate` (DateTime), `VerificationStatus` (enum: Pending, Verified, Rejected)
+    - [ ] `VerificationDate` (DateTime?), `VerifiedBy` (string, 100)
+    - [ ] `RejectionReason` (string, 500), `CreatedAt`, `UpdatedAt`
+  - [ ] Create `Models/Entities/BusinessVerification.cs` with properties:
+    - [ ] `Id`, `CompanyId` (FK), `BusinessRegistrationNumber` (string, 100, encrypted)
+    - [ ] `TaxIdentificationNumber` (string, 100, encrypted), `BusinessType` (enum)
+    - [ ] `IncorporationDate` (DateTime), `IncorporationCountry` (string, 2)
+    - [ ] `VerificationStatus` (enum: Pending, Verified, Rejected)
+    - [ ] `VerificationDate` (DateTime?), `VerifiedBy` (string, 100)
+    - [ ] `ComplianceFlags` (JSON), `CreatedAt`, `UpdatedAt`
+
+- [ ] **Create database migrations for compliance entities**
+  - [ ] Run: `dotnet ef migrations add ComplianceAndSecurity`
+  - [ ] Review migration for GDPR, PCI-DSS, KYC/KYB entities
+  - [ ] Add encryption for sensitive fields (DocumentNumber, TaxId)
+  - [ ] Verify audit trail triggers and constraints
+  - [ ] Run: `dotnet ef database update`
+  - [ ] Test compliance entity relationships
+
+- [ ] **Add data retention policies**
+  - [ ] Create `Services/DataRetentionService.cs` with methods:
+    - [ ] `ApplyRetentionPolicy(string entityType, TimeSpan retentionPeriod)`
+    - [ ] `ScheduleDataDeletion(int entityId, DateTime deletionDate)`
+    - [ ] `AnonymizeExpiredData()`
+  - [ ] Implement retention rules: GDPR (7 years), PCI-DSS (1 year), KYC (5 years)
+  - [ ] Create background job for automated data cleanup
+  - [ ] Add retention policy configuration in appsettings.json
+
+- [ ] **Implement audit trail functionality**
+  - [ ] Create `Models/Entities/AuditLog.cs` with properties:
+    - [ ] `Id`, `EntityType` (string, 100), `EntityId` (string, 100)
+    - [ ] `Action` (enum: Create, Update, Delete, View), `UserId` (FK)
+    - [ ] `OldValues` (JSON), `NewValues` (JSON), `IpAddress` (string, 45)
+    - [ ] `UserAgent` (string, 500), `CreatedAt`
+  - [ ] Implement audit interceptor for Entity Framework
+  - [ ] Add audit logging for sensitive operations
+  - [ ] Create audit trail query endpoints
+
+- [ ] **Add proper indexing for compliance queries**
+  - [ ] Add index on `ConsentRecord.CustomerId, ConsentType`: `CREATE INDEX IX_ConsentRecords_Customer_Type`
+  - [ ] Add index on `PaymentAuditLog.CreatedAt`: `CREATE INDEX IX_PaymentAuditLog_CreatedAt`
+  - [ ] Add index on `SecurityEvent.EventType, Severity`: `CREATE INDEX IX_SecurityEvents_Type_Severity`
+  - [ ] Add index on `AuditLog.EntityType, EntityId`: `CREATE INDEX IX_AuditLog_Entity`
+
+- [ ] **Implement data anonymization features**
+  - [ ] Create `Services/DataAnonymizationService.cs` with methods:
+    - [ ] `AnonymizeCustomerData(int customerId)`
+    - [ ] `PseudonymizePersonalData(string data)`
+    - [ ] `GenerateAnonymousIdentifier()`
+  - [ ] Implement "Right to be Forgotten" functionality
+  - [ ] Add data masking for non-production environments
+  - [ ] Create anonymization audit trail
 
 ---
 
@@ -97,54 +632,573 @@ This document outlines the atomic, developer-ready tasks for implementing the Sh
 ### [ ] TASK-007: Shopify API Client Setup
 **Priority**: High | **Effort**: 6h | **Dependencies**: TASK-001
 
+#### **Objective**:
+Establish secure and robust Shopify API integration with OAuth 2.0 authentication, rate limiting, error handling, and comprehensive API client services. Enable reliable data synchronization between Shopify and local database with proper security measures and performance optimization.
+
+#### **Expected Outcomes**:
+- Complete Shopify API client with OAuth 2.0 authentication and token management
+- Robust rate limiting implementation respecting Shopify's API limits (40 req/sec REST, 1000 points/sec GraphQL)
+- Comprehensive error handling with retry logic and exponential backoff
+- Secure credential management and HMAC signature verification
+- Webhook endpoint setup for real-time data synchronization
+- API versioning support with automatic migration capabilities
+- Performance monitoring and API usage analytics
+
+#### **Constraints & Considerations**:
+- **Rate Limits**: Must strictly adhere to Shopify's API rate limits to avoid throttling
+- **Security**: OAuth tokens and webhook secrets must be securely stored and managed
+- **API Versioning**: Support for multiple API versions and graceful migration paths
+- **Error Handling**: Robust retry mechanisms for transient failures and network issues
+- **Performance**: Efficient batching and pagination for large data sets
+- **Compliance**: GDPR and data protection requirements for customer data handling
+- **Monitoring**: Comprehensive logging and monitoring of API interactions
+
+#### **Risk Factors**:
+- **Rate Limiting**: Exceeding API limits could result in temporary access suspension
+- **Token Expiration**: OAuth token management failures could disrupt data synchronization
+- **API Changes**: Shopify API updates may require immediate client modifications
+- **Security Vulnerabilities**: Improper token handling could expose sensitive data
+- **Network Failures**: Unreliable network connections may cause data synchronization issues
+
 #### Sub-tasks:
-- [ ] Create Shopify API client service
-- [ ] Implement OAuth 2.0 authentication
-- [ ] Configure rate limiting (40 req/sec REST, 1000 points/sec GraphQL)
-- [ ] Implement exponential backoff and retry logic
-- [ ] Add circuit breaker pattern for API resilience
-- [ ] Create API response models matching Shopify schema
-- [ ] Implement request/response logging
-- [ ] Add API health monitoring
+- [ ] **Create Shopify API client service**
+  - [ ] Create `Services/ShopifyApiClient.cs` with constructor:
+    - [ ] Inject `HttpClient`, `IConfiguration`, `ILogger<ShopifyApiClient>`
+    - [ ] Set base address: `https://{shop}.myshopify.com/admin/api/2024-01/`
+    - [ ] Add default headers: `X-Shopify-Access-Token`, `Content-Type: application/json`
+  - [ ] Create `Models/Configuration/ShopifyConfig.cs` with properties:
+    - [ ] `ShopDomain` (string), `AccessToken` (string), `ApiVersion` (string)
+    - [ ] `WebhookSecret` (string), `RateLimitPerSecond` (int, default: 2)
+  - [ ] Register HttpClient in `Program.cs`:
+    - [ ] `services.AddHttpClient<ShopifyApiClient>()`
+    - [ ] Configure timeout: 30 seconds, retry policy: 3 attempts
+
+- [ ] **Implement OAuth 2.0 authentication**
+  - [ ] Create `Services/ShopifyOAuthService.cs` with methods:
+    - [ ] `GenerateAuthorizationUrl(string shopDomain, string[] scopes)`
+    - [ ] `ExchangeCodeForToken(string code, string shopDomain)`
+    - [ ] `ValidateShop(string shopDomain)` - verify .myshopify.com domain
+  - [ ] Create `Models/OAuth/ShopifyOAuthRequest.cs` with properties:
+    - [ ] `ClientId`, `ClientSecret`, `RedirectUri`, `Scopes`, `State`
+  - [ ] Create `Models/OAuth/ShopifyOAuthResponse.cs` with properties:
+    - [ ] `AccessToken`, `Scope`, `ExpiresIn`, `AssociatedUser`
+  - [ ] Implement HMAC signature verification for OAuth callbacks
+  - [ ] Add state parameter validation to prevent CSRF attacks
+
+- [ ] **Configure rate limiting (40 req/sec REST, 1000 points/sec GraphQL)**
+  - [ ] Create `Services/RateLimitService.cs` with methods:
+    - [ ] `CheckRestApiLimit()` - implements 40 requests per second limit
+    - [ ] `CheckGraphQLLimit(int cost)` - implements 1000 points per second
+    - [ ] `WaitForRateLimit()` - delays request if limit exceeded
+    - [ ] `UpdateRateLimitFromHeaders(HttpResponseMessage response)`
+  - [ ] Implement leaky bucket algorithm for rate limiting
+  - [ ] Parse Shopify rate limit headers:
+    - [ ] `X-Shopify-Shop-Api-Call-Limit`: current/max calls
+    - [ ] `X-Shopify-Shop-Api-Call-Limit-Cost`: GraphQL cost
+  - [ ] Add rate limit metrics and monitoring
+
+- [ ] **Implement exponential backoff and retry logic**
+  - [ ] Create `Policies/RetryPolicy.cs` using Polly library:
+    - [ ] Install: `dotnet add package Polly --version 8.0.0`
+    - [ ] Base delay: 1 second, max delay: 30 seconds
+    - [ ] Retry on HTTP 429, 500, 502, 503, 504
+    - [ ] Max retries: 3 attempts with jitter
+  - [ ] Implement exponential backoff calculation:
+    - [ ] Delay = BaseDelay * (2 ^ attempt) + Random(0, 1000ms)
+  - [ ] Add retry attempt logging and metrics
+  - [ ] Handle `Retry-After` header from Shopify responses
+
+- [ ] **Add circuit breaker pattern for API resilience**
+  - [ ] Create `Policies/CircuitBreakerPolicy.cs`:
+    - [ ] Failure threshold: 5 consecutive failures
+    - [ ] Circuit open duration: 30 seconds
+    - [ ] Success threshold to close: 3 consecutive successes
+  - [ ] Implement circuit breaker states: Closed, Open, Half-Open
+  - [ ] Add circuit breaker metrics and alerts
+  - [ ] Create fallback mechanisms for critical operations
+
+- [ ] **Create API response models matching Shopify schema**
+  - [ ] Create `Models/Shopify/Product/ShopifyProduct.cs` matching Shopify API:
+    - [ ] Properties: `id`, `title`, `handle`, `body_html`, `vendor`, `product_type`
+    - [ ] `created_at`, `updated_at`, `published_at`, `status`, `tags`
+    - [ ] `variants` (array), `options` (array), `images` (array)
+  - [ ] Create `Models/Shopify/Customer/ShopifyCustomer.cs`:
+    - [ ] Properties: `id`, `email`, `first_name`, `last_name`, `phone`
+    - [ ] `accepts_marketing`, `created_at`, `updated_at`, `orders_count`
+    - [ ] `total_spent`, `addresses` (array), `default_address`
+  - [ ] Create `Models/Shopify/Order/ShopifyOrder.cs`:
+    - [ ] Properties: `id`, `order_number`, `email`, `created_at`, `updated_at`
+    - [ ] `total_price`, `subtotal_price`, `total_tax`, `currency`
+    - [ ] `financial_status`, `fulfillment_status`, `line_items` (array)
+  - [ ] Add JSON serialization attributes and converters
+
+- [ ] **Implement request/response logging**
+  - [ ] Create `Middleware/ShopifyApiLoggingHandler.cs` inheriting `DelegatingHandler`:
+    - [ ] Log request: method, URL, headers (excluding sensitive data)
+    - [ ] Log response: status code, headers, execution time
+    - [ ] Mask sensitive data: access tokens, webhook secrets
+  - [ ] Add structured logging with correlation IDs
+  - [ ] Configure log levels: Debug for requests, Error for failures
+  - [ ] Add performance metrics: request duration, success rate
+
+- [ ] **Add API health monitoring**
+  - [ ] Create `HealthChecks/ShopifyApiHealthCheck.cs`:
+    - [ ] Implement `IHealthCheck` interface
+    - [ ] Test connectivity with lightweight API call (shop info)
+    - [ ] Check rate limit status and remaining quota
+    - [ ] Verify authentication token validity
+  - [ ] Register health check in `Program.cs`:
+    - [ ] `services.AddHealthChecks().AddCheck<ShopifyApiHealthCheck>("shopify-api")`
+  - [ ] Add health check endpoint: `/health/shopify`
+  - [ ] Create alerting for API health failures
 
 ### [ ] TASK-008: Product Data Synchronization
 **Priority**: High | **Effort**: 8h | **Dependencies**: TASK-002, TASK-007
 
+#### **Objective**:
+Implement comprehensive product data synchronization between Shopify and local database, including products, variants, images, and metadata. Establish real-time synchronization capabilities with conflict resolution, data validation, and performance optimization for large product catalogs.
+
+#### **Expected Outcomes**:
+- Complete product synchronization system with full CRUD operations
+- Real-time product updates via webhooks and scheduled batch synchronization
+- Robust variant management with inventory tracking and pricing synchronization
+- Product image synchronization with CDN integration and optimization
+- Metadata and custom field synchronization including metafields and tags
+- Conflict resolution mechanisms for concurrent updates and data inconsistencies
+- Performance-optimized bulk operations for large product catalogs
+- Comprehensive audit trails for all product data changes
+
+#### **Constraints & Considerations**:
+- **API Rate Limits**: Must respect Shopify's 40 requests/second limit for REST API
+- **Data Volume**: Efficient handling of large product catalogs with thousands of items
+- **Real-time Updates**: Webhook processing must be reliable and handle failures gracefully
+- **Data Integrity**: Maintain referential integrity between products, variants, and related entities
+- **Performance**: Bulk operations must not impact system responsiveness
+- **Storage**: Optimize database storage for product images and large metadata
+- **Conflict Resolution**: Handle concurrent updates from multiple sources
+
+#### **Risk Factors**:
+- **Data Loss**: Network failures during synchronization could result in missing updates
+- **Performance Degradation**: Large product catalogs may impact synchronization performance
+- **API Throttling**: Exceeding rate limits could delay critical product updates
+- **Data Inconsistency**: Concurrent updates may create conflicts requiring resolution
+- **Storage Costs**: Product images and metadata may significantly increase storage requirements
+
 #### Sub-tasks:
-- [ ] Implement product data fetching from Shopify REST API
-- [ ] Implement product variant synchronization
-- [ ] Implement product options and values sync
-- [ ] Implement product images and media sync
-- [ ] Add incremental sync based on updated_at timestamps
-- [ ] Implement conflict resolution for concurrent updates
-- [ ] Add data validation and transformation logic
-- [ ] Create unit tests for product sync
+- [ ] **Implement product data fetching from Shopify REST API**
+  - [ ] Create `Services/ProductSyncService.cs` with methods:
+    - [ ] `FetchProductsAsync(DateTime? since = null)` - fetch products with pagination
+    - [ ] `FetchProductByIdAsync(long shopifyId)` - fetch single product
+    - [ ] `FetchProductCountAsync()` - get total product count
+  - [ ] Implement REST API calls:
+    - [ ] GET `/admin/api/2024-01/products.json?limit=250&since_id={id}`
+    - [ ] GET `/admin/api/2024-01/products/{id}.json`
+    - [ ] Handle pagination using `since_id` parameter
+  - [ ] Add request throttling: max 2 requests per second
+  - [ ] Implement error handling for API failures
+
+- [ ] **Implement product variant synchronization**
+  - [ ] Create `Services/ProductVariantSyncService.cs` with methods:
+    - [ ] `SyncVariantsAsync(Product product, ShopifyProduct shopifyProduct)`
+    - [ ] `CreateVariantAsync(ProductVariant variant)`
+    - [ ] `UpdateVariantAsync(ProductVariant variant)`
+    - [ ] `DeleteVariantAsync(long variantId)`
+  - [ ] Map Shopify variant fields to local entity:
+    - [ ] `id` → `ShopifyId`, `title` → `Title`, `price` → `Price`
+    - [ ] `compare_at_price` → `CompareAtPrice`, `sku` → `Sku`
+    - [ ] `inventory_quantity` → `InventoryQuantity`
+  - [ ] Handle variant option values mapping
+  - [ ] Implement variant image associations
+
+- [ ] **Implement product options and values sync**
+  - [ ] Create `Services/ProductOptionSyncService.cs` with methods:
+    - [ ] `SyncOptionsAsync(Product product, ShopifyProduct shopifyProduct)`
+    - [ ] `CreateOptionAsync(ProductOption option)`
+    - [ ] `UpdateOptionAsync(ProductOption option)`
+  - [ ] Map Shopify options to local entities:
+    - [ ] `id` → `ShopifyId`, `name` → `Name`, `position` → `Position`
+    - [ ] `values` array → `Values` JSON field
+  - [ ] Create option value lookup tables for performance
+  - [ ] Handle option reordering and deletions
+
+- [ ] **Implement product images and media sync**
+  - [ ] Create `Models/Entities/ProductImage.cs` with properties:
+    - [ ] `Id`, `ProductId` (FK), `Src` (string, 500), `AltText` (string, 255)
+    - [ ] `Position` (int), `Width` (int), `Height` (int), `ShopifyId` (long)
+  - [ ] Create `Services/ProductImageSyncService.cs` with methods:
+    - [ ] `SyncImagesAsync(Product product, ShopifyProduct shopifyProduct)`
+    - [ ] `DownloadImageAsync(string imageUrl)` - optional local storage
+  - [ ] Handle image variant associations
+  - [ ] Implement image optimization and CDN integration
+
+- [ ] **Add incremental sync based on updated_at timestamps**
+  - [ ] Create `Models/Entities/SyncState.cs` with properties:
+    - [ ] `Id`, `EntityType` (enum), `LastSyncAt` (DateTime)
+    - [ ] `LastShopifyId` (long), `SyncStatus` (enum), `ErrorCount` (int)
+  - [ ] Implement incremental sync logic:
+    - [ ] Use `updated_at_min` parameter in API calls
+    - [ ] Track last successful sync timestamp
+    - [ ] Handle timezone conversions (UTC)
+  - [ ] Add full resync capability for data recovery
+  - [ ] Implement sync progress tracking and reporting
+
+- [ ] **Implement conflict resolution for concurrent updates**
+  - [ ] Create conflict detection logic:
+    - [ ] Compare `updated_at` timestamps
+    - [ ] Detect concurrent modifications
+  - [ ] Implement resolution strategies:
+    - [ ] Shopify wins (default), Local wins, Manual resolution
+    - [ ] Field-level merge for non-conflicting changes
+  - [ ] Create `Models/Entities/SyncConflict.cs` for tracking:
+    - [ ] `Id`, `EntityType`, `EntityId`, `ConflictType`
+    - [ ] `ShopifyData` (JSON), `LocalData` (JSON), `ResolvedAt`
+  - [ ] Add conflict resolution UI/API endpoints
+
+- [ ] **Add data validation and transformation logic**
+  - [ ] Create `Services/ProductValidationService.cs` with methods:
+    - [ ] `ValidateProduct(ShopifyProduct shopifyProduct)`
+    - [ ] `TransformProduct(ShopifyProduct source)` → `Product`
+    - [ ] `ValidateBusinessRules(Product product)`
+  - [ ] Implement validation rules:
+    - [ ] Required fields: title, handle, vendor
+    - [ ] Handle uniqueness and format validation
+    - [ ] Price validation: >= 0, proper decimal format
+    - [ ] SKU uniqueness across variants
+  - [ ] Add data transformation:
+    - [ ] HTML sanitization for body_html
+    - [ ] Tag parsing and normalization
+    - [ ] Currency conversion if needed
+
+- [ ] **Create unit tests for product sync**
+  - [ ] Create `Tests/Unit/ProductSyncServiceTests.cs`:
+    - [ ] Test product fetching with pagination
+    - [ ] Test variant synchronization scenarios
+    - [ ] Test option and image sync
+    - [ ] Test incremental sync logic
+  - [ ] Create `Tests/Unit/ProductValidationServiceTests.cs`:
+    - [ ] Test validation rules
+    - [ ] Test data transformation
+    - [ ] Test conflict resolution
+  - [ ] Mock Shopify API responses for testing
+  - [ ] Test error scenarios and edge cases
 
 ### [ ] TASK-009: Customer Data Synchronization
 **Priority**: High | **Effort**: 6h | **Dependencies**: TASK-002, TASK-007
 
+#### **Objective**:
+Implement secure and compliant customer data synchronization between Shopify and local database, including customer profiles, addresses, preferences, and GDPR-compliant data handling. Establish real-time customer updates with privacy protection and consent management.
+
+#### **Expected Outcomes**:
+- Complete customer synchronization system with profile and address management
+- GDPR-compliant data handling with consent tracking and right to be forgotten
+- Real-time customer updates via webhooks and scheduled synchronization
+- Customer address management with validation and geocoding capabilities
+- Marketing preference synchronization with opt-in/opt-out tracking
+- Customer segmentation and analytics data synchronization
+- Secure PII handling with encryption and access controls
+- Customer lifecycle tracking and engagement metrics
+
+#### **Constraints & Considerations**:
+- **Data Privacy**: Strict GDPR compliance for customer PII handling and storage
+- **Security**: Customer data must be encrypted at rest and in transit
+- **Consent Management**: Track and respect customer consent preferences
+- **Data Retention**: Implement automated data retention and deletion policies
+- **Performance**: Efficient bulk operations for large customer databases
+- **Real-time Updates**: Immediate synchronization of critical customer changes
+- **Data Quality**: Validation and deduplication of customer records
+
+#### **Risk Factors**:
+- **Privacy Violations**: Improper handling of PII could result in GDPR penalties
+- **Data Breaches**: Customer data exposure could cause significant legal and reputational damage
+- **Consent Issues**: Incorrect consent tracking may violate privacy regulations
+- **Data Loss**: Network failures could result in missing customer updates
+- **Performance Impact**: Large customer databases may affect synchronization performance
+
 #### Sub-tasks:
-- [ ] Implement customer data fetching from Shopify API
-- [ ] Implement customer address synchronization
-- [ ] Implement customer tags and groups sync
-- [ ] Add GDPR compliance for customer data
-- [ ] Implement customer data anonymization
-- [ ] Add incremental sync for customer updates
-- [ ] Create unit tests for customer sync
-- [ ] Implement customer data retention policies
+- [ ] **Implement customer data fetching from Shopify REST API**
+  - [ ] Create `Services/CustomerSyncService.cs` with methods:
+    - [ ] `FetchCustomersAsync(DateTime? since = null)` - fetch with pagination
+    - [ ] `FetchCustomerByIdAsync(long shopifyId)` - fetch single customer
+    - [ ] `FetchCustomerCountAsync()` - get total customer count
+    - [ ] `SearchCustomersAsync(string query)` - search by email/phone
+  - [ ] Implement REST API calls:
+    - [ ] GET `/admin/api/2024-01/customers.json?limit=250&since_id={id}`
+    - [ ] GET `/admin/api/2024-01/customers/{id}.json`
+    - [ ] GET `/admin/api/2024-01/customers/search.json?query={query}`
+  - [ ] Map Shopify customer fields:
+    - [ ] `id` → `ShopifyId`, `email` → `Email`, `first_name` → `FirstName`
+    - [ ] `last_name` → `LastName`, `phone` → `Phone`
+    - [ ] `accepts_marketing` → `AcceptsMarketing`, `created_at` → `CreatedAt`
+    - [ ] `orders_count` → `OrdersCount`, `total_spent` → `TotalSpent`
+
+- [ ] **Implement customer address synchronization**
+  - [ ] Create `Models/Entities/CustomerAddress.cs` with properties:
+    - [ ] `Id`, `CustomerId` (FK), `FirstName`, `LastName`, `Company`
+    - [ ] `Address1`, `Address2`, `City`, `Province`, `Country`
+    - [ ] `Zip`, `Phone`, `IsDefault` (bool), `ShopifyId` (long)
+  - [ ] Create `Services/CustomerAddressSyncService.cs` with methods:
+    - [ ] `SyncAddressesAsync(Customer customer, ShopifyCustomer shopifyCustomer)`
+    - [ ] `CreateAddressAsync(CustomerAddress address)`
+    - [ ] `UpdateAddressAsync(CustomerAddress address)`
+    - [ ] `DeleteAddressAsync(long addressId)`
+  - [ ] Handle default address assignment
+  - [ ] Implement address validation and normalization
+
+- [ ] **Implement customer tags and groups sync**
+  - [ ] Create `Models/Entities/CustomerTag.cs` with properties:
+    - [ ] `Id`, `CustomerId` (FK), `Tag` (string, 100), `CreatedAt`
+    - [ ] Composite unique constraint on (CustomerId, Tag)
+  - [ ] Create `Models/Entities/CustomerGroup.cs` with properties:
+    - [ ] `Id`, `Name` (string, 255), `Description` (text), `ShopifyId` (long)
+  - [ ] Create `Models/Entities/CustomerGroupMembership.cs`:
+    - [ ] `CustomerId` (FK), `CustomerGroupId` (FK), `AddedAt`
+  - [ ] Create `Services/CustomerTagSyncService.cs` with methods:
+    - [ ] `SyncTagsAsync(Customer customer, string[] tags)`
+    - [ ] `SyncGroupMembershipsAsync(Customer customer, ShopifyCustomerGroup[] groups)`
+  - [ ] Handle tag parsing from comma-separated string
+  - [ ] Implement group membership updates
+
+- [ ] **Add GDPR compliance for customer data**
+  - [ ] Implement data processing consent tracking:
+    - [ ] Link customer to ConsentRecord entity
+    - [ ] Track marketing consent changes
+    - [ ] Record consent withdrawal dates
+  - [ ] Create `Services/CustomerGdprService.cs` with methods:
+    - [ ] `RecordConsentAsync(int customerId, ConsentType type, bool granted)`
+    - [ ] `AnonymizeCustomerAsync(int customerId)` - right to be forgotten
+    - [ ] `ExportCustomerDataAsync(int customerId)` - data portability
+  - [ ] Implement data retention policies:
+    - [ ] Inactive customers: 7 years retention
+    - [ ] Marketing data: until consent withdrawal
+  - [ ] Add GDPR audit trail for customer operations
+
+- [ ] **Implement customer data anonymization**
+  - [ ] Create `Services/CustomerAnonymizationService.cs` with methods:
+    - [ ] `AnonymizePersonalData(Customer customer)`
+    - [ ] `PseudonymizeIdentifiers(Customer customer)`
+    - [ ] `GenerateAnonymousCustomerId()`
+  - [ ] Implement anonymization rules:
+    - [ ] Replace email with anonymous@example.com pattern
+    - [ ] Clear first_name, last_name, phone
+    - [ ] Anonymize addresses while preserving analytics
+  - [ ] Preserve order history for business analytics
+  - [ ] Create anonymization audit trail
+
+- [ ] **Add incremental sync for customer updates**
+  - [ ] Extend SyncState entity for customer tracking:
+    - [ ] Track last customer sync timestamp
+    - [ ] Handle customer deletion detection
+  - [ ] Implement customer change detection:
+    - [ ] Compare updated_at timestamps
+    - [ ] Detect new customers vs. updates
+    - [ ] Handle customer merging scenarios
+  - [ ] Create customer sync scheduling:
+    - [ ] Full sync: daily at 2 AM
+    - [ ] Incremental sync: every 15 minutes
+    - [ ] Priority sync for recent orders
+  - [ ] Add sync performance monitoring:
+    - [ ] Track sync duration and throughput
+    - [ ] Monitor API rate limit usage
+    - [ ] Alert on sync failures or delays
+
+- [ ] **Create unit tests for customer sync**
+  - [ ] Create `Tests/Unit/CustomerSyncServiceTests.cs`:
+    - [ ] Test customer fetching with pagination
+    - [ ] Test address synchronization scenarios
+    - [ ] Test tag and group sync
+    - [ ] Test incremental sync logic
+  - [ ] Create `Tests/Unit/CustomerGdprServiceTests.cs`:
+    - [ ] Test consent recording and tracking
+    - [ ] Test data anonymization
+    - [ ] Test data export functionality
+  - [ ] Create `Tests/Unit/CustomerAnonymizationServiceTests.cs`:
+    - [ ] Test anonymization rules
+    - [ ] Test data preservation requirements
+    - [ ] Test audit trail creation
+  - [ ] Mock Shopify API responses for testing
+  - [ ] Test GDPR compliance scenarios
+
+- [ ] **Implement customer data retention policies**
+  - [ ] Create `Services/CustomerRetentionService.cs` with methods:
+    - [ ] `ApplyRetentionPolicy(Customer customer)`
+    - [ ] `ScheduleDataDeletion(int customerId, DateTime deletionDate)`
+    - [ ] `ProcessExpiredCustomers()`
+  - [ ] Implement retention rules:
+    - [ ] Active customers: indefinite retention
+    - [ ] Inactive customers (no orders 7+ years): anonymize
+    - [ ] Consent withdrawn: immediate anonymization
+  - [ ] Create background job for retention processing
+  - [ ] Add retention policy configuration
+  - [ ] Implement retention audit logging
 
 ### [ ] TASK-010: Order Data Synchronization
 **Priority**: High | **Effort**: 10h | **Dependencies**: TASK-002, TASK-007
 
+#### **Objective**:
+Implement comprehensive order data synchronization between Shopify and local database, including orders, line items, fulfillments, transactions, and refunds. Establish real-time order processing with financial accuracy, inventory management, and complete order lifecycle tracking.
+
+#### **Expected Outcomes**:
+- Complete order synchronization system with full order lifecycle management
+- Real-time order updates via webhooks for immediate processing
+- Accurate financial data synchronization including taxes, discounts, and refunds
+- Order line item tracking with product and variant associations
+- Fulfillment and shipping status synchronization with tracking information
+- Payment transaction tracking with PCI-DSS compliant audit trails
+- Order analytics and reporting capabilities with performance metrics
+- Inventory impact tracking and automatic stock level adjustments
+
+#### **Constraints & Considerations**:
+- **Financial Accuracy**: Order totals, taxes, and discounts must be precisely calculated and tracked
+- **Real-time Processing**: Critical order updates must be processed immediately
+- **Data Integrity**: Maintain referential integrity between orders, customers, and products
+- **Performance**: Handle high-volume order processing during peak periods
+- **Compliance**: PCI-DSS compliance for payment data and GDPR for customer information
+- **Inventory Management**: Accurate stock level updates based on order fulfillment
+- **Audit Requirements**: Complete audit trails for all financial transactions
+
+#### **Risk Factors**:
+- **Financial Discrepancies**: Incorrect order calculations could result in revenue loss
+- **Inventory Issues**: Inaccurate stock updates may lead to overselling or stockouts
+- **Payment Failures**: Transaction processing errors could impact customer experience
+- **Data Loss**: Network failures during order processing could result in lost orders
+- **Performance Bottlenecks**: High order volumes may overwhelm synchronization processes
+
 #### Sub-tasks:
-- [ ] Implement order data fetching from Shopify API
-- [ ] Implement order line items synchronization
-- [ ] Implement order fulfillment sync
-- [ ] Implement order transaction sync
-- [ ] Implement order refund synchronization
-- [ ] Add real-time order status updates
-- [ ] Implement order financial data sync
-- [ ] Create comprehensive order sync tests
+- [ ] **Implement order data fetching from Shopify API**
+  - [ ] Create `Services/OrderSyncService.cs` with methods:
+    - [ ] `FetchOrdersAsync(DateTime? since = null, string status = null)` - fetch with pagination
+    - [ ] `FetchOrderByIdAsync(long shopifyId)` - fetch single order
+    - [ ] `FetchOrderCountAsync(string status = null)` - get order count by status
+    - [ ] `FetchOrdersByCustomerAsync(long customerId)` - customer orders
+  - [ ] Implement REST API calls:
+    - [ ] GET `/admin/api/2024-01/orders.json?limit=250&since_id={id}&status={status}`
+    - [ ] GET `/admin/api/2024-01/orders/{id}.json`
+    - [ ] GET `/admin/api/2024-01/orders/count.json?status={status}`
+    - [ ] GET `/admin/api/2024-01/customers/{id}/orders.json`
+  - [ ] Map Shopify order fields:
+    - [ ] `id` → `ShopifyId`, `order_number` → `OrderNumber`, `name` → `Name`
+    - [ ] `email` → `Email`, `created_at` → `CreatedAt`, `updated_at` → `UpdatedAt`
+    - [ ] `total_price` → `TotalPrice`, `subtotal_price` → `SubtotalPrice`
+    - [ ] `total_tax` → `TotalTax`, `total_discounts` → `TotalDiscounts`
+    - [ ] `currency` → `Currency`, `financial_status` → `FinancialStatus`
+    - [ ] `fulfillment_status` → `FulfillmentStatus`, `cancelled_at` → `CancelledAt`
+
+- [ ] **Implement order line items synchronization**
+  - [ ] Create `Models/Entities/OrderLineItem.cs` with properties:
+    - [ ] `Id`, `OrderId` (FK), `ProductId` (FK), `VariantId` (FK)
+    - [ ] `Quantity` (int), `Price` (decimal), `TotalDiscount` (decimal)
+    - [ ] `Title` (string, 255), `VariantTitle` (string, 255)
+    - [ ] `Sku` (string, 100), `Vendor` (string, 100)
+    - [ ] `Grams` (int), `RequiresShipping` (bool), `Taxable` (bool)
+    - [ ] `ShopifyId` (long), `ShopifyProductId` (long), `ShopifyVariantId` (long)
+  - [ ] Create `Services/OrderLineItemSyncService.cs` with methods:
+    - [ ] `SyncLineItemsAsync(Order order, ShopifyLineItem[] lineItems)`
+    - [ ] `CreateLineItemAsync(OrderLineItem lineItem)`
+    - [ ] `UpdateLineItemAsync(OrderLineItem lineItem)`
+    - [ ] `DeleteLineItemAsync(long lineItemId)`
+  - [ ] Handle line item properties and custom attributes
+  - [ ] Implement line item tax calculations
+  - [ ] Link line items to product variants
+
+- [ ] **Implement order fulfillment sync**
+  - [ ] Create `Models/Entities/OrderFulfillment.cs` with properties:
+    - [ ] `Id`, `OrderId` (FK), `Status` (enum), `TrackingCompany` (string, 100)
+    - [ ] `TrackingNumber` (string, 100), `TrackingUrl` (string, 500)
+    - [ ] `ShippedAt`, `DeliveredAt`, `EstimatedDelivery`
+    - [ ] `ShopifyId` (long), `CreatedAt`, `UpdatedAt`
+  - [ ] Create `Models/Entities/FulfillmentLineItem.cs`:
+    - [ ] `FulfillmentId` (FK), `LineItemId` (FK), `Quantity` (int)
+  - [ ] Create `Services/OrderFulfillmentSyncService.cs` with methods:
+    - [ ] `SyncFulfillmentsAsync(Order order, ShopifyFulfillment[] fulfillments)`
+    - [ ] `UpdateTrackingInfoAsync(int fulfillmentId, string trackingNumber)`
+    - [ ] `UpdateDeliveryStatusAsync(int fulfillmentId, FulfillmentStatus status)`
+  - [ ] Implement fulfillment status enum:
+    - [ ] Pending, Fulfilled, Shipped, Delivered, Cancelled
+  - [ ] Handle partial fulfillments and split shipments
+
+- [ ] **Implement order transaction sync**
+  - [ ] Create `Models/Entities/OrderTransaction.cs` with properties:
+    - [ ] `Id`, `OrderId` (FK), `Kind` (enum), `Gateway` (string, 100)
+    - [ ] `Status` (enum), `Amount` (decimal), `Currency` (string, 3)
+    - [ ] `ProcessedAt`, `AuthorizationCode` (string, 100)
+    - [ ] `ShopifyId` (long), `ParentId` (long?), `CreatedAt`
+  - [ ] Create `Services/OrderTransactionSyncService.cs` with methods:
+    - [ ] `SyncTransactionsAsync(Order order, ShopifyTransaction[] transactions)`
+    - [ ] `ProcessPaymentAsync(int orderId, decimal amount)`
+    - [ ] `ProcessRefundAsync(int orderId, decimal amount, string reason)`
+  - [ ] Implement transaction kind enum:
+    - [ ] Authorization, Capture, Sale, Void, Refund
+  - [ ] Implement transaction status enum:
+    - [ ] Pending, Success, Failure, Error
+  - [ ] Handle payment gateway integration
+
+- [ ] **Implement order refund synchronization**
+  - [ ] Create `Models/Entities/OrderRefund.cs` with properties:
+    - [ ] `Id`, `OrderId` (FK), `Amount` (decimal), `Reason` (string, 500)
+    - [ ] `Note` (text), `ProcessedAt`, `ShopifyId` (long)
+    - [ ] `CreatedAt`, `CreatedBy` (string, 100)
+  - [ ] Create `Models/Entities/RefundLineItem.cs`:
+    - [ ] `RefundId` (FK), `LineItemId` (FK), `Quantity` (int)
+    - [ ] `RestockType` (enum), `Amount` (decimal)
+  - [ ] Create `Services/OrderRefundSyncService.cs` with methods:
+    - [ ] `SyncRefundsAsync(Order order, ShopifyRefund[] refunds)`
+    - [ ] `ProcessRefundAsync(int orderId, RefundRequest request)`
+    - [ ] `CancelOrderAsync(int orderId, string reason)`
+  - [ ] Implement restock type enum:
+    - [ ] NoRestock, Return, Cancel, LegacyRestock
+  - [ ] Handle inventory adjustments for refunds
+
+- [ ] **Add real-time order status updates**
+  - [ ] Extend SyncState entity for order tracking:
+    - [ ] Track last order sync timestamp per status
+    - [ ] Handle order status transitions
+  - [ ] Implement order change detection:
+    - [ ] Compare updated_at timestamps
+    - [ ] Detect status changes (financial, fulfillment)
+    - [ ] Handle order modifications and cancellations
+  - [ ] Create order sync scheduling:
+    - [ ] New orders: every 5 minutes
+    - [ ] Order updates: every 15 minutes
+    - [ ] Fulfillment updates: every 30 minutes
+  - [ ] Add sync performance monitoring:
+    - [ ] Track sync duration by order status
+    - [ ] Monitor API rate limit usage
+    - [ ] Alert on sync failures or delays
+
+- [ ] **Implement order financial data sync**
+  - [ ] Create `Models/Entities/OrderFinancialSummary.cs` with properties:
+    - [ ] `OrderId` (FK), `SubtotalPrice` (decimal), `TotalTax` (decimal)
+    - [ ] `TotalDiscounts` (decimal), `TotalShipping` (decimal)
+    - [ ] `TotalPrice` (decimal), `TotalRefunded` (decimal)
+    - [ ] `Currency` (string, 3), `ExchangeRate` (decimal?)
+  - [ ] Create `Services/OrderFinancialSyncService.cs` with methods:
+    - [ ] `SyncFinancialDataAsync(Order order, ShopifyOrder shopifyOrder)`
+    - [ ] `CalculateOrderTotalsAsync(int orderId)`
+    - [ ] `UpdateExchangeRatesAsync()`
+  - [ ] Handle multi-currency orders
+  - [ ] Implement tax calculation validation
+  - [ ] Track financial reconciliation
+
+- [ ] **Create comprehensive order sync tests**
+  - [ ] Create `Tests/Unit/OrderSyncServiceTests.cs`:
+    - [ ] Test order fetching with pagination
+    - [ ] Test line item synchronization
+    - [ ] Test fulfillment tracking
+    - [ ] Test incremental sync logic
+  - [ ] Create `Tests/Unit/OrderTransactionSyncServiceTests.cs`:
+    - [ ] Test payment processing
+    - [ ] Test refund handling
+    - [ ] Test transaction status updates
+  - [ ] Create `Tests/Unit/OrderRefundSyncServiceTests.cs`:
+    - [ ] Test refund processing
+    - [ ] Test inventory adjustments
+    - [ ] Test cancellation handling
+  - [ ] Create `Tests/Integration/OrderSyncIntegrationTests.cs`:
+    - [ ] Test end-to-end order synchronization
+    - [ ] Test webhook integration with order updates
+    - [ ] Test performance with large order volumes
+  - [ ] Mock Shopify API responses for testing
+  - [ ] Test order state transitions and edge cases
 
 ### [ ] TASK-011: Inventory Synchronization
 **Priority**: High | **Effort**: 6h | **Dependencies**: TASK-002, TASK-007
@@ -167,47 +1221,610 @@ This document outlines the atomic, developer-ready tasks for implementing the Sh
 **Priority**: High | **Effort**: 8h | **Dependencies**: TASK-001
 
 #### Sub-tasks:
-- [ ] Create webhook endpoint controllers
-- [ ] Implement webhook signature verification
-- [ ] Add webhook payload validation
-- [ ] Implement webhook event routing
-- [ ] Add webhook retry mechanism
-- [ ] Implement webhook event logging
-- [ ] Create webhook management interface
-- [ ] Add webhook security measures
+- [ ] **Create webhook endpoint controllers**
+  - [ ] Create `Controllers/WebhookController.cs` with endpoints:
+    - [ ] `POST /api/webhooks/shopify` - main webhook receiver
+    - [ ] `GET /api/webhooks/health` - webhook health check
+    - [ ] `POST /api/webhooks/test` - webhook testing endpoint
+  - [ ] Implement webhook topic routing:
+    - [ ] `orders/create`, `orders/updated`, `orders/paid`, `orders/cancelled`
+    - [ ] `products/create`, `products/update`, `products/delete`
+    - [ ] `customers/create`, `customers/update`, `customers/delete`
+    - [ ] `inventory_levels/update`, `inventory_levels/connect`
+  - [ ] Add webhook request logging middleware
+  - [ ] Implement async webhook processing with queues
+
+- [ ] **Implement webhook signature verification**
+  - [ ] Create `Services/WebhookVerificationService.cs` with methods:
+    - [ ] `VerifyShopifyWebhook(string payload, string signature, string secret)`
+    - [ ] `GenerateHmacSha256(string payload, string secret)`
+    - [ ] `SecureCompare(string expected, string actual)` - timing-safe comparison
+  - [ ] Implement HMAC-SHA256 verification:
+    - [ ] Extract `X-Shopify-Hmac-Sha256` header
+    - [ ] Calculate HMAC using webhook secret
+    - [ ] Compare signatures using constant-time comparison
+  - [ ] Add webhook secret configuration:
+    - [ ] Store in `appsettings.json` under `Shopify:WebhookSecret`
+    - [ ] Support environment variable override
+    - [ ] Implement secret rotation capability
+  - [ ] Handle verification failures:
+    - [ ] Return 401 Unauthorized for invalid signatures
+    - [ ] Log security violations with IP addresses
+    - [ ] Implement rate limiting for failed attempts
+
+- [ ] **Add webhook payload validation**
+  - [ ] Create `Models/Webhooks/` directory with DTOs:
+    - [ ] `ShopifyWebhookPayload.cs` - base webhook structure
+    - [ ] `OrderWebhookPayload.cs` - order-specific payload
+    - [ ] `ProductWebhookPayload.cs` - product-specific payload
+    - [ ] `CustomerWebhookPayload.cs` - customer-specific payload
+    - [ ] `InventoryWebhookPayload.cs` - inventory-specific payload
+  - [ ] Implement payload validation attributes:
+    - [ ] `[Required]` for mandatory fields
+    - [ ] `[Range]` for numeric constraints
+    - [ ] `[StringLength]` for text field limits
+    - [ ] Custom validation for Shopify IDs
+  - [ ] Add JSON schema validation:
+    - [ ] Create schema files in `Schemas/Webhooks/`
+    - [ ] Validate against Shopify webhook documentation
+    - [ ] Handle schema version compatibility
+  - [ ] Implement payload sanitization:
+    - [ ] Remove potentially harmful content
+    - [ ] Validate URL formats and domains
+    - [ ] Escape special characters in text fields
+
+- [ ] **Implement webhook event routing**
+  - [ ] Create `Services/WebhookRouterService.cs` with methods:
+    - [ ] `RouteWebhookAsync(string topic, string payload)`
+    - [ ] `GetHandlerForTopic(string topic)`
+    - [ ] `RegisterWebhookHandler(string topic, IWebhookHandler handler)`
+  - [ ] Implement webhook handler interface:
+    - [ ] `IWebhookHandler` with `HandleAsync(WebhookPayload payload)`
+    - [ ] `IOrderWebhookHandler`, `IProductWebhookHandler`, etc.
+  - [ ] Create handler registration system:
+    - [ ] Use dependency injection for handler discovery
+    - [ ] Support multiple handlers per topic
+    - [ ] Implement handler priority ordering
+  - [ ] Add event routing configuration:
+    - [ ] Map topics to handler types
+    - [ ] Support conditional routing based on payload
+    - [ ] Implement fallback handlers for unknown topics
+
+- [ ] **Add webhook retry mechanism**
+  - [ ] Create `Models/Entities/WebhookEvent.cs` with properties:
+    - [ ] `Id`, `Topic` (string, 100), `ShopifyId` (long)
+    - [ ] `Payload` (text), `ProcessedAt`, `Status` (enum)
+    - [ ] `RetryCount` (int), `NextRetryAt`, `ErrorMessage` (text)
+    - [ ] `CreatedAt`, `UpdatedAt`
+  - [ ] Create `Services/WebhookRetryService.cs` with methods:
+    - [ ] `ScheduleRetryAsync(int webhookEventId, TimeSpan delay)`
+    - [ ] `ProcessRetryQueueAsync()` - background service
+    - [ ] `MarkAsFailedAsync(int webhookEventId, string error)`
+  - [ ] Implement exponential backoff strategy:
+    - [ ] Initial delay: 30 seconds
+    - [ ] Maximum delay: 24 hours
+    - [ ] Maximum retry attempts: 10
+    - [ ] Jitter to prevent thundering herd
+  - [ ] Add dead letter queue for failed webhooks:
+    - [ ] Move to separate table after max retries
+    - [ ] Implement manual retry capability
+    - [ ] Alert administrators of persistent failures
+
+- [ ] **Implement webhook event logging**
+  - [ ] Create `Models/Entities/WebhookLog.cs` with properties:
+    - [ ] `Id`, `Topic` (string, 100), `HttpMethod` (string, 10)
+    - [ ] `RequestHeaders` (JSON), `RequestBody` (text)
+    - [ ] `ResponseStatus` (int), `ResponseBody` (text)
+    - [ ] `ProcessingDuration` (TimeSpan), `IpAddress` (string, 45)
+    - [ ] `UserAgent` (string, 500), `CreatedAt`
+  - [ ] Create `Services/WebhookLoggingService.cs` with methods:
+    - [ ] `LogWebhookRequestAsync(WebhookRequest request)`
+    - [ ] `LogWebhookResponseAsync(int logId, WebhookResponse response)`
+    - [ ] `GetWebhookLogsAsync(WebhookLogFilter filter)`
+  - [ ] Implement structured logging:
+    - [ ] Use Serilog with structured properties
+    - [ ] Include correlation IDs for request tracking
+    - [ ] Log performance metrics and errors
+  - [ ] Add log retention policies:
+    - [ ] Keep detailed logs for 30 days
+    - [ ] Archive summary data for 1 year
+    - [ ] Implement automated cleanup jobs
+
+- [ ] **Create webhook management interface**
+  - [ ] Create `Controllers/WebhookManagementController.cs` with endpoints:
+    - [ ] `GET /api/webhook-management/logs` - view webhook logs
+    - [ ] `GET /api/webhook-management/stats` - webhook statistics
+    - [ ] `POST /api/webhook-management/retry/{id}` - manual retry
+    - [ ] `POST /api/webhook-management/test` - test webhook processing
+  - [ ] Implement webhook dashboard:
+    - [ ] Real-time webhook processing status
+    - [ ] Success/failure rate charts
+    - [ ] Recent webhook events list
+    - [ ] Error analysis and trends
+  - [ ] Add webhook configuration management:
+    - [ ] View registered webhook topics
+    - [ ] Enable/disable specific webhooks
+    - [ ] Update webhook secrets and endpoints
+  - [ ] Implement webhook testing tools:
+    - [ ] Simulate webhook payloads
+    - [ ] Validate webhook signatures
+    - [ ] Test handler performance
+
+- [ ] **Add webhook security measures**
+  - [ ] Implement IP allowlisting:
+    - [ ] Configure Shopify IP ranges in `appsettings.json`
+    - [ ] Create middleware to validate source IPs
+    - [ ] Support dynamic IP range updates
+  - [ ] Add rate limiting:
+    - [ ] Limit webhooks per IP: 1000/hour
+    - [ ] Limit webhooks per topic: 500/hour
+    - [ ] Implement sliding window rate limiting
+  - [ ] Implement request size limits:
+    - [ ] Maximum payload size: 1MB
+    - [ ] Maximum header size: 8KB
+    - [ ] Reject oversized requests early
+  - [ ] Add security headers:
+    - [ ] `X-Content-Type-Options: nosniff`
+    - [ ] `X-Frame-Options: DENY`
+    - [ ] `X-XSS-Protection: 1; mode=block`
+  - [ ] Implement webhook audit trail:
+    - [ ] Log all webhook security events
+    - [ ] Track failed authentication attempts
+    - [ ] Monitor for suspicious patterns
+  - [ ] Add webhook endpoint protection:
+    - [ ] Use HTTPS only for webhook endpoints
+    - [ ] Implement CSRF protection
+    - [ ] Add request timeout limits (30 seconds)
 
 ### [ ] TASK-013: Product Webhook Handlers
 **Priority**: High | **Effort**: 4h | **Dependencies**: TASK-008, TASK-012
 
 #### Sub-tasks:
-- [ ] Implement product create webhook handler
-- [ ] Implement product update webhook handler
-- [ ] Implement product delete webhook handler
-- [ ] Implement variant update webhook handler
-- [ ] Add webhook event deduplication
-- [ ] Create webhook handler tests
-- [ ] Implement webhook failure recovery
+- [ ] **Implement product create webhook handler**
+  - [ ] Create `Services/Webhooks/ProductCreateWebhookHandler.cs` implementing `IWebhookHandler`:
+    - [ ] `HandleAsync(ProductWebhookPayload payload)` method
+    - [ ] Map Shopify product payload to local Product entity
+    - [ ] Handle product images, variants, and options
+    - [ ] Validate required fields: title, vendor, product_type
+  - [ ] Implement product creation logic:
+    - [ ] Check for existing product by ShopifyId
+    - [ ] Create new Product entity with mapped fields
+    - [ ] Process product variants and create ProductVariant entities
+    - [ ] Handle product images and create ProductImage entities
+    - [ ] Set product status and visibility
+  - [ ] Handle webhook payload structure:
+    - [ ] Extract product data from `product` root object
+    - [ ] Process variants array with pricing and inventory
+    - [ ] Handle images array with alt text and position
+    - [ ] Process options array (size, color, etc.)
+  - [ ] Add error handling:
+    - [ ] Validate Shopify ID uniqueness
+    - [ ] Handle missing required fields gracefully
+    - [ ] Log creation failures with detailed context
+
+- [ ] **Implement product update webhook handler**
+  - [ ] Create `Services/Webhooks/ProductUpdateWebhookHandler.cs` implementing `IWebhookHandler`:
+    - [ ] `HandleAsync(ProductWebhookPayload payload)` method
+    - [ ] Find existing product by ShopifyId
+    - [ ] Compare updated_at timestamps to prevent stale updates
+    - [ ] Update product fields selectively
+  - [ ] Implement update logic:
+    - [ ] Update basic product fields: title, description, vendor
+    - [ ] Handle product status changes (active/draft/archived)
+    - [ ] Update SEO fields: handle, meta_title, meta_description
+    - [ ] Process tags and product_type changes
+  - [ ] Handle variant updates:
+    - [ ] Compare existing variants with webhook payload
+    - [ ] Create new variants, update existing, mark deleted
+    - [ ] Update variant pricing, inventory, and SKU
+    - [ ] Handle variant option changes
+  - [ ] Handle image updates:
+    - [ ] Compare image URLs and positions
+    - [ ] Add new images, update existing, remove deleted
+    - [ ] Handle image alt text and position changes
+  - [ ] Implement conflict resolution:
+    - [ ] Use updated_at timestamp for version control
+    - [ ] Handle concurrent updates gracefully
+    - [ ] Log update conflicts for manual review
+
+- [ ] **Implement product delete webhook handler**
+  - [ ] Create `Services/Webhooks/ProductDeleteWebhookHandler.cs` implementing `IWebhookHandler`:
+    - [ ] `HandleAsync(ProductWebhookPayload payload)` method
+    - [ ] Find product by ShopifyId from payload
+    - [ ] Implement soft delete strategy
+  - [ ] Implement deletion logic:
+    - [ ] Set product status to 'Deleted' instead of hard delete
+    - [ ] Update DeletedAt timestamp
+    - [ ] Preserve product data for order history
+    - [ ] Handle cascade deletion for variants and images
+  - [ ] Handle related data:
+    - [ ] Mark all product variants as deleted
+    - [ ] Preserve order line items referencing deleted products
+    - [ ] Update inventory levels to zero
+    - [ ] Remove from active product collections
+  - [ ] Add safety measures:
+    - [ ] Validate deletion request authenticity
+    - [ ] Log deletion events with full product context
+    - [ ] Implement deletion confirmation for high-value products
+    - [ ] Support product restoration if needed
+
+- [ ] **Implement variant update webhook handler**
+  - [ ] Create `Services/Webhooks/ProductVariantUpdateWebhookHandler.cs`:
+    - [ ] Handle `products/update` webhooks with variant focus
+    - [ ] Process individual variant changes within product updates
+    - [ ] Handle inventory level changes for variants
+  - [ ] Implement variant-specific logic:
+    - [ ] Update variant pricing (price, compare_at_price)
+    - [ ] Handle inventory quantity and tracking changes
+    - [ ] Update variant SKU and barcode
+    - [ ] Process variant weight and dimensions
+  - [ ] Handle variant options:
+    - [ ] Update option1, option2, option3 values
+    - [ ] Validate option combinations are unique
+    - [ ] Handle option value changes
+  - [ ] Manage variant availability:
+    - [ ] Update inventory_management settings
+    - [ ] Handle inventory_policy changes
+    - [ ] Process fulfillment_service updates
+    - [ ] Update requires_shipping flag
+
+- [ ] **Add webhook event deduplication**
+  - [ ] Create `Services/WebhookDeduplicationService.cs` with methods:
+    - [ ] `IsDuplicateEvent(string topic, long shopifyId, DateTime updatedAt)`
+    - [ ] `RecordProcessedEvent(string topic, long shopifyId, DateTime updatedAt)`
+    - [ ] `CleanupOldEvents()` - remove events older than 24 hours
+  - [ ] Implement deduplication strategy:
+    - [ ] Use combination of topic + shopifyId + updated_at as key
+    - [ ] Store processed events in Redis or database table
+    - [ ] Set TTL of 24 hours for deduplication records
+  - [ ] Handle edge cases:
+    - [ ] Multiple webhooks for same event (Shopify retry)
+    - [ ] Out-of-order webhook delivery
+    - [ ] Webhook replay scenarios
+  - [ ] Add monitoring:
+    - [ ] Track duplicate webhook rates
+    - [ ] Alert on unusual duplication patterns
+    - [ ] Log deduplication statistics
+
+- [ ] **Create webhook handler tests**
+  - [ ] Create `Tests/Unit/Webhooks/ProductWebhookHandlerTests.cs`:
+    - [ ] Test product creation with valid payload
+    - [ ] Test product update scenarios
+    - [ ] Test product deletion handling
+    - [ ] Test variant update processing
+  - [ ] Create test data fixtures:
+    - [ ] Sample Shopify product webhook payloads
+    - [ ] Mock product entities for database testing
+    - [ ] Test scenarios for edge cases
+  - [ ] Test error scenarios:
+    - [ ] Invalid webhook payloads
+    - [ ] Missing required fields
+    - [ ] Database constraint violations
+    - [ ] Concurrent update conflicts
+  - [ ] Integration tests:
+    - [ ] End-to-end webhook processing
+    - [ ] Database state verification
+    - [ ] Performance testing with large payloads
+
+- [ ] **Implement webhook failure recovery**
+  - [ ] Create `Services/WebhookRecoveryService.cs` with methods:
+    - [ ] `RecoverFailedWebhooks(DateTime since)`
+    - [ ] `ReprocessWebhookEvent(int webhookEventId)`
+    - [ ] `AnalyzeFailurePatterns()`
+  - [ ] Implement recovery strategies:
+    - [ ] Automatic retry with exponential backoff
+    - [ ] Manual retry capability for failed events
+    - [ ] Bulk reprocessing for systematic failures
+  - [ ] Add failure analysis:
+    - [ ] Categorize failure types (validation, database, external)
+    - [ ] Track failure patterns and trends
+    - [ ] Generate failure reports for investigation
+  - [ ] Implement recovery monitoring:
+    - [ ] Alert on high failure rates
+    - [ ] Track recovery success rates
+    - [ ] Monitor processing latency
+  - [ ] Add data consistency checks:
+    - [ ] Compare local data with Shopify API
+    - [ ] Identify and fix data discrepancies
+    - [ ] Implement periodic reconciliation jobs
 
 ### [ ] TASK-014: Order Webhook Handlers
 **Priority**: High | **Effort**: 6h | **Dependencies**: TASK-010, TASK-012
 
 #### Sub-tasks:
-- [ ] Implement order create webhook handler
-- [ ] Implement order update webhook handler
-- [ ] Implement order payment webhook handler
-- [ ] Implement order fulfillment webhook handler
-- [ ] Implement order cancellation webhook handler
-- [ ] Add real-time order status updates
-- [ ] Create comprehensive webhook tests
+- [ ] **Implement order create webhook handler**
+  - [ ] Create `Services/Webhooks/OrderCreateWebhookHandler.cs` implementing `IWebhookHandler`:
+    - [ ] `HandleAsync(OrderWebhookPayload payload)` method
+    - [ ] Map Shopify order payload to local Order entity
+    - [ ] Handle order line items, shipping, and billing addresses
+    - [ ] Validate required fields: email, total_price, currency
+  - [ ] Implement order creation logic:
+    - [ ] Check for existing order by ShopifyOrderId
+    - [ ] Create new Order entity with mapped fields
+    - [ ] Process order line items and create OrderLineItem entities
+    - [ ] Handle shipping and billing addresses
+    - [ ] Set order status and financial status
+  - [ ] Handle order payload structure:
+    - [ ] Extract order data from root object
+    - [ ] Process line_items array with product variants
+    - [ ] Handle shipping_address and billing_address objects
+    - [ ] Process discount_codes and tax_lines arrays
+  - [ ] Handle customer association:
+    - [ ] Link order to existing customer by email/ShopifyId
+    - [ ] Create guest customer record if customer doesn't exist
+    - [ ] Handle customer privacy settings (accepts_marketing)
+  - [ ] Process financial data:
+    - [ ] Calculate and validate order totals
+    - [ ] Handle currency conversion if needed
+    - [ ] Process payment gateway information
+    - [ ] Store payment method details securely
+  - [ ] Add compliance handling:
+    - [ ] Apply GDPR data protection for EU customers
+    - [ ] Handle PCI-DSS requirements for payment data
+    - [ ] Implement data retention policies
+
+- [ ] **Implement order update webhook handler**
+  - [ ] Create `Services/Webhooks/OrderUpdateWebhookHandler.cs` implementing `IWebhookHandler`:
+    - [ ] `HandleAsync(OrderWebhookPayload payload)` method
+    - [ ] Find existing order by ShopifyOrderId
+    - [ ] Compare updated_at timestamps to prevent stale updates
+    - [ ] Update order fields selectively
+  - [ ] Implement update logic:
+    - [ ] Update order status (pending, open, closed, cancelled)
+    - [ ] Handle financial status changes (pending, paid, refunded)
+    - [ ] Update fulfillment status (unfulfilled, partial, fulfilled)
+    - [ ] Process order note and tag changes
+  - [ ] Handle line item updates:
+    - [ ] Compare existing line items with webhook payload
+    - [ ] Update quantities, prices, and discounts
+    - [ ] Handle line item additions and removals
+    - [ ] Recalculate order totals
+  - [ ] Handle address updates:
+    - [ ] Update shipping and billing addresses
+    - [ ] Validate address format and completeness
+    - [ ] Handle address verification results
+  - [ ] Process discount and tax updates:
+    - [ ] Update applied discount codes
+    - [ ] Recalculate tax amounts
+    - [ ] Handle tax exemption changes
+  - [ ] Implement conflict resolution:
+    - [ ] Use updated_at timestamp for version control
+    - [ ] Handle concurrent updates gracefully
+    - [ ] Log update conflicts for manual review
+
+- [ ] **Implement order payment webhook handler**
+  - [ ] Create `Services/Webhooks/OrderPaymentWebhookHandler.cs`:
+    - [ ] Handle `orders/paid` webhook events
+    - [ ] Process payment confirmation and authorization
+    - [ ] Update order financial status
+  - [ ] Implement payment processing logic:
+    - [ ] Update order financial_status to 'paid'
+    - [ ] Record payment transaction details
+    - [ ] Handle partial payments and installments
+    - [ ] Process payment method information
+  - [ ] Handle payment gateway data:
+    - [ ] Store transaction ID and gateway reference
+    - [ ] Record payment processor fees
+    - [ ] Handle currency conversion rates
+    - [ ] Store payment timestamp and timezone
+  - [ ] Implement fraud detection:
+    - [ ] Check payment against fraud indicators
+    - [ ] Handle high-risk payment flags
+    - [ ] Implement payment verification workflows
+  - [ ] Add compliance measures:
+    - [ ] Ensure PCI-DSS compliance for payment data
+    - [ ] Implement payment data encryption
+    - [ ] Handle payment dispute notifications
+    - [ ] Store audit trail for payment events
+
+- [ ] **Implement order fulfillment webhook handler**
+  - [ ] Create `Services/Webhooks/OrderFulfillmentWebhookHandler.cs`:
+    - [ ] Handle `orders/fulfilled` and `fulfillments/create` webhooks
+    - [ ] Process fulfillment status updates
+    - [ ] Handle tracking information
+  - [ ] Implement fulfillment logic:
+    - [ ] Update order fulfillment_status
+    - [ ] Create OrderFulfillment entity with tracking details
+    - [ ] Handle partial fulfillments
+    - [ ] Update inventory levels for fulfilled items
+  - [ ] Process shipping information:
+    - [ ] Store tracking number and carrier information
+    - [ ] Handle shipping method and service level
+    - [ ] Process estimated delivery dates
+    - [ ] Store shipping costs and taxes
+  - [ ] Handle fulfillment line items:
+    - [ ] Map fulfilled quantities to order line items
+    - [ ] Handle split fulfillments across multiple shipments
+    - [ ] Update remaining quantities to fulfill
+  - [ ] Implement notification triggers:
+    - [ ] Trigger customer shipping notifications
+    - [ ] Send tracking information to customers
+    - [ ] Handle delivery confirmation updates
+
+- [ ] **Implement order cancellation webhook handler**
+  - [ ] Create `Services/Webhooks/OrderCancellationWebhookHandler.cs`:
+    - [ ] Handle `orders/cancelled` webhook events
+    - [ ] Process order cancellation and refunds
+    - [ ] Update inventory levels
+  - [ ] Implement cancellation logic:
+    - [ ] Update order status to 'cancelled'
+    - [ ] Record cancellation reason and timestamp
+    - [ ] Handle partial vs full cancellations
+    - [ ] Process cancellation by customer vs merchant
+  - [ ] Handle inventory restoration:
+    - [ ] Restore inventory for cancelled line items
+    - [ ] Handle reserved inventory release
+    - [ ] Update product availability
+  - [ ] Process refund handling:
+    - [ ] Calculate refund amounts including taxes
+    - [ ] Handle refund processing status
+    - [ ] Store refund transaction details
+    - [ ] Handle partial refunds and restocking fees
+  - [ ] Implement compliance measures:
+    - [ ] Handle consumer protection regulations
+    - [ ] Process refund timelines per jurisdiction
+    - [ ] Store cancellation audit trail
+
+- [ ] **Add real-time order status updates**
+  - [ ] Create `Services/OrderStatusUpdateService.cs` with methods:
+    - [ ] `BroadcastOrderStatusChange(int orderId, string newStatus)`
+    - [ ] `NotifyCustomerOfStatusChange(int orderId, string status)`
+    - [ ] `UpdateOrderTimeline(int orderId, string event, DateTime timestamp)`
+  - [ ] Implement real-time notifications:
+    - [ ] Use SignalR for real-time dashboard updates
+    - [ ] Send email notifications for status changes
+    - [ ] Trigger SMS notifications for critical updates
+    - [ ] Update customer portal with status changes
+  - [ ] Handle status transition validation:
+    - [ ] Validate allowed status transitions
+    - [ ] Prevent invalid status changes
+    - [ ] Log status change attempts and reasons
+  - [ ] Implement notification preferences:
+    - [ ] Respect customer notification preferences
+    - [ ] Handle opt-out requests
+    - [ ] Support multiple notification channels
+
+- [ ] **Create comprehensive webhook tests**
+  - [ ] Create `Tests/Unit/Webhooks/OrderWebhookHandlerTests.cs`:
+    - [ ] Test order creation with valid payload
+    - [ ] Test order update scenarios
+    - [ ] Test payment processing
+    - [ ] Test fulfillment handling
+    - [ ] Test order cancellation
+  - [ ] Create test data fixtures:
+    - [ ] Sample Shopify order webhook payloads
+    - [ ] Mock order entities for database testing
+    - [ ] Test scenarios for different order states
+  - [ ] Test error scenarios:
+    - [ ] Invalid webhook payloads
+    - [ ] Missing required fields
+    - [ ] Invalid order totals
+    - [ ] Payment processing failures
+    - [ ] Inventory conflicts
+  - [ ] Integration tests:
+    - [ ] End-to-end order processing
+    - [ ] Database state verification
+    - [ ] Performance testing with large orders
+    - [ ] Concurrent order processing tests
+  - [ ] Compliance testing:
+    - [ ] GDPR data handling tests
+    - [ ] PCI-DSS payment data tests
+    - [ ] Data retention policy tests
 
 ### [ ] TASK-015: Inventory Webhook Handlers
 **Priority**: High | **Effort**: 4h | **Dependencies**: TASK-011, TASK-012
 
 #### Sub-tasks:
-- [ ] Implement inventory level update webhook handler
-- [ ] Implement location update webhook handler
-- [ ] Add real-time inventory synchronization
-- [ ] Implement inventory adjustment webhooks
+- [ ] **Implement inventory level update webhook handler**
+  - [ ] Create `Services/Webhooks/InventoryLevelUpdateWebhookHandler.cs` implementing `IWebhookHandler`:
+    - [ ] `HandleAsync(InventoryLevelWebhookPayload payload)` method
+    - [ ] Map Shopify inventory level payload to local InventoryLevel entity
+    - [ ] Handle inventory quantity updates for specific locations
+    - [ ] Validate inventory data integrity
+  - [ ] Implement inventory update logic:
+    - [ ] Find existing inventory level by inventory_item_id and location_id
+    - [ ] Update available quantity with new value
+    - [ ] Handle reserved quantity calculations
+    - [ ] Update committed quantity for pending orders
+  - [ ] Handle inventory tracking:
+    - [ ] Process inventory_item_id mapping to product variants
+    - [ ] Handle location-specific inventory levels
+    - [ ] Update inventory history for audit trail
+    - [ ] Calculate total available inventory across locations
+  - [ ] Implement inventory validation:
+    - [ ] Validate quantity values (non-negative)
+    - [ ] Check for inventory discrepancies
+    - [ ] Handle negative inventory scenarios
+    - [ ] Validate location existence and status
+  - [ ] Add inventory alerts:
+    - [ ] Trigger low stock alerts when quantity falls below threshold
+    - [ ] Send out-of-stock notifications
+    - [ ] Alert on significant inventory changes
+    - [ ] Notify on inventory discrepancies
+
+- [ ] **Implement location update webhook handler**
+  - [ ] Create `Services/Webhooks/LocationUpdateWebhookHandler.cs` implementing `IWebhookHandler`:
+    - [ ] `HandleAsync(LocationWebhookPayload payload)` method
+    - [ ] Map Shopify location payload to local Location entity
+    - [ ] Handle location status and configuration changes
+    - [ ] Update location-specific settings
+  - [ ] Implement location update logic:
+    - [ ] Find existing location by ShopifyLocationId
+    - [ ] Update location name, address, and contact information
+    - [ ] Handle location status changes (active/inactive)
+    - [ ] Update location type and fulfillment settings
+  - [ ] Handle location configuration:
+    - [ ] Update fulfillment service settings
+    - [ ] Handle inventory management preferences
+    - [ ] Process shipping zone assignments
+    - [ ] Update location-specific tax settings
+  - [ ] Manage location relationships:
+    - [ ] Handle location hierarchy changes
+    - [ ] Update location group assignments
+    - [ ] Process location-specific pricing rules
+    - [ ] Handle location access permissions
+  - [ ] Implement location validation:
+    - [ ] Validate location address format
+    - [ ] Check location code uniqueness
+    - [ ] Validate timezone and locale settings
+    - [ ] Ensure required location fields are present
+
+- [ ] **Add real-time inventory synchronization**
+  - [ ] Create `Services/RealTimeInventorySyncService.cs` with methods:
+    - [ ] `SyncInventoryLevel(int variantId, int locationId, int newQuantity)`
+    - [ ] `BroadcastInventoryChange(int variantId, int oldQuantity, int newQuantity)`
+    - [ ] `UpdateProductAvailability(int productId)`
+  - [ ] Implement real-time updates:
+    - [ ] Use SignalR for real-time inventory updates to admin dashboard
+    - [ ] Update product availability status in real-time
+    - [ ] Broadcast inventory changes to connected clients
+    - [ ] Update shopping cart availability warnings
+  - [ ] Handle inventory reservations:
+    - [ ] Reserve inventory for items in shopping carts
+    - [ ] Release reservations after timeout period
+    - [ ] Handle reservation conflicts during checkout
+    - [ ] Update available quantity considering reservations
+  - [ ] Implement inventory reconciliation:
+    - [ ] Compare local inventory with Shopify API periodically
+    - [ ] Identify and resolve inventory discrepancies
+    - [ ] Generate reconciliation reports
+    - [ ] Handle bulk inventory adjustments
+  - [ ] Add performance optimization:
+    - [ ] Batch inventory updates for better performance
+    - [ ] Implement inventory change debouncing
+    - [ ] Cache frequently accessed inventory data
+    - [ ] Optimize database queries for inventory lookups
+
+- [ ] **Implement inventory adjustment webhooks**
+  - [ ] Create `Services/Webhooks/InventoryAdjustmentWebhookHandler.cs`:
+    - [ ] Handle `inventory_levels/update` webhooks for adjustments
+    - [ ] Process manual inventory adjustments from Shopify admin
+    - [ ] Handle bulk inventory import adjustments
+  - [ ] Implement adjustment tracking:
+    - [ ] Create InventoryAdjustment entity to track changes
+    - [ ] Record adjustment reason and source
+    - [ ] Store adjustment timestamp and user information
+    - [ ] Track adjustment quantity (positive/negative)
+  - [ ] Handle adjustment types:
+    - [ ] Process manual count adjustments
+    - [ ] Handle damage/loss adjustments
+    - [ ] Process return-to-stock adjustments
+    - [ ] Handle transfer adjustments between locations
+  - [ ] Implement adjustment validation:
+    - [ ] Validate adjustment quantities and reasons
+    - [ ] Check user permissions for adjustments
+    - [ ] Prevent unauthorized inventory changes
+    - [ ] Validate adjustment business rules
+  - [ ] Add adjustment reporting:
+    - [ ] Generate inventory adjustment reports
+    - [ ] Track adjustment patterns and trends
+    - [ ] Alert on unusual adjustment activities
+    - [ ] Provide adjustment audit trail
+  - [ ] Handle adjustment notifications:
+    - [ ] Notify relevant staff of significant adjustments
+    - [ ] Send alerts for negative adjustments
+    - [ ] Report on adjustment approval workflows
+    - [ ] Trigger reorder alerts after adjustments
 - [ ] Create inventory webhook tests
 - [ ] Add webhook performance monitoring
 
@@ -219,63 +1836,562 @@ This document outlines the atomic, developer-ready tasks for implementing the Sh
 **Priority**: High | **Effort**: 8h | **Dependencies**: TASK-002
 
 #### Sub-tasks:
-- [ ] Create ProductsController with CRUD operations
-- [ ] Implement product filtering and search
-- [ ] Add pagination and sorting
-- [ ] Implement product variant management
-- [ ] Add product image management
-- [ ] Implement product collection management
-- [ ] Create comprehensive API documentation
-- [ ] Add API validation and error handling
+- [ ] Create `Controllers/ProductsController.cs` with methods:
+    - [ ] `GetProducts()` - GET /api/products with filtering, pagination
+    - [ ] `GetProduct(long id)` - GET /api/products/{id}
+    - [ ] `CreateProduct(CreateProductDto dto)` - POST /api/products
+    - [ ] `UpdateProduct(long id, UpdateProductDto dto)` - PUT /api/products/{id}
+    - [ ] `DeleteProduct(long id)` - DELETE /api/products/{id}
+    - [ ] `GetProductVariants(long productId)` - GET /api/products/{id}/variants
+    - [ ] `SearchProducts(ProductSearchDto dto)` - POST /api/products/search
+- [ ] Create DTOs in `Models/DTOs/Products/`:
+    - [ ] `ProductDto.cs` with Id, Title, Handle, Description, Vendor, ProductType, Tags, Status, Images, Variants, Options, CreatedAt, UpdatedAt
+    - [ ] `CreateProductDto.cs` with validation attributes [Required], [StringLength], [Range]
+    - [ ] `UpdateProductDto.cs` with optional fields and validation
+    - [ ] `ProductSearchDto.cs` with filters (Title, Vendor, ProductType, Tags, Status, PriceRange, CreatedDateRange)
+    - [ ] `ProductVariantDto.cs` with Id, ProductId, Title, Price, CompareAtPrice, Sku, Barcode, InventoryQuantity, Weight, RequiresShipping
+    - [ ] `ProductImageDto.cs` with Id, ProductId, Src, Alt, Position, Width, Height
+- [ ] Implement filtering and search in `Services/ProductSearchService.cs`:
+    - [ ] Full-text search using Entity Framework Core with SQL Server full-text indexing
+    - [ ] Filter by vendor, product type, tags, status, price range
+    - [ ] Advanced search with multiple criteria combination
+    - [ ] Search result ranking and relevance scoring
+- [ ] Add pagination using `Models/Common/PagedResult<T>.cs`:
+    - [ ] Properties: Items, TotalCount, PageNumber, PageSize, TotalPages, HasNextPage, HasPreviousPage
+    - [ ] Extension method `IQueryable<T>.ToPagedResultAsync(int page, int size)`
+    - [ ] Default page size: 20, max page size: 100
+- [ ] Implement sorting with `Models/Common/SortOptions.cs`:
+    - [ ] Sort by: Title, CreatedAt, UpdatedAt, Price, Vendor (ascending/descending)
+    - [ ] Default sort: CreatedAt descending
+    - [ ] Multiple sort criteria support
+- [ ] Product variant management in `Services/ProductVariantService.cs`:
+    - [ ] `CreateVariantAsync(long productId, CreateProductVariantDto dto)`
+    - [ ] `UpdateVariantAsync(long variantId, UpdateProductVariantDto dto)`
+    - [ ] `DeleteVariantAsync(long variantId)`
+    - [ ] `GetVariantsByProductIdAsync(long productId)`
+    - [ ] Variant option validation (size, color, material combinations)
+    - [ ] SKU uniqueness validation
+    - [ ] Inventory tracking integration
+- [ ] Product image management in `Services/ProductImageService.cs`:
+    - [ ] `UploadImageAsync(long productId, IFormFile file)` with Azure Blob Storage integration
+    - [ ] `UpdateImageAsync(long imageId, UpdateProductImageDto dto)`
+    - [ ] `DeleteImageAsync(long imageId)`
+    - [ ] `ReorderImagesAsync(long productId, List<ImagePositionDto> positions)`
+    - [ ] Image validation: file size (max 5MB), formats (JPEG, PNG, WebP), dimensions (min 100x100, max 4096x4096)
+    - [ ] Automatic image optimization and thumbnail generation
+    - [ ] CDN URL generation for optimized delivery
+- [ ] Product collection management in `Services/ProductCollectionService.cs`:
+    - [ ] `AddProductToCollectionAsync(long productId, long collectionId)`
+    - [ ] `RemoveProductFromCollectionAsync(long productId, long collectionId)`
+    - [ ] `GetProductCollectionsAsync(long productId)`
+    - [ ] `GetCollectionProductsAsync(long collectionId, ProductFilterDto filter)`
+    - [ ] Smart collection rules evaluation (automatic product assignment based on conditions)
+    - [ ] Collection product ordering and featured products
+- [ ] API documentation using Swagger/OpenAPI:
+    - [ ] Configure Swashbuckle.AspNetCore in `Program.cs`
+    - [ ] Add XML documentation comments to all controller methods
+    - [ ] Define response schemas with examples
+    - [ ] Document authentication requirements
+    - [ ] Add operation tags and summaries
+    - [ ] Include error response documentation (400, 401, 403, 404, 500)
+- [ ] Validation and error handling:
+    - [ ] Custom validation attributes in `Attributes/Validation/`:
+        - [ ] `ValidProductHandleAttribute` - URL-friendly handle validation
+        - [ ] `ValidProductTypeAttribute` - predefined product type validation
+        - [ ] `ValidTagsAttribute` - tag format and count validation
+    - [ ] Global exception filter `Filters/GlobalExceptionFilter.cs`
+    - [ ] Model validation with detailed error messages
+    - [ ] Business rule validation (e.g., variant options consistency)
+    - [ ] Rate limiting per endpoint (100 requests/minute for search, 1000/minute for CRUD)
+    - [ ] Request size limits (max 10MB for image uploads)
+- [ ] Unit tests in `Tests/Controllers/ProductsControllerTests.cs`:
+    - [ ] Test all CRUD operations with valid/invalid data
+    - [ ] Test filtering, searching, and pagination scenarios
+    - [ ] Test variant and image management operations
+    - [ ] Mock dependencies using Moq framework
+    - [ ] Test error handling and validation scenarios
+    - [ ] Performance tests for search operations
+- [ ] Integration tests in `Tests/Integration/ProductApiTests.cs`:
+    - [ ] End-to-end API testing with test database
+    - [ ] Test complete product lifecycle (create → update → variants → images → delete)
+    - [ ] Test concurrent operations and data consistency
+    - [ ] Test file upload scenarios
+    - [ ] Test authentication and authorization
 
 ### [ ] TASK-017: Customer Management APIs
 **Priority**: High | **Effort**: 6h | **Dependencies**: TASK-002
 
 #### Sub-tasks:
-- [ ] Create CustomersController with CRUD operations
-- [ ] Implement customer search and filtering
-- [ ] Add customer address management
-- [ ] Implement customer order history
-- [ ] Add customer analytics endpoints
-- [ ] Implement GDPR compliance endpoints
-- [ ] Create customer API tests
+- [ ] Create `Controllers/CustomersController.cs` with methods:
+    - [ ] `GetCustomers()` - GET /api/customers with filtering, pagination
+    - [ ] `GetCustomer(long id)` - GET /api/customers/{id}
+    - [ ] `CreateCustomer(CreateCustomerDto dto)` - POST /api/customers
+    - [ ] `UpdateCustomer(long id, UpdateCustomerDto dto)` - PUT /api/customers/{id}
+    - [ ] `DeleteCustomer(long id)` - DELETE /api/customers (soft delete with GDPR compliance)
+    - [ ] `SearchCustomers(CustomerSearchDto dto)` - POST /api/customers/search
+    - [ ] `GetCustomerOrders(long customerId)` - GET /api/customers/{id}/orders
+    - [ ] `GetCustomerAddresses(long customerId)` - GET /api/customers/{id}/addresses
+- [ ] Create DTOs in `Models/DTOs/Customers/`:
+    - [ ] `CustomerDto.cs` with Id, Email, FirstName, LastName, Phone, AcceptsMarketing, State, TotalSpent, OrdersCount, Tags, Note, CreatedAt, UpdatedAt
+    - [ ] `CreateCustomerDto.cs` with validation: [Required] Email, [EmailAddress], [StringLength] for names, [Phone] validation
+    - [ ] `UpdateCustomerDto.cs` with optional fields and validation
+    - [ ] `CustomerSearchDto.cs` with filters (Email, Name, Phone, State, Tags, TotalSpentRange, OrdersCountRange, CreatedDateRange)
+    - [ ] `CustomerAddressDto.cs` with Id, CustomerId, FirstName, LastName, Company, Address1, Address2, City, Province, Country, Zip, Phone, IsDefault
+    - [ ] `CustomerOrderSummaryDto.cs` with Id, OrderNumber, TotalPrice, FinancialStatus, FulfillmentStatus, CreatedAt
+    - [ ] `CustomerAnalyticsDto.cs` with TotalSpent, AverageOrderValue, OrdersCount, LastOrderDate, LifetimeValue, CustomerSegment
+- [ ] Implement search and filtering in `Services/CustomerSearchService.cs`:
+    - [ ] Full-text search on email, first name, last name, phone
+    - [ ] Filter by customer state (enabled, disabled, invited, declined)
+    - [ ] Filter by tags, total spent range, orders count range
+    - [ ] Advanced search with multiple criteria combination
+    - [ ] Customer segmentation (VIP, regular, new, at-risk)
+    - [ ] Search result ranking by relevance and customer value
+- [ ] Customer address management in `Services/CustomerAddressService.cs`:
+    - [ ] `CreateAddressAsync(long customerId, CreateCustomerAddressDto dto)`
+    - [ ] `UpdateAddressAsync(long addressId, UpdateCustomerAddressDto dto)`
+    - [ ] `DeleteAddressAsync(long addressId)`
+    - [ ] `SetDefaultAddressAsync(long customerId, long addressId)`
+    - [ ] `GetAddressesByCustomerIdAsync(long customerId)`
+    - [ ] Address validation using external service (Google Maps API)
+    - [ ] Duplicate address detection and prevention
+    - [ ] Address standardization and formatting
+- [ ] Customer order history in `Services/CustomerOrderService.cs`:
+    - [ ] `GetCustomerOrdersAsync(long customerId, OrderFilterDto filter)`
+    - [ ] `GetCustomerOrderSummaryAsync(long customerId)`
+    - [ ] `GetCustomerLifetimeValueAsync(long customerId)`
+    - [ ] Order history pagination and sorting
+    - [ ] Order status tracking and notifications
+    - [ ] Return and refund history
+    - [ ] Wishlist and saved items management
+- [ ] Customer analytics in `Services/CustomerAnalyticsService.cs`:
+    - [ ] `GetCustomerAnalyticsAsync(long customerId)`
+    - [ ] `GetCustomerSegmentationAsync(CustomerSegmentationDto criteria)`
+    - [ ] `GetCustomerLifetimeValueAsync(long customerId)`
+    - [ ] `GetCustomerChurnRiskAsync(long customerId)`
+    - [ ] Purchase behavior analysis (frequency, seasonality, preferences)
+    - [ ] Customer satisfaction scoring
+    - [ ] Predictive analytics for next purchase
+    - [ ] Customer retention metrics
+- [ ] GDPR compliance in `Services/GdprComplianceService.cs`:
+    - [ ] `ExportCustomerDataAsync(long customerId)` - complete data export in JSON/XML format
+    - [ ] `AnonymizeCustomerDataAsync(long customerId)` - replace PII with anonymized values
+    - [ ] `DeleteCustomerDataAsync(long customerId)` - permanent data deletion with audit trail
+    - [ ] `GetDataProcessingConsentAsync(long customerId)` - consent status tracking
+    - [ ] `UpdateDataProcessingConsentAsync(long customerId, ConsentDto consent)`
+    - [ ] Data retention policy enforcement (automatic deletion after specified period)
+    - [ ] Audit logging for all GDPR operations
+    - [ ] Data breach notification system
+    - [ ] Right to rectification implementation
+- [ ] Validation and error handling:
+    - [ ] Custom validation attributes in `Attributes/Validation/`:
+        - [ ] `ValidEmailAttribute` - enhanced email validation with domain verification
+        - [ ] `ValidPhoneAttribute` - international phone number validation
+        - [ ] `ValidCustomerStateAttribute` - customer state validation
+    - [ ] Email uniqueness validation across the system
+    - [ ] Phone number format validation and normalization
+    - [ ] Customer state transition validation
+    - [ ] Rate limiting: 500 requests/minute for customer operations
+    - [ ] PII data encryption in transit and at rest
+- [ ] Unit tests in `Tests/Controllers/CustomersControllerTests.cs`:
+    - [ ] Test all CRUD operations with valid/invalid data
+    - [ ] Test customer search and filtering scenarios
+    - [ ] Test address management operations
+    - [ ] Test order history retrieval
+    - [ ] Test analytics calculations
+    - [ ] Test GDPR compliance operations
+    - [ ] Mock external dependencies (address validation, email services)
+    - [ ] Test error handling and validation scenarios
+- [ ] Integration tests in `Tests/Integration/CustomerApiTests.cs`:
+    - [ ] End-to-end customer lifecycle testing
+    - [ ] Test customer data export and anonymization
+    - [ ] Test address validation integration
+    - [ ] Test email notification integration
+    - [ ] Test concurrent customer operations
+    - [ ] Test GDPR compliance workflows
+    - [ ] Performance tests for customer search operations
 
 ### [ ] TASK-018: Order Management APIs
 **Priority**: High | **Effort**: 8h | **Dependencies**: TASK-002
 
 #### Sub-tasks:
-- [ ] Create OrdersController with comprehensive operations
-- [ ] Implement order search and filtering
-- [ ] Add order fulfillment management
-- [ ] Implement order refund processing
-- [ ] Add order analytics and reporting
-- [ ] Implement order status tracking
-- [ ] Create order API tests
-- [ ] Add order export functionality
+- [ ] Create `Controllers/OrdersController.cs` with methods:
+    - [ ] `GetOrders()` - GET /api/orders with filtering, pagination
+    - [ ] `GetOrder(long id)` - GET /api/orders/{id}
+    - [ ] `CreateOrder(CreateOrderDto dto)` - POST /api/orders
+    - [ ] `UpdateOrder(long id, UpdateOrderDto dto)` - PUT /api/orders/{id}
+    - [ ] `CancelOrder(long id, CancelOrderDto dto)` - POST /api/orders/{id}/cancel
+    - [ ] `SearchOrders(OrderSearchDto dto)` - POST /api/orders/search
+    - [ ] `GetOrderLineItems(long orderId)` - GET /api/orders/{id}/line-items
+    - [ ] `GetOrderFulfillments(long orderId)` - GET /api/orders/{id}/fulfillments
+    - [ ] `GetOrderTransactions(long orderId)` - GET /api/orders/{id}/transactions
+- [ ] Create DTOs in `Models/DTOs/Orders/`:
+    - [ ] `OrderDto.cs` with Id, OrderNumber, Email, FinancialStatus, FulfillmentStatus, TotalPrice, SubtotalPrice, TotalTax, TotalDiscounts, Currency, CustomerId, BillingAddress, ShippingAddress, LineItems, Fulfillments, Transactions, Tags, Note, CreatedAt, UpdatedAt
+    - [ ] `CreateOrderDto.cs` with validation: [Required] Email, LineItems, [Range] for prices, [Currency] validation
+    - [ ] `UpdateOrderDto.cs` with optional fields and business rule validation
+    - [ ] `OrderSearchDto.cs` with filters (OrderNumber, Email, FinancialStatus, FulfillmentStatus, CustomerId, TotalPriceRange, CreatedDateRange, Tags)
+    - [ ] `OrderLineItemDto.cs` with Id, ProductId, VariantId, Title, Quantity, Price, TotalDiscount, Sku, Vendor, ProductExists, VariantTitle
+    - [ ] `OrderFulfillmentDto.cs` with Id, OrderId, Status, TrackingCompany, TrackingNumber, TrackingUrl, LineItems, CreatedAt, UpdatedAt
+    - [ ] `OrderTransactionDto.cs` with Id, OrderId, Kind, Gateway, Status, Amount, Currency, AuthorizationCode, CreatedAt
+    - [ ] `CancelOrderDto.cs` with Reason, NotifyCustomer, Refund, RestockItems
+- [ ] Implement order search and filtering in `Services/OrderSearchService.cs`:
+    - [ ] Full-text search on order number, customer email, product titles
+    - [ ] Filter by financial status (pending, authorized, partially_paid, paid, partially_refunded, refunded, voided)
+    - [ ] Filter by fulfillment status (fulfilled, null, partial, restocked)
+    - [ ] Advanced search with multiple criteria combination
+    - [ ] Date range filtering with timezone support
+    - [ ] Customer-based order filtering
+    - [ ] Product-based order filtering
+    - [ ] Search result ranking by relevance and order value
+- [ ] Order fulfillment management in `Services/OrderFulfillmentService.cs`:
+    - [ ] `CreateFulfillmentAsync(long orderId, CreateFulfillmentDto dto)`
+    - [ ] `UpdateFulfillmentAsync(long fulfillmentId, UpdateFulfillmentDto dto)`
+    - [ ] `CancelFulfillmentAsync(long fulfillmentId)`
+    - [ ] `GetFulfillmentsByOrderIdAsync(long orderId)`
+    - [ ] `UpdateTrackingInfoAsync(long fulfillmentId, TrackingInfoDto dto)`
+    - [ ] Partial fulfillment support with line item tracking
+    - [ ] Integration with shipping carriers (FedEx, UPS, DHL, USPS) for tracking
+    - [ ] Automatic fulfillment status updates via webhook
+    - [ ] Fulfillment notification emails to customers
+    - [ ] Inventory adjustment upon fulfillment
+- [ ] Order refund processing in `Services/OrderRefundService.cs`:
+    - [ ] `CreateRefundAsync(long orderId, CreateRefundDto dto)`
+    - [ ] `GetRefundsByOrderIdAsync(long orderId)`
+    - [ ] `ProcessPartialRefundAsync(long orderId, PartialRefundDto dto)`
+    - [ ] `ProcessFullRefundAsync(long orderId, FullRefundDto dto)`
+    - [ ] `GetRefundCalculationAsync(long orderId, RefundCalculationDto dto)`
+    - [ ] Integration with payment gateways for refund processing
+    - [ ] Refund reason tracking and categorization
+    - [ ] Automatic inventory restocking upon refund
+    - [ ] Refund notification emails to customers
+    - [ ] Refund audit trail and compliance reporting
+- [ ] Order analytics and reporting in `Services/OrderAnalyticsService.cs`:
+    - [ ] `GetOrderAnalyticsAsync(OrderAnalyticsFilterDto filter)`
+    - [ ] `GetSalesReportAsync(SalesReportFilterDto filter)`
+    - [ ] `GetOrderTrendsAsync(OrderTrendsFilterDto filter)`
+    - [ ] `GetTopProductsReportAsync(TopProductsFilterDto filter)`
+    - [ ] `GetCustomerOrderAnalyticsAsync(long customerId)`
+    - [ ] Revenue analytics with time-based aggregation
+    - [ ] Order conversion funnel analysis
+    - [ ] Average order value calculations
+    - [ ] Geographic sales distribution
+    - [ ] Seasonal trend analysis
+    - [ ] Product performance metrics
+- [ ] Order status tracking in `Services/OrderStatusService.cs`:
+    - [ ] `GetOrderStatusHistoryAsync(long orderId)`
+    - [ ] `UpdateOrderStatusAsync(long orderId, UpdateOrderStatusDto dto)`
+    - [ ] `GetOrderTimelineAsync(long orderId)`
+    - [ ] `NotifyCustomerOfStatusChangeAsync(long orderId, string newStatus)`
+    - [ ] Real-time status updates via SignalR
+    - [ ] Status change validation and business rules
+    - [ ] Automated status transitions based on events
+    - [ ] Status change audit logging
+    - [ ] Customer notification preferences management
+- [ ] Order export functionality in `Services/OrderExportService.cs`:
+    - [ ] `ExportOrdersAsync(OrderExportFilterDto filter, ExportFormat format)`
+    - [ ] `ExportOrderReportAsync(OrderReportFilterDto filter, ExportFormat format)`
+    - [ ] `ScheduleRecurringExportAsync(RecurringExportDto dto)`
+    - [ ] Support for CSV, Excel, JSON, XML export formats
+    - [ ] Large dataset export with pagination and streaming
+    - [ ] Custom field selection for exports
+    - [ ] Export job status tracking and notifications
+    - [ ] Secure export file storage with expiration
+    - [ ] Export audit logging and access control
+- [ ] Validation and error handling:
+    - [ ] Custom validation attributes in `Attributes/Validation/`:
+        - [ ] `ValidOrderStatusAttribute` - order status transition validation
+        - [ ] `ValidCurrencyAttribute` - currency code validation
+        - [ ] `ValidLineItemsAttribute` - line items consistency validation
+    - [ ] Order total calculation validation
+    - [ ] Inventory availability validation before order creation
+    - [ ] Payment method validation
+    - [ ] Shipping address validation
+    - [ ] Rate limiting: 200 requests/minute for order operations
+    - [ ] Order data encryption for sensitive information
+- [ ] Unit tests in `Tests/Controllers/OrdersControllerTests.cs`:
+    - [ ] Test all CRUD operations with valid/invalid data
+    - [ ] Test order search and filtering scenarios
+    - [ ] Test fulfillment management operations
+    - [ ] Test refund processing workflows
+    - [ ] Test order status transitions
+    - [ ] Test analytics calculations
+    - [ ] Mock external dependencies (payment gateways, shipping carriers)
+    - [ ] Test error handling and validation scenarios
+    - [ ] Performance tests for order search operations
+- [ ] Integration tests in `Tests/Integration/OrderApiTests.cs`:
+    - [ ] End-to-end order lifecycle testing (create → fulfill → refund)
+    - [ ] Test payment gateway integration
+    - [ ] Test shipping carrier integration
+    - [ ] Test inventory management integration
+    - [ ] Test email notification integration
+    - [ ] Test concurrent order operations
+    - [ ] Test order export functionality
+    - [ ] Performance tests for large order datasets
 
 ### [ ] TASK-019: Inventory Management APIs
 **Priority**: High | **Effort**: 6h | **Dependencies**: TASK-002
 
 #### Sub-tasks:
-- [ ] Create InventoryController with management operations
-- [ ] Implement inventory level tracking
-- [ ] Add location-based inventory queries
-- [ ] Implement inventory adjustment APIs
-- [ ] Add inventory reporting endpoints
-- [ ] Implement low stock alerts
-- [ ] Create inventory API tests
+- [ ] Create `Controllers/InventoryController.cs` with methods:
+    - [ ] `GetInventoryLevels()` - GET /api/inventory with filtering, pagination
+    - [ ] `GetInventoryLevel(long id)` - GET /api/inventory/{id}
+    - [ ] `UpdateInventoryLevel(long id, UpdateInventoryLevelDto dto)` - PUT /api/inventory/{id}
+    - [ ] `AdjustInventory(long id, InventoryAdjustmentDto dto)` - POST /api/inventory/{id}/adjust
+    - [ ] `GetInventoryByLocation(long locationId)` - GET /api/inventory/locations/{locationId}
+    - [ ] `GetInventoryByProduct(long productId)` - GET /api/inventory/products/{productId}
+    - [ ] `GetLowStockItems()` - GET /api/inventory/low-stock
+    - [ ] `GetInventoryMovements(long inventoryLevelId)` - GET /api/inventory/{id}/movements
+    - [ ] `BulkUpdateInventory(BulkInventoryUpdateDto dto)` - POST /api/inventory/bulk-update
+- [ ] Create DTOs in `Models/DTOs/Inventory/`:
+    - [ ] `InventoryLevelDto.cs` with Id, InventoryItemId, LocationId, Available, Committed, Incoming, OnHand, Reserved, UpdatedAt
+    - [ ] `UpdateInventoryLevelDto.cs` with validation: [Range] for quantities, [Required] fields
+    - [ ] `InventoryAdjustmentDto.cs` with Quantity, Reason, Note, AdjustmentType (increase/decrease/set)
+    - [ ] `InventoryItemDto.cs` with Id, Sku, ProductId, VariantId, Cost, CountryCodeOfOrigin, ProvinceCodeOfOrigin, HarmonizedSystemCode, Tracked, CountryHarmonizedSystemCodes
+    - [ ] `InventoryMovementDto.cs` with Id, InventoryLevelId, Quantity, MovementType, Reason, OrderId, UserId, CreatedAt
+    - [ ] `LocationDto.cs` with Id, Name, Address, City, Province, Country, Zip, Phone, Active, Legacy
+    - [ ] `LowStockItemDto.cs` with InventoryLevelId, Sku, ProductTitle, VariantTitle, CurrentStock, MinimumStock, LocationName
+    - [ ] `BulkInventoryUpdateDto.cs` with List<InventoryUpdateItem> containing InventoryLevelId, NewQuantity, Reason
+- [ ] Implement inventory level tracking in `Services/InventoryTrackingService.cs`:
+    - [ ] `GetInventoryLevelsAsync(InventoryFilterDto filter)`
+    - [ ] `GetInventoryLevelByIdAsync(long id)`
+    - [ ] `GetInventoryByLocationAsync(long locationId, InventoryFilterDto filter)`
+    - [ ] `GetInventoryByProductAsync(long productId)`
+    - [ ] `GetInventoryBySkuAsync(string sku)`
+    - [ ] Real-time inventory tracking with change notifications
+    - [ ] Inventory reservation system for pending orders
+    - [ ] Multi-location inventory aggregation
+    - [ ] Inventory aging analysis
+    - [ ] Stock velocity calculations
+- [ ] Location-based inventory queries in `Services/LocationInventoryService.cs`:
+    - [ ] `GetLocationInventoryAsync(long locationId, LocationInventoryFilterDto filter)`
+    - [ ] `TransferInventoryAsync(InventoryTransferDto dto)`
+    - [ ] `GetInventoryTransferHistoryAsync(long locationId)`
+    - [ ] `GetLocationStockSummaryAsync(long locationId)`
+    - [ ] `GetOptimalStockLevelsAsync(long locationId)`
+    - [ ] Location-specific stock policies and rules
+    - [ ] Inter-location transfer management
+    - [ ] Location performance analytics
+    - [ ] Geographic inventory distribution optimization
+- [ ] Inventory adjustment APIs in `Services/InventoryAdjustmentService.cs`:
+    - [ ] `CreateAdjustmentAsync(long inventoryLevelId, InventoryAdjustmentDto dto)`
+    - [ ] `GetAdjustmentHistoryAsync(long inventoryLevelId)`
+    - [ ] `BulkAdjustInventoryAsync(BulkInventoryAdjustmentDto dto)`
+    - [ ] `ReconcileInventoryAsync(long locationId, InventoryReconciliationDto dto)`
+    - [ ] `GetAdjustmentReportAsync(AdjustmentReportFilterDto filter)`
+    - [ ] Adjustment reason categorization and validation
+    - [ ] Automatic adjustment triggers (damage, theft, expiration)
+    - [ ] Adjustment approval workflow for large quantities
+    - [ ] Cost impact calculation for adjustments
+    - [ ] Audit trail for all inventory adjustments
+- [ ] Inventory reporting in `Services/InventoryReportingService.cs`:
+    - [ ] `GetInventoryReportAsync(InventoryReportFilterDto filter)`
+    - [ ] `GetStockMovementReportAsync(StockMovementReportFilterDto filter)`
+    - [ ] `GetInventoryValuationReportAsync(InventoryValuationFilterDto filter)`
+    - [ ] `GetStockAgeingReportAsync(StockAgeingFilterDto filter)`
+    - [ ] `GetInventoryTurnoverReportAsync(InventoryTurnoverFilterDto filter)`
+    - [ ] ABC analysis for inventory classification
+    - [ ] Dead stock identification and reporting
+    - [ ] Seasonal inventory trend analysis
+    - [ ] Inventory performance KPIs
+    - [ ] Custom report generation with flexible filters
+- [ ] Low stock alerts in `Services/LowStockAlertService.cs`:
+    - [ ] `GetLowStockItemsAsync(LowStockFilterDto filter)`
+    - [ ] `SetStockThresholdAsync(long inventoryLevelId, StockThresholdDto dto)`
+    - [ ] `GetStockThresholdsAsync(long locationId)`
+    - [ ] `SendLowStockNotificationsAsync()`
+    - [ ] `GetStockAlertHistoryAsync(StockAlertHistoryFilterDto filter)`
+    - [ ] Configurable stock threshold levels (minimum, reorder point, maximum)
+    - [ ] Automated reorder suggestions based on sales velocity
+    - [ ] Multi-channel notification system (email, SMS, webhook)
+    - [ ] Escalation rules for critical stock levels
+    - [ ] Seasonal threshold adjustments
+    - [ ] Supplier lead time integration for reorder calculations
+- [ ] Inventory movements tracking in `Services/InventoryMovementService.cs`:
+    - [ ] `RecordMovementAsync(InventoryMovementDto dto)`
+    - [ ] `GetMovementHistoryAsync(long inventoryLevelId, MovementFilterDto filter)`
+    - [ ] `GetMovementsByOrderAsync(long orderId)`
+    - [ ] `GetMovementsByDateRangeAsync(DateRangeFilterDto filter)`
+    - [ ] `GetMovementSummaryAsync(MovementSummaryFilterDto filter)`
+    - [ ] Movement type categorization (sale, return, adjustment, transfer, damage)
+    - [ ] Batch movement processing for performance
+    - [ ] Movement validation and business rules
+    - [ ] Integration with order fulfillment system
+    - [ ] Real-time movement notifications
+- [ ] Validation and error handling:
+    - [ ] Custom validation attributes in `Attributes/Validation/`:
+        - [ ] `ValidInventoryQuantityAttribute` - quantity range and format validation
+        - [ ] `ValidSkuAttribute` - SKU format and uniqueness validation
+        - [ ] `ValidAdjustmentReasonAttribute` - adjustment reason validation
+    - [ ] Negative inventory prevention with configurable rules
+    - [ ] Concurrent inventory update conflict resolution
+    - [ ] Location existence validation
+    - [ ] Product variant existence validation
+    - [ ] Rate limiting: 300 requests/minute for inventory operations
+    - [ ] Inventory data encryption for sensitive cost information
+- [ ] Unit tests in `Tests/Controllers/InventoryControllerTests.cs`:
+    - [ ] Test all inventory operations with valid/invalid data
+    - [ ] Test inventory level tracking and updates
+    - [ ] Test location-based inventory queries
+    - [ ] Test inventory adjustment workflows
+    - [ ] Test low stock alert functionality
+    - [ ] Test bulk operations and performance
+    - [ ] Mock external dependencies (notification services)
+    - [ ] Test error handling and validation scenarios
+    - [ ] Test concurrent inventory updates
+- [ ] Integration tests in `Tests/Integration/InventoryApiTests.cs`:
+    - [ ] End-to-end inventory lifecycle testing
+    - [ ] Test inventory synchronization with Shopify
+    - [ ] Test order fulfillment inventory integration
+    - [ ] Test notification system integration
+    - [ ] Test reporting and analytics integration
+    - [ ] Test multi-location inventory scenarios
+    - [ ] Performance tests for large inventory datasets
+    - [ ] Test inventory data consistency across operations
 
 ### [ ] TASK-020: B2B Commerce APIs
 **Priority**: Medium | **Effort**: 6h | **Dependencies**: TASK-004
 
 #### Sub-tasks:
 - [ ] Create CompaniesController for B2B management
+    - [ ] Create `Controllers/B2B/CompaniesController.cs` with methods:
+        - [ ] `GetCompanies()` - GET /api/b2b/companies with filtering, pagination
+        - [ ] `GetCompany(long id)` - GET /api/b2b/companies/{id}
+        - [ ] `CreateCompany(CreateCompanyDto dto)` - POST /api/b2b/companies
+        - [ ] `UpdateCompany(long id, UpdateCompanyDto dto)` - PUT /api/b2b/companies/{id}
+        - [ ] `DeleteCompany(long id)` - DELETE /api/b2b/companies/{id} (soft delete)
+        - [ ] `GetCompanyUsers(long companyId)` - GET /api/b2b/companies/{id}/users
+        - [ ] `AddUserToCompany(long companyId, AddCompanyUserDto dto)` - POST /api/b2b/companies/{id}/users
+        - [ ] `RemoveUserFromCompany(long companyId, long userId)` - DELETE /api/b2b/companies/{companyId}/users/{userId}
+    - [ ] Create DTOs in `Models/DTOs/B2B/Companies/`:
+        - [ ] `CompanyDto.cs` with Id, Name, Email, Phone, Address, TaxId, CreditLimit, PaymentTerms, Status, CreatedAt, UpdatedAt
+        - [ ] `CreateCompanyDto.cs` with validation: [Required] Name, Email, [EmailAddress], [StringLength] constraints
+        - [ ] `UpdateCompanyDto.cs` with optional fields and validation
+        - [ ] `AddCompanyUserDto.cs` with UserId, Role, Permissions
+        - [ ] `CompanyUserDto.cs` with user details and company-specific role
+    - [ ] Implement `Services/B2B/CompanyService.cs`:
+        - [ ] Company CRUD operations with business logic validation
+        - [ ] User-company relationship management
+        - [ ] Company hierarchy support (parent/subsidiary relationships)
+        - [ ] Credit limit monitoring and enforcement
+        - [ ] Company status management (active, suspended, pending)
 - [ ] Implement B2B payment terms management
+    - [ ] Create `Controllers/B2B/PaymentTermsController.cs` with methods:
+        - [ ] `GetPaymentTerms()` - GET /api/b2b/payment-terms
+        - [ ] `CreatePaymentTerm(CreatePaymentTermDto dto)` - POST /api/b2b/payment-terms
+        - [ ] `UpdatePaymentTerm(long id, UpdatePaymentTermDto dto)` - PUT /api/b2b/payment-terms/{id}
+        - [ ] `AssignPaymentTermToCompany(long companyId, long paymentTermId)` - POST /api/b2b/companies/{id}/payment-terms
+        - [ ] `GetCompanyPaymentTerms(long companyId)` - GET /api/b2b/companies/{id}/payment-terms
+    - [ ] Create DTOs in `Models/DTOs/B2B/PaymentTerms/`:
+        - [ ] `PaymentTermDto.cs` with Id, Name, Description, DueDays, DiscountPercentage, DiscountDays, IsActive
+        - [ ] `CreatePaymentTermDto.cs` with validation for due days and discount rules
+        - [ ] `UpdatePaymentTermDto.cs` with optional fields
+        - [ ] `CompanyPaymentTermDto.cs` with company-specific payment term details
+    - [ ] Implement `Services/B2B/PaymentTermsService.cs`:
+        - [ ] Payment term CRUD operations
+        - [ ] Company payment term assignment and validation
+        - [ ] Payment due date calculations
+        - [ ] Early payment discount calculations
+        - [ ] Payment term compliance monitoring
 - [ ] Add selling plans and subscriptions APIs
+    - [ ] Create `Controllers/B2B/SellingPlansController.cs` with methods:
+        - [ ] `GetSellingPlans()` - GET /api/b2b/selling-plans
+        - [ ] `CreateSellingPlan(CreateSellingPlanDto dto)` - POST /api/b2b/selling-plans
+        - [ ] `UpdateSellingPlan(long id, UpdateSellingPlanDto dto)` - PUT /api/b2b/selling-plans/{id}
+        - [ ] `GetSellingPlanSubscriptions(long planId)` - GET /api/b2b/selling-plans/{id}/subscriptions
+        - [ ] `CreateSubscription(CreateSubscriptionDto dto)` - POST /api/b2b/subscriptions
+        - [ ] `UpdateSubscription(long id, UpdateSubscriptionDto dto)` - PUT /api/b2b/subscriptions/{id}
+        - [ ] `CancelSubscription(long id, CancelSubscriptionDto dto)` - POST /api/b2b/subscriptions/{id}/cancel
+    - [ ] Create DTOs in `Models/DTOs/B2B/SellingPlans/`:
+        - [ ] `SellingPlanDto.cs` with Id, Name, Description, BillingPolicy, DeliveryPolicy, PricingPolicies, IsActive
+        - [ ] `CreateSellingPlanDto.cs` with validation for billing and delivery policies
+        - [ ] `SubscriptionDto.cs` with Id, CompanyId, SellingPlanId, Status, NextBillingDate, NextDeliveryDate
+        - [ ] `CreateSubscriptionDto.cs` with company and plan validation
+        - [ ] `CancelSubscriptionDto.cs` with cancellation reason and effective date
+    - [ ] Implement `Services/B2B/SellingPlanService.cs`:
+        - [ ] Selling plan management with policy validation
+        - [ ] Subscription lifecycle management
+        - [ ] Billing cycle calculations and processing
+        - [ ] Delivery schedule management
+        - [ ] Subscription renewal and cancellation handling
 - [ ] Implement B2B pricing and discounts
+    - [ ] Create `Controllers/B2B/PricingController.cs` with methods:
+        - [ ] `GetB2BPricing(long companyId, long productId)` - GET /api/b2b/pricing/companies/{companyId}/products/{productId}
+        - [ ] `CreatePriceRule(CreatePriceRuleDto dto)` - POST /api/b2b/price-rules
+        - [ ] `UpdatePriceRule(long id, UpdatePriceRuleDto dto)` - PUT /api/b2b/price-rules/{id}
+        - [ ] `GetCompanyPriceRules(long companyId)` - GET /api/b2b/companies/{id}/price-rules
+        - [ ] `CalculateBulkDiscount(BulkDiscountRequestDto dto)` - POST /api/b2b/pricing/bulk-discount
+        - [ ] `GetTieredPricing(long productId)` - GET /api/b2b/pricing/tiered/{productId}
+    - [ ] Create DTOs in `Models/DTOs/B2B/Pricing/`:
+        - [ ] `B2BPriceDto.cs` with ProductId, CompanyId, Price, Currency, EffectiveDate, ExpiryDate
+        - [ ] `CreatePriceRuleDto.cs` with validation for pricing logic and conditions
+        - [ ] `PriceRuleDto.cs` with Id, Name, Type, Value, Conditions, Priority, IsActive
+        - [ ] `BulkDiscountRequestDto.cs` with product quantities and company context
+        - [ ] `TieredPricingDto.cs` with quantity breaks and corresponding prices
+    - [ ] Implement `Services/B2B/B2BPricingService.cs`:
+        - [ ] Company-specific pricing calculations
+        - [ ] Volume-based discount applications
+        - [ ] Tiered pricing structure management
+        - [ ] Price rule evaluation and priority handling
+        - [ ] Contract pricing support with effective dates
 - [ ] Add B2B order management
+    - [ ] Create `Controllers/B2B/B2BOrdersController.cs` with methods:
+        - [ ] `GetB2BOrders(long companyId)` - GET /api/b2b/companies/{id}/orders
+        - [ ] `CreateB2BOrder(CreateB2BOrderDto dto)` - POST /api/b2b/orders
+        - [ ] `GetB2BOrder(long id)` - GET /api/b2b/orders/{id}
+        - [ ] `UpdateB2BOrder(long id, UpdateB2BOrderDto dto)` - PUT /api/b2b/orders/{id}
+        - [ ] `ApproveOrder(long id, OrderApprovalDto dto)` - POST /api/b2b/orders/{id}/approve
+        - [ ] `RejectOrder(long id, OrderRejectionDto dto)` - POST /api/b2b/orders/{id}/reject
+        - [ ] `GetOrderApprovalWorkflow(long id)` - GET /api/b2b/orders/{id}/approval-workflow
+    - [ ] Create DTOs in `Models/DTOs/B2B/Orders/`:
+        - [ ] `B2BOrderDto.cs` extending OrderDto with B2B-specific fields (CompanyId, ApprovalStatus, PaymentTerms, PurchaseOrderNumber)
+        - [ ] `CreateB2BOrderDto.cs` with B2B validation rules and approval requirements
+        - [ ] `OrderApprovalDto.cs` with approver details and approval notes
+        - [ ] `OrderRejectionDto.cs` with rejection reason and feedback
+        - [ ] `OrderApprovalWorkflowDto.cs` with approval steps and current status
+    - [ ] Implement `Services/B2B/B2BOrderService.cs`:
+        - [ ] B2B order creation with approval workflow integration
+        - [ ] Multi-level approval process management
+        - [ ] Purchase order number validation and tracking
+        - [ ] Credit limit validation before order approval
+        - [ ] B2B-specific order status management
 - [ ] Create B2B analytics endpoints
+    - [ ] Create `Controllers/B2B/B2BAnalyticsController.cs` with methods:
+        - [ ] `GetCompanyAnalytics(long companyId)` - GET /api/b2b/analytics/companies/{id}
+        - [ ] `GetB2BSalesReport(B2BSalesReportDto dto)` - POST /api/b2b/analytics/sales-report
+        - [ ] `GetTopB2BCustomers(TopB2BCustomersDto dto)` - POST /api/b2b/analytics/top-customers
+        - [ ] `GetB2BOrderTrends(OrderTrendsDto dto)` - POST /api/b2b/analytics/order-trends
+        - [ ] `GetCreditUtilization()` - GET /api/b2b/analytics/credit-utilization
+        - [ ] `GetSubscriptionMetrics()` - GET /api/b2b/analytics/subscription-metrics
+    - [ ] Create DTOs in `Models/DTOs/B2B/Analytics/`:
+        - [ ] `CompanyAnalyticsDto.cs` with TotalOrders, TotalSpent, AverageOrderValue, CreditUtilization, PaymentHistory
+        - [ ] `B2BSalesReportDto.cs` with date range, company filters, and aggregation options
+        - [ ] `TopB2BCustomersDto.cs` with ranking criteria and time period
+        - [ ] `OrderTrendsDto.cs` with trend analysis parameters
+        - [ ] `CreditUtilizationDto.cs` with credit limit usage across companies
+        - [ ] `SubscriptionMetricsDto.cs` with subscription performance indicators
+    - [ ] Implement `Services/B2B/B2BAnalyticsService.cs`:
+        - [ ] Company performance analytics and KPI calculations
+        - [ ] B2B sales trend analysis and forecasting
+        - [ ] Credit utilization monitoring and reporting
+        - [ ] Subscription metrics and churn analysis
+        - [ ] B2B customer segmentation and lifetime value calculations
 - [ ] Add B2B API tests
+    - [ ] Create unit tests in `Tests/Controllers/B2B/`:
+        - [ ] `CompaniesControllerTests.cs` - test company management operations
+        - [ ] `PaymentTermsControllerTests.cs` - test payment terms functionality
+        - [ ] `SellingPlansControllerTests.cs` - test selling plans and subscriptions
+        - [ ] `B2BPricingControllerTests.cs` - test pricing and discount calculations
+        - [ ] `B2BOrdersControllerTests.cs` - test B2B order workflows
+        - [ ] `B2BAnalyticsControllerTests.cs` - test analytics endpoints
+    - [ ] Create integration tests in `Tests/Integration/B2B/`:
+        - [ ] `B2BWorkflowTests.cs` - end-to-end B2B scenarios
+        - [ ] `B2BOrderApprovalTests.cs` - test approval workflows
+        - [ ] `B2BPricingIntegrationTests.cs` - test pricing calculations
+        - [ ] `B2BSubscriptionTests.cs` - test subscription lifecycle
+    - [ ] API documentation and examples:
+        - [ ] Add Swagger annotations for all B2B endpoints
+        - [ ] Create B2B API usage examples and tutorials
+        - [ ] Document B2B authentication and authorization requirements
+        - [ ] Add rate limiting documentation for B2B endpoints
 
 ---
 
@@ -286,39 +2402,519 @@ This document outlines the atomic, developer-ready tasks for implementing the Sh
 
 #### Sub-tasks:
 - [ ] Implement JWT token authentication
+    - [ ] Install and configure `Microsoft.AspNetCore.Authentication.JwtBearer` v8.0.0
+    - [ ] Create `Services/Authentication/JwtTokenService.cs`:
+        - [ ] `GenerateAccessTokenAsync(User user, IList<string> roles)` - generate JWT with RS256 algorithm
+        - [ ] `GenerateRefreshTokenAsync(long userId)` - generate secure refresh token with 30-day expiry
+        - [ ] `ValidateTokenAsync(string token)` - validate JWT signature and claims
+        - [ ] `RefreshTokenAsync(string refreshToken)` - exchange refresh token for new access token
+        - [ ] `RevokeTokenAsync(string refreshToken)` - invalidate refresh token
+    - [ ] Configure JWT settings in `appsettings.json`:
+        - [ ] RSA key pair for token signing (RS256 algorithm)
+        - [ ] Token expiry: 15 minutes for access tokens, 30 days for refresh tokens
+        - [ ] Issuer and audience configuration
+        - [ ] Clock skew tolerance: 5 minutes
+    - [ ] Create `Models/Authentication/`:
+        - [ ] `LoginRequestDto.cs` with [Required] Email, Password, [Optional] RememberMe
+        - [ ] `LoginResponseDto.cs` with AccessToken, RefreshToken, ExpiresIn, TokenType, User
+        - [ ] `RefreshTokenRequestDto.cs` with [Required] RefreshToken
+        - [ ] `TokenValidationResultDto.cs` with IsValid, UserId, Claims, ExpiryDate
+    - [ ] Implement `Controllers/AuthController.cs`:
+        - [ ] `Login(LoginRequestDto dto)` - POST /api/auth/login with rate limiting (5 attempts/minute)
+        - [ ] `RefreshToken(RefreshTokenRequestDto dto)` - POST /api/auth/refresh
+        - [ ] `Logout(LogoutRequestDto dto)` - POST /api/auth/logout
+        - [ ] `ValidateToken()` - GET /api/auth/validate
+    - [ ] Add JWT middleware configuration in `Program.cs`:
+        - [ ] Token validation parameters with RS256 signature validation
+        - [ ] Custom JWT events for logging and monitoring
+        - [ ] Token blacklist integration for logout functionality
 - [ ] Add OAuth 2.0 support
+    - [ ] Install `Microsoft.AspNetCore.Authentication.Google` v8.0.0
+    - [ ] Install `Microsoft.AspNetCore.Authentication.Facebook` v8.0.0
+    - [ ] Create `Services/Authentication/OAuthService.cs`:
+        - [ ] `HandleGoogleCallbackAsync(string code, string state)` - process Google OAuth callback
+        - [ ] `HandleFacebookCallbackAsync(string code, string state)` - process Facebook OAuth callback
+        - [ ] `LinkExternalAccountAsync(long userId, ExternalLoginInfo info)` - link OAuth account to existing user
+        - [ ] `CreateUserFromExternalLoginAsync(ExternalLoginInfo info)` - create user from OAuth data
+        - [ ] `GetExternalLoginProvidersAsync()` - get configured OAuth providers
+    - [ ] Configure OAuth providers in `appsettings.json`:
+        - [ ] Google OAuth 2.0: ClientId, ClientSecret, scopes (openid, profile, email)
+        - [ ] Facebook OAuth: AppId, AppSecret, scopes (email, public_profile)
+        - [ ] Redirect URIs and callback endpoints
+    - [ ] Create OAuth DTOs in `Models/Authentication/OAuth/`:
+        - [ ] `ExternalLoginRequestDto.cs` with Provider, ReturnUrl, State
+        - [ ] `ExternalLoginCallbackDto.cs` with Code, State, Error, ErrorDescription
+        - [ ] `LinkExternalAccountDto.cs` with Provider, ExternalUserId, Email
+        - [ ] `ExternalUserInfoDto.cs` with Id, Email, Name, Picture, Provider
+    - [ ] Add OAuth endpoints to `Controllers/AuthController.cs`:
+        - [ ] `ExternalLogin(string provider, string returnUrl)` - GET /api/auth/external-login/{provider}
+        - [ ] `ExternalLoginCallback(string provider)` - GET /api/auth/external-login-callback/{provider}
+        - [ ] `LinkExternalAccount(LinkExternalAccountDto dto)` - POST /api/auth/link-external-account
+        - [ ] `UnlinkExternalAccount(string provider)` - DELETE /api/auth/external-accounts/{provider}
 - [ ] Implement role-based access control (RBAC)
+    - [ ] Create role entities in `Models/Identity/`:
+        - [ ] `Role.cs` with Id, Name, Description, Permissions, IsSystemRole, CreatedAt, UpdatedAt
+        - [ ] `Permission.cs` with Id, Name, Resource, Action, Description (e.g., "products:read", "orders:write")
+        - [ ] `UserRole.cs` with UserId, RoleId, AssignedBy, AssignedAt, ExpiresAt
+        - [ ] `RolePermission.cs` with RoleId, PermissionId, GrantedBy, GrantedAt
+    - [ ] Implement `Services/Authorization/RoleService.cs`:
+        - [ ] `CreateRoleAsync(CreateRoleDto dto)` - create role with permissions
+        - [ ] `UpdateRoleAsync(long roleId, UpdateRoleDto dto)` - update role and permissions
+        - [ ] `DeleteRoleAsync(long roleId)` - soft delete role (prevent deletion of system roles)
+        - [ ] `AssignRoleToUserAsync(long userId, long roleId, DateTime? expiresAt)` - assign role with optional expiry
+        - [ ] `RemoveRoleFromUserAsync(long userId, long roleId)` - remove role assignment
+        - [ ] `GetUserRolesAsync(long userId)` - get user's active roles
+        - [ ] `GetRolePermissionsAsync(long roleId)` - get role's permissions
+    - [ ] Create authorization attributes in `Attributes/Authorization/`:
+        - [ ] `RequirePermissionAttribute.cs` - check specific permission (e.g., [RequirePermission("products:write")])
+        - [ ] `RequireRoleAttribute.cs` - check role membership (e.g., [RequireRole("Admin")])
+        - [ ] `RequireResourceOwnershipAttribute.cs` - check resource ownership
+    - [ ] Implement `Services/Authorization/AuthorizationService.cs`:
+        - [ ] `HasPermissionAsync(long userId, string permission)` - check user permission
+        - [ ] `HasRoleAsync(long userId, string roleName)` - check user role
+        - [ ] `IsResourceOwnerAsync(long userId, string resourceType, long resourceId)` - check ownership
+        - [ ] `GetUserPermissionsAsync(long userId)` - get all user permissions (direct + role-based)
+    - [ ] Define system roles and permissions:
+        - [ ] SuperAdmin: all permissions, system management
+        - [ ] Admin: user management, content management, reporting
+        - [ ] Manager: order management, customer service, inventory
+        - [ ] Employee: basic operations, read-only access
+        - [ ] Customer: profile management, order history
 - [ ] Add API key authentication
+    - [ ] Create `Models/Authentication/ApiKey.cs`:
+        - [ ] Id, Name, KeyHash, UserId, Scopes, IsActive, ExpiresAt, LastUsedAt, CreatedAt
+    - [ ] Implement `Services/Authentication/ApiKeyService.cs`:
+        - [ ] `CreateApiKeyAsync(CreateApiKeyDto dto)` - generate API key with SHA-256 hashing
+        - [ ] `ValidateApiKeyAsync(string apiKey)` - validate and update last used timestamp
+        - [ ] `RevokeApiKeyAsync(long apiKeyId)` - revoke API key
+        - [ ] `GetUserApiKeysAsync(long userId)` - get user's API keys
+        - [ ] `RotateApiKeyAsync(long apiKeyId)` - generate new key, revoke old one
+    - [ ] Create API key DTOs in `Models/Authentication/ApiKeys/`:
+        - [ ] `CreateApiKeyDto.cs` with Name, Scopes, ExpiresAt validation
+        - [ ] `ApiKeyDto.cs` with Id, Name, Scopes, IsActive, ExpiresAt, LastUsedAt (exclude KeyHash)
+        - [ ] `ApiKeyCreatedDto.cs` with ApiKey (plain text, shown only once), ApiKeyDto
+    - [ ] Add API key middleware `Middleware/ApiKeyAuthenticationMiddleware.cs`:
+        - [ ] Extract API key from X-API-Key header or query parameter
+        - [ ] Validate API key and set user context
+        - [ ] Rate limiting per API key (1000 requests/hour)
+        - [ ] Logging for API key usage and failures
+    - [ ] Add API key endpoints to `Controllers/ApiKeysController.cs`:
+        - [ ] `CreateApiKey(CreateApiKeyDto dto)` - POST /api/api-keys
+        - [ ] `GetApiKeys()` - GET /api/api-keys
+        - [ ] `RevokeApiKey(long id)` - DELETE /api/api-keys/{id}
+        - [ ] `RotateApiKey(long id)` - POST /api/api-keys/{id}/rotate
 - [ ] Implement user permission management
+    - [ ] Create `Controllers/PermissionsController.cs`:
+        - [ ] `GetPermissions()` - GET /api/permissions (list all available permissions)
+        - [ ] `GetUserPermissions(long userId)` - GET /api/users/{id}/permissions
+        - [ ] `GrantPermissionToUser(long userId, GrantPermissionDto dto)` - POST /api/users/{id}/permissions
+        - [ ] `RevokePermissionFromUser(long userId, long permissionId)` - DELETE /api/users/{userId}/permissions/{permissionId}
+        - [ ] `GetRoles()` - GET /api/roles
+        - [ ] `CreateRole(CreateRoleDto dto)` - POST /api/roles
+        - [ ] `UpdateRole(long id, UpdateRoleDto dto)` - PUT /api/roles/{id}
+        - [ ] `DeleteRole(long id)` - DELETE /api/roles/{id}
+    - [ ] Create permission DTOs in `Models/Authorization/`:
+        - [ ] `PermissionDto.cs` with Id, Name, Resource, Action, Description
+        - [ ] `GrantPermissionDto.cs` with PermissionId, ExpiresAt, GrantedReason
+        - [ ] `UserPermissionDto.cs` with Permission, GrantedAt, ExpiresAt, Source (Direct/Role)
+        - [ ] `CreateRoleDto.cs` with Name, Description, PermissionIds validation
+        - [ ] `UpdateRoleDto.cs` with optional fields and permission updates
+    - [ ] Implement permission caching in `Services/Authorization/PermissionCacheService.cs`:
+        - [ ] `GetUserPermissionsCachedAsync(long userId)` - cache user permissions for 15 minutes
+        - [ ] `InvalidateUserPermissionsAsync(long userId)` - clear user permission cache
+        - [ ] `InvalidateRolePermissionsAsync(long roleId)` - clear role permission cache
+        - [ ] Redis-based caching with automatic expiration
 - [ ] Add multi-factor authentication support
+    - [ ] Install `Google.Authenticator` v2.0.0 for TOTP
+    - [ ] Create `Models/Authentication/MFA/`:
+        - [ ] `MfaSettings.cs` with UserId, IsEnabled, SecretKey, BackupCodes, LastUsedAt
+        - [ ] `MfaSetupDto.cs` with QrCodeUrl, SecretKey, BackupCodes
+        - [ ] `MfaVerificationDto.cs` with Code, RememberDevice
+        - [ ] `MfaBackupCodeDto.cs` with Code, IsUsed, UsedAt
+    - [ ] Implement `Services/Authentication/MfaService.cs`:
+        - [ ] `SetupMfaAsync(long userId)` - generate secret key and QR code
+        - [ ] `EnableMfaAsync(long userId, string verificationCode)` - enable MFA after verification
+        - [ ] `DisableMfaAsync(long userId, string verificationCode)` - disable MFA
+        - [ ] `VerifyMfaCodeAsync(long userId, string code)` - verify TOTP code
+        - [ ] `GenerateBackupCodesAsync(long userId)` - generate 10 backup codes
+        - [ ] `UseBackupCodeAsync(long userId, string backupCode)` - use backup code
+    - [ ] Add MFA endpoints to `Controllers/AuthController.cs`:
+        - [ ] `SetupMfa()` - POST /api/auth/mfa/setup
+        - [ ] `EnableMfa(EnableMfaDto dto)` - POST /api/auth/mfa/enable
+        - [ ] `DisableMfa(DisableMfaDto dto)` - POST /api/auth/mfa/disable
+        - [ ] `VerifyMfa(MfaVerificationDto dto)` - POST /api/auth/mfa/verify
+        - [ ] `GenerateBackupCodes()` - POST /api/auth/mfa/backup-codes
+    - [ ] Implement MFA middleware `Middleware/MfaRequiredMiddleware.cs`:
+        - [ ] Check if user has MFA enabled and verified for current session
+        - [ ] Redirect to MFA verification if required
+        - [ ] Remember device for 30 days if requested
 - [ ] Create authentication tests
+    - [ ] Unit tests in `Tests/Services/Authentication/`:
+        - [ ] `JwtTokenServiceTests.cs` - test token generation, validation, refresh
+        - [ ] `OAuthServiceTests.cs` - test OAuth flows and user creation
+        - [ ] `ApiKeyServiceTests.cs` - test API key management
+        - [ ] `MfaServiceTests.cs` - test MFA setup and verification
+        - [ ] `RoleServiceTests.cs` - test role and permission management
+    - [ ] Integration tests in `Tests/Integration/Authentication/`:
+        - [ ] `AuthenticationFlowTests.cs` - test complete login/logout flows
+        - [ ] `OAuthIntegrationTests.cs` - test OAuth provider integration
+        - [ ] `MfaIntegrationTests.cs` - test MFA workflows
+        - [ ] `AuthorizationTests.cs` - test permission and role enforcement
+    - [ ] Security tests in `Tests/Security/`:
+        - [ ] `TokenSecurityTests.cs` - test token tampering, expiry, signature validation
+        - [ ] `BruteForceProtectionTests.cs` - test rate limiting and account lockout
+        - [ ] `SessionSecurityTests.cs` - test session fixation, hijacking protection
 - [ ] Add session management
+    - [ ] Configure session settings in `Program.cs`:
+        - [ ] Redis-based session storage for scalability
+        - [ ] Session timeout: 30 minutes of inactivity
+        - [ ] Secure session cookies with HttpOnly, Secure, SameSite=Strict
+        - [ ] Session ID regeneration on login/privilege escalation
+    - [ ] Implement `Services/Authentication/SessionService.cs`:
+        - [ ] `CreateSessionAsync(long userId, string deviceInfo, string ipAddress)` - create session
+        - [ ] `ValidateSessionAsync(string sessionId)` - validate and extend session
+        - [ ] `InvalidateSessionAsync(string sessionId)` - invalidate specific session
+        - [ ] `InvalidateAllUserSessionsAsync(long userId)` - invalidate all user sessions
+        - [ ] `GetActiveSessionsAsync(long userId)` - get user's active sessions
+    - [ ] Create session DTOs in `Models/Authentication/Sessions/`:
+        - [ ] `SessionDto.cs` with Id, UserId, DeviceInfo, IpAddress, CreatedAt, LastAccessedAt, ExpiresAt
+        - [ ] `CreateSessionDto.cs` with DeviceInfo, IpAddress validation
+        - [ ] `ActiveSessionDto.cs` with session details and current status
+    - [ ] Add session endpoints to `Controllers/SessionsController.cs`:
+        - [ ] `GetActiveSessions()` - GET /api/sessions
+        - [ ] `InvalidateSession(string sessionId)` - DELETE /api/sessions/{id}
+        - [ ] `InvalidateAllSessions()` - DELETE /api/sessions
+    - [ ] Implement session security features:
+        - [ ] Concurrent session limits (max 5 sessions per user)
+        - [ ] Suspicious activity detection (unusual IP, device)
+        - [ ] Session monitoring and alerting
+        - [ ] Automatic session cleanup for expired sessions
 
 ### [ ] TASK-022: Data Encryption and Security
 **Priority**: High | **Effort**: 6h | **Dependencies**: TASK-001
 
 #### Sub-tasks:
 - [ ] Implement data encryption at rest
+    - [ ] Configure SQL Server Transparent Data Encryption (TDE):
+        - [ ] Enable TDE on database with AES-256 encryption
+        - [ ] Create database master key with strong passphrase (min 32 characters)
+        - [ ] Create certificate for TDE with RSA-2048 key
+        - [ ] Backup certificate and private key to secure location
+        - [ ] Configure automatic key rotation every 12 months
+    - [ ] Implement Azure Key Vault integration:
+        - [ ] Install `Azure.Security.KeyVault.Keys` v4.5.0
+        - [ ] Install `Azure.Security.KeyVault.Secrets` v4.5.0
+        - [ ] Configure Key Vault connection in `appsettings.json`
+        - [ ] Create `Services/Security/KeyVaultService.cs` with key management methods
+    - [ ] Configure file system encryption:
+        - [ ] Enable BitLocker/LUKS for server storage
+        - [ ] Encrypt application logs and temporary files
+        - [ ] Secure file upload storage with encryption
 - [ ] Add data encryption in transit (TLS/SSL)
+    - [ ] Configure HTTPS in `Program.cs`:
+        - [ ] Enforce HTTPS redirection for all requests
+        - [ ] Configure HSTS (HTTP Strict Transport Security) with 1-year max-age
+        - [ ] Set secure cookie policies (Secure, HttpOnly, SameSite=Strict)
+        - [ ] Disable insecure protocols (TLS 1.0, 1.1)
+    - [ ] Implement TLS 1.3 configuration:
+        - [ ] Configure Kestrel for TLS 1.3 support
+        - [ ] Use strong cipher suites (AES-256-GCM, ChaCha20-Poly1305)
+        - [ ] Configure perfect forward secrecy (PFS)
+        - [ ] Implement certificate pinning for critical endpoints
+    - [ ] Add SSL/TLS certificate management:
+        - [ ] Create `Services/Security/CertificateService.cs`
+        - [ ] Implement automatic certificate renewal
+        - [ ] Add certificate expiry monitoring and alerts
 - [ ] Implement sensitive data masking
+    - [ ] Create `Services/Logging/DataMaskingService.cs`:
+        - [ ] `MaskSensitiveData(string logMessage)` - mask PII in log messages
+        - [ ] `MaskEmail(string email)` - mask email (e.g., j***@example.com)
+        - [ ] `MaskPhone(string phone)` - mask phone (e.g., ***-***-1234)
+        - [ ] `MaskCreditCard(string cardNumber)` - mask card (e.g., ****-****-****-1234)
+        - [ ] `MaskAddress(string address)` - mask address details
+    - [ ] Implement field-level encryption:
+        - [ ] Install `Microsoft.AspNetCore.DataProtection` v8.0.0
+        - [ ] Create `Services/Security/FieldEncryptionService.cs`
+        - [ ] Implement encryption attributes for sensitive entity properties
+        - [ ] Configure automatic encryption/decryption for EF Core
+    - [ ] Configure masking rules in `appsettings.json`:
+        - [ ] Regex patterns for email, phone, SSN, credit card detection
+        - [ ] Field names to always mask (password, token, key)
+        - [ ] Log levels requiring masking (Information, Warning, Error)
 - [ ] Add audit logging for security events
+    - [ ] Create `Models/Security/SecurityAuditLog.cs`:
+        - [ ] Id, UserId, Action, Resource, IpAddress, UserAgent, Timestamp, Success, Details
+    - [ ] Implement `Services/Security/SecurityAuditService.cs`:
+        - [ ] `LogSecurityEventAsync(SecurityEvent evt)` - log security events
+        - [ ] `LogLoginAttemptAsync(LoginAttempt attempt)` - log login attempts
+        - [ ] `LogPermissionChangeAsync(PermissionChange change)` - log permission changes
+        - [ ] `LogDataAccessAsync(DataAccess access)` - log sensitive data access
+        - [ ] `LogSecurityViolationAsync(SecurityViolation violation)` - log security violations
+    - [ ] Define security events to audit:
+        - [ ] Authentication: login, logout, failed attempts, password changes
+        - [ ] Authorization: permission grants/revokes, role changes, access denials
+        - [ ] Data Access: PII access, bulk data exports, sensitive queries
+        - [ ] System: configuration changes, key rotations, security updates
+        - [ ] Violations: injection attempts, rate limit exceeded, suspicious activity
+    - [ ] Implement audit log protection:
+        - [ ] Digital signatures for audit log integrity
+        - [ ] Immutable audit log storage (append-only)
+        - [ ] Separate database/storage for audit logs
+        - [ ] Encrypted audit log transmission
 - [ ] Implement PCI DSS v4.0.1 compliance
+    - [ ] Implement cardholder data protection:
+        - [ ] Encrypt all cardholder data with AES-256
+        - [ ] Implement strong cryptography and security protocols
+        - [ ] Secure transmission of cardholder data across networks
+        - [ ] Never store sensitive authentication data (CVV, PIN)
+    - [ ] Create secure network architecture:
+        - [ ] Install and maintain firewall configuration
+        - [ ] Segment cardholder data environment from other networks
+        - [ ] Restrict access to cardholder data by business need-to-know
+        - [ ] Implement strong access control measures
+    - [ ] Implement vulnerability management:
+        - [ ] Use and regularly update anti-virus software
+        - [ ] Develop and maintain secure systems and applications
+        - [ ] Regular security testing and vulnerability assessments
+        - [ ] Implement file integrity monitoring
+    - [ ] Create PCI DSS compliance reporting:
+        - [ ] Document compliance procedures and policies
+        - [ ] Regular compliance assessments and audits
+        - [ ] Incident response procedures for security breaches
+        - [ ] Employee security awareness training
 - [ ] Add GDPR data protection measures
+    - [ ] Implement data subject rights:
+        - [ ] Create `Services/Privacy/GdprService.cs`:
+            - [ ] `ExportPersonalDataAsync(long userId)` - export all user data (Article 20)
+            - [ ] `DeletePersonalDataAsync(long userId)` - right to erasure (Article 17)
+            - [ ] `RectifyPersonalDataAsync(long userId, RectificationDto dto)` - right to rectification (Article 16)
+            - [ ] `RestrictProcessingAsync(long userId, RestrictionDto dto)` - restrict processing (Article 18)
+            - [ ] `ObjectToProcessingAsync(long userId, ObjectionDto dto)` - right to object (Article 21)
+    - [ ] Implement consent management:
+        - [ ] Create `Models/Privacy/Consent.cs` with consent tracking
+        - [ ] Create `Services/Privacy/ConsentService.cs` for consent management
+        - [ ] Add consent validation for data processing activities
+        - [ ] Implement consent withdrawal mechanisms
+    - [ ] Add GDPR endpoints to `Controllers/PrivacyController.cs`:
+        - [ ] `ExportPersonalData()` - GET /api/privacy/export-data
+        - [ ] `DeletePersonalData()` - DELETE /api/privacy/delete-data
+        - [ ] `RectifyPersonalData(RectificationDto dto)` - PUT /api/privacy/rectify-data
+        - [ ] `ManageConsent(ConsentDto dto)` - POST /api/privacy/consent
+    - [ ] Implement data retention policies:
+        - [ ] Configure automatic data deletion after retention period
+        - [ ] Implement data anonymization for analytics
+        - [ ] Create data lifecycle management workflows
+        - [ ] Add legal hold functionality for litigation
 - [ ] Create security tests
+    - [ ] Unit tests in `Tests/Security/`:
+        - [ ] `EncryptionServiceTests.cs` - test encryption/decryption functionality
+        - [ ] `DataMaskingTests.cs` - test sensitive data masking
+        - [ ] `AuditLoggingTests.cs` - test security audit logging
+        - [ ] `GdprComplianceTests.cs` - test GDPR compliance features
+    - [ ] Security integration tests:
+        - [ ] `SecurityHeadersTests.cs` - test security headers implementation
+        - [ ] `TlsConfigurationTests.cs` - test TLS/SSL configuration
+        - [ ] `InputValidationTests.cs` - test input validation and sanitization
+        - [ ] `AuthenticationSecurityTests.cs` - test authentication security measures
+    - [ ] Penetration testing scenarios:
+        - [ ] SQL injection prevention tests
+        - [ ] XSS (Cross-Site Scripting) prevention tests
+        - [ ] CSRF (Cross-Site Request Forgery) protection tests
+        - [ ] Authentication bypass attempt tests
+        - [ ] Authorization escalation tests
 - [ ] Implement secure key management
+    - [ ] Create `Models/Security/EncryptionKey.cs`:
+        - [ ] Id, KeyId, Purpose, Algorithm, CreatedAt, ExpiresAt, IsActive, KeyVaultReference
+    - [ ] Implement `Services/Security/KeyManagementService.cs`:
+        - [ ] `GenerateKeyAsync(string purpose, string algorithm)` - generate new encryption key
+        - [ ] `GetActiveKeyAsync(string purpose)` - get current active key for purpose
+        - [ ] `RotateKeyAsync(string purpose)` - rotate key and mark old as inactive
+        - [ ] `BackupKeysAsync()` - backup keys to secure storage
+        - [ ] `ValidateKeyIntegrityAsync()` - verify key integrity and availability
+    - [ ] Configure key hierarchy:
+        - [ ] Master Key: stored in Azure Key Vault, rotated annually
+        - [ ] Data Encryption Keys: derived from master key, rotated quarterly
+        - [ ] Field Encryption Keys: purpose-specific, rotated monthly
+        - [ ] Session Keys: temporary, rotated per session
+    - [ ] Implement key escrow and recovery:
+        - [ ] Create `Services/Security/KeyEscrowService.cs` for secure key backup
+        - [ ] Implement multi-person key recovery procedures
+        - [ ] Add comprehensive audit logging for all key operations
+    - [ ] Add key management endpoints to `Controllers/SecurityController.cs`:
+        - [ ] `RotateKeys(RotateKeysDto dto)` - POST /api/security/keys/rotate (admin only)
+        - [ ] `GetKeyStatus()` - GET /api/security/keys/status
+        - [ ] `BackupKeys()` - POST /api/security/keys/backup (super admin only)
 
 ### [ ] TASK-023: API Security and Rate Limiting
 **Priority**: High | **Effort**: 4h | **Dependencies**: TASK-021
 
 #### Sub-tasks:
 - [ ] Implement API rate limiting
+    - [ ] Install `AspNetCoreRateLimit` v5.0.0 package
+    - [ ] Create `Services/Security/RateLimitingService.cs`:
+        - [ ] `ConfigureRateLimiting()` - configure rate limiting rules
+        - [ ] `GetClientIdentifier(HttpContext context)` - identify client for rate limiting
+        - [ ] `HandleRateLimitExceeded(HttpContext context)` - handle rate limit violations
+        - [ ] `GetRateLimitStatus(string clientId)` - get current rate limit status
+    - [ ] Configure rate limiting rules in `appsettings.json`:
+        - [ ] General API: 1000 requests per hour per IP
+        - [ ] Authentication endpoints: 10 requests per minute per IP
+        - [ ] Search endpoints: 100 requests per minute per user
+        - [ ] Admin endpoints: 50 requests per minute per admin user
+        - [ ] File upload endpoints: 10 requests per hour per user
+    - [ ] Implement distributed rate limiting:
+        - [ ] Configure Redis for distributed rate limiting storage
+        - [ ] Add rate limiting middleware in `Program.cs`
+        - [ ] Implement sliding window rate limiting algorithm
+        - [ ] Add rate limit headers (X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset)
 - [ ] Add request throttling
+    - [ ] Create `Middleware/RequestThrottlingMiddleware.cs`:
+        - [ ] `InvokeAsync(HttpContext context, RequestDelegate next)` - process throttling
+        - [ ] `CalculateThrottleDelay(string clientId)` - calculate throttle delay
+        - [ ] `ApplyThrottling(HttpContext context, TimeSpan delay)` - apply throttling
+        - [ ] `IsThrottlingRequired(HttpContext context)` - check if throttling needed
+    - [ ] Implement adaptive throttling:
+        - [ ] Monitor server CPU and memory usage
+        - [ ] Adjust throttling based on system load
+        - [ ] Implement circuit breaker pattern for overloaded endpoints
+        - [ ] Add throttling exemptions for health checks and monitoring
+    - [ ] Configure throttling policies:
+        - [ ] Exponential backoff for repeated violations
+        - [ ] Different throttling levels based on user tiers
+        - [ ] Emergency throttling during high load
+        - [ ] Throttling bypass for critical system operations
 - [ ] Implement API key rotation
+    - [ ] Create `Models/Security/ApiKey.cs`:
+        - [ ] Id, KeyId, UserId, KeyHash, Name, Scopes, CreatedAt, ExpiresAt, LastUsedAt, IsActive
+    - [ ] Implement `Services/Security/ApiKeyService.cs`:
+        - [ ] `GenerateApiKeyAsync(long userId, string name, string[] scopes)` - generate new API key
+        - [ ] `ValidateApiKeyAsync(string apiKey)` - validate API key
+        - [ ] `RotateApiKeyAsync(string keyId)` - rotate existing API key
+        - [ ] `RevokeApiKeyAsync(string keyId)` - revoke API key
+        - [ ] `GetApiKeyUsageAsync(string keyId)` - get usage statistics
+    - [ ] Add API key management endpoints to `Controllers/ApiKeysController.cs`:
+        - [ ] `CreateApiKey(CreateApiKeyDto dto)` - POST /api/keys
+        - [ ] `GetApiKeys()` - GET /api/keys
+        - [ ] `RotateApiKey(string keyId)` - POST /api/keys/{keyId}/rotate
+        - [ ] `RevokeApiKey(string keyId)` - DELETE /api/keys/{keyId}
+        - [ ] `GetApiKeyUsage(string keyId)` - GET /api/keys/{keyId}/usage
+    - [ ] Implement automatic key rotation:
+        - [ ] Schedule automatic rotation every 90 days
+        - [ ] Send notifications before key expiration
+        - [ ] Grace period for old keys after rotation
+        - [ ] Audit logging for all key operations
 - [ ] Add CORS configuration
+    - [ ] Configure CORS in `Program.cs`:
+        - [ ] Define allowed origins from configuration
+        - [ ] Specify allowed HTTP methods (GET, POST, PUT, DELETE, OPTIONS)
+        - [ ] Configure allowed headers (Authorization, Content-Type, X-Requested-With)
+        - [ ] Set credentials policy for cross-origin requests
+    - [ ] Create environment-specific CORS policies:
+        - [ ] Development: Allow localhost origins for testing
+        - [ ] Staging: Allow staging domain origins
+        - [ ] Production: Restrict to production domain origins only
+        - [ ] API-specific: Different policies for public vs private APIs
+    - [ ] Implement CORS security measures:
+        - [ ] Validate Origin header against whitelist
+        - [ ] Implement CORS policy versioning
+        - [ ] Add CORS violation detection and alerting
+        - [ ] Configure CORS for WebSocket connections
+    - [ ] Add CORS monitoring:
+        - [ ] Log CORS violations and blocked requests
+        - [ ] Monitor CORS policy effectiveness
+        - [ ] Track cross-origin request patterns
+        - [ ] Alert on suspicious CORS activity
 - [ ] Implement request validation
+    - [ ] Create `Middleware/RequestValidationMiddleware.cs`:
+        - [ ] `ValidateRequestSize(HttpContext context)` - validate request size limits
+        - [ ] `ValidateContentType(HttpContext context)` - validate content type
+        - [ ] `ValidateRequestHeaders(HttpContext context)` - validate required headers
+        - [ ] `SanitizeRequestData(HttpContext context)` - sanitize input data
+        - [ ] `ValidateRequestFormat(HttpContext context)` - validate JSON/XML format
+    - [ ] Implement input validation rules:
+        - [ ] Maximum request size: 10MB for file uploads, 1MB for API calls
+        - [ ] Required headers: Content-Type, Authorization, User-Agent
+        - [ ] Allowed content types: application/json, multipart/form-data, application/xml
+        - [ ] SQL injection prevention using parameterized queries
+        - [ ] XSS prevention with input encoding and validation
+    - [ ] Add custom validation attributes:
+        - [ ] `[NoSqlInjection]` - prevent NoSQL injection attacks
+        - [ ] `[SafeHtml]` - validate and sanitize HTML input
+        - [ ] `[SecureFileName]` - validate file names for uploads
+        - [ ] `[IpAddress]` - validate IP address format
+        - [ ] `[StrongPassword]` - enforce strong password requirements
+    - [ ] Configure validation error responses:
+        - [ ] Standardized error format with error codes
+        - [ ] Detailed validation messages for development
+        - [ ] Generic error messages for production
+        - [ ] Validation error logging and monitoring
 - [ ] Add security headers
+    - [ ] Create `Middleware/SecurityHeadersMiddleware.cs`:
+        - [ ] `AddSecurityHeaders(HttpContext context)` - add all security headers
+        - [ ] `ConfigureContentSecurityPolicy()` - configure CSP header
+        - [ ] `ConfigureHsts()` - configure HTTP Strict Transport Security
+        - [ ] `ConfigureFrameOptions()` - configure X-Frame-Options
+    - [ ] Implement required security headers:
+        - [ ] `X-Content-Type-Options: nosniff` - prevent MIME type sniffing
+        - [ ] `X-Frame-Options: DENY` - prevent clickjacking attacks
+        - [ ] `X-XSS-Protection: 1; mode=block` - enable XSS protection
+        - [ ] `Referrer-Policy: strict-origin-when-cross-origin` - control referrer information
+        - [ ] `Permissions-Policy` - control browser features access
+    - [ ] Configure Content Security Policy (CSP):
+        - [ ] `default-src 'self'` - default source policy
+        - [ ] `script-src 'self' 'unsafe-inline'` - script source policy
+        - [ ] `style-src 'self' 'unsafe-inline'` - style source policy
+        - [ ] `img-src 'self' data: https:` - image source policy
+        - [ ] `connect-src 'self'` - connection source policy
+    - [ ] Add HSTS configuration:
+        - [ ] `max-age=31536000` - 1 year HSTS policy
+        - [ ] `includeSubDomains` - apply to all subdomains
+        - [ ] `preload` - enable HSTS preload list
 - [ ] Create security monitoring
+    - [ ] Create `Services/Monitoring/SecurityMonitoringService.cs`:
+        - [ ] `LogSecurityEvent(SecurityEvent evt)` - log security events
+        - [ ] `DetectAnomalousActivity(HttpContext context)` - detect suspicious activity
+        - [ ] `TriggerSecurityAlert(SecurityAlert alert)` - trigger security alerts
+        - [ ] `GenerateSecurityReport()` - generate security reports
+    - [ ] Implement security metrics collection:
+        - [ ] Authentication failure rates
+        - [ ] Rate limiting violations
+        - [ ] CORS violations and blocked requests
+        - [ ] Security header compliance
+        - [ ] API key usage and rotation status
+    - [ ] Configure security alerting:
+        - [ ] Multiple failed authentication attempts (>5 in 5 minutes)
+        - [ ] Unusual traffic patterns (>200% normal volume)
+        - [ ] High error rates (>10% 4xx/5xx responses)
+        - [ ] Potential DDoS attacks (rate limit violations)
+        - [ ] Suspicious user agent patterns
+    - [ ] Add security dashboards:
+        - [ ] Real-time security events timeline
+        - [ ] API security health dashboard
+        - [ ] Rate limiting status and violations
+        - [ ] Authentication and authorization metrics
 - [ ] Implement DDoS protection
+    - [ ] Create `Services/Security/DdosProtectionService.cs`:
+        - [ ] `DetectDdosAttack(HttpContext context)` - detect DDoS patterns
+        - [ ] `ApplyDdosProtection(HttpContext context)` - apply protection measures
+        - [ ] `BlockSuspiciousIp(string ipAddress)` - block suspicious IPs
+        - [ ] `AnalyzeTrafficPatterns()` - analyze traffic for anomalies
+    - [ ] Implement DDoS detection algorithms:
+        - [ ] Request frequency analysis (requests per second threshold)
+        - [ ] IP reputation checking against known bad actors
+        - [ ] Geolocation-based filtering for suspicious regions
+        - [ ] User agent analysis for bot detection
+        - [ ] Request pattern analysis for automated attacks
+    - [ ] Configure DDoS protection measures:
+        - [ ] Automatic IP blocking for detected attacks
+        - [ ] Progressive rate limiting during attacks
+        - [ ] CAPTCHA challenges for suspicious requests
+        - [ ] Temporary service degradation to maintain availability
+    - [ ] Add DDoS monitoring and alerting:
+        - [ ] Real-time attack detection and notification
+        - [ ] Attack pattern analysis and reporting
+        - [ ] Integration with external DDoS protection services
+        - [ ] Post-attack analysis and mitigation effectiveness
 
 ---
 
@@ -329,12 +2925,181 @@ This document outlines the atomic, developer-ready tasks for implementing the Sh
 
 #### Sub-tasks:
 - [ ] Implement Redis caching
+    - [ ] Install Redis packages:
+        - [ ] `Microsoft.Extensions.Caching.StackExchangeRedis` v8.0.0
+        - [ ] `StackExchange.Redis` v2.7.20
+        - [ ] `Microsoft.Extensions.Caching.Abstractions` v8.0.0
+    - [ ] Configure Redis connection in `Program.cs`:
+        - [ ] Add Redis connection string to `appsettings.json`
+        - [ ] Configure Redis options (timeout, retry policy, SSL)
+        - [ ] Add Redis health checks
+        - [ ] Configure Redis failover and clustering
+    - [ ] Create `Services/Caching/RedisCacheService.cs`:
+        - [ ] `GetAsync<T>(string key)` - get cached value with deserialization
+        - [ ] `SetAsync<T>(string key, T value, TimeSpan? expiry)` - set cached value with serialization
+        - [ ] `RemoveAsync(string key)` - remove cached value
+        - [ ] `RemoveByPatternAsync(string pattern)` - remove multiple keys by pattern
+        - [ ] `ExistsAsync(string key)` - check if key exists
+        - [ ] `GetKeysAsync(string pattern)` - get keys matching pattern
+    - [ ] Implement Redis data structures:
+        - [ ] String cache for simple key-value pairs
+        - [ ] Hash cache for complex objects
+        - [ ] List cache for ordered collections
+        - [ ] Set cache for unique collections
+        - [ ] Sorted set cache for ranked data
+    - [ ] Configure Redis serialization:
+        - [ ] JSON serialization with `System.Text.Json`
+        - [ ] Binary serialization for performance-critical data
+        - [ ] Compression for large objects (>1KB)
+        - [ ] Custom serializers for specific data types
 - [ ] Add distributed caching for API responses
+    - [ ] Create `Middleware/ResponseCachingMiddleware.cs`:
+        - [ ] `InvokeAsync(HttpContext context, RequestDelegate next)` - handle response caching
+        - [ ] `ShouldCacheResponse(HttpContext context)` - determine if response should be cached
+        - [ ] `GenerateCacheKey(HttpContext context)` - generate cache key from request
+        - [ ] `GetCachedResponse(string cacheKey)` - retrieve cached response
+        - [ ] `CacheResponse(string cacheKey, HttpResponse response)` - cache response
+    - [ ] Implement cache key strategies:
+        - [ ] Include HTTP method, path, query parameters
+        - [ ] Include user ID for personalized responses
+        - [ ] Include API version for versioned endpoints
+        - [ ] Include request headers for content negotiation
+        - [ ] Hash long cache keys for Redis compatibility
+    - [ ] Configure response caching policies:
+        - [ ] Product catalog: 15 minutes cache
+        - [ ] User profiles: 5 minutes cache
+        - [ ] Search results: 10 minutes cache
+        - [ ] Static content: 1 hour cache
+        - [ ] Real-time data: no cache
+    - [ ] Add cache headers:
+        - [ ] `Cache-Control` headers for client-side caching
+        - [ ] `ETag` headers for conditional requests
+        - [ ] `Last-Modified` headers for cache validation
+        - [ ] Custom headers for cache status (hit/miss)
 - [ ] Implement cache invalidation strategies
+    - [ ] Create `Services/Caching/CacheInvalidationService.cs`:
+        - [ ] `InvalidateByKeyAsync(string key)` - invalidate specific cache key
+        - [ ] `InvalidateByPatternAsync(string pattern)` - invalidate keys matching pattern
+        - [ ] `InvalidateByTagsAsync(string[] tags)` - invalidate cache by tags
+        - [ ] `InvalidateRelatedCacheAsync(string entityType, long entityId)` - invalidate related cache
+        - [ ] `ScheduleInvalidationAsync(string key, DateTime when)` - schedule future invalidation
+    - [ ] Implement invalidation triggers:
+        - [ ] Database change notifications using EF Core interceptors
+        - [ ] Message queue integration for distributed invalidation
+        - [ ] Time-based invalidation with TTL
+        - [ ] Manual invalidation through admin endpoints
+        - [ ] Event-driven invalidation using domain events
+    - [ ] Configure invalidation patterns:
+        - [ ] Product updates: invalidate product cache and related categories
+        - [ ] User updates: invalidate user profile and personalized content
+        - [ ] Order updates: invalidate order cache and inventory
+        - [ ] Inventory updates: invalidate product availability cache
+        - [ ] Price updates: invalidate pricing and promotion cache
+    - [ ] Add cache tagging system:
+        - [ ] Tag cache entries with entity types and IDs
+        - [ ] Implement hierarchical tagging (category:electronics:phones)
+        - [ ] Support multiple tags per cache entry
+        - [ ] Efficient tag-based invalidation using Redis sets
 - [ ] Add memory caching for frequently accessed data
+    - [ ] Configure `IMemoryCache` in `Program.cs`:
+        - [ ] Set memory cache size limits (100MB default)
+        - [ ] Configure cache eviction policies (LRU, LFU)
+        - [ ] Set default expiration times
+        - [ ] Configure cache statistics collection
+    - [ ] Create `Services/Caching/MemoryCacheService.cs`:
+        - [ ] `Get<T>(string key)` - get from memory cache
+        - [ ] `Set<T>(string key, T value, MemoryCacheEntryOptions options)` - set in memory cache
+        - [ ] `Remove(string key)` - remove from memory cache
+        - [ ] `GetOrCreateAsync<T>(string key, Func<Task<T>> factory)` - get or create pattern
+        - [ ] `GetCacheStatistics()` - get cache hit/miss statistics
+    - [ ] Implement L1/L2 cache hierarchy:
+        - [ ] L1: Memory cache for ultra-fast access (1-5 minutes TTL)
+        - [ ] L2: Redis cache for shared access (5-60 minutes TTL)
+        - [ ] Automatic promotion from L2 to L1 for hot data
+        - [ ] Write-through and write-behind strategies
+    - [ ] Configure memory cache for specific data:
+        - [ ] Configuration settings: 1 hour TTL
+        - [ ] User sessions: 20 minutes TTL
+        - [ ] Lookup tables: 30 minutes TTL
+        - [ ] Frequently accessed products: 10 minutes TTL
+        - [ ] API rate limit counters: 1 minute TTL
 - [ ] Implement cache warming
+    - [ ] Create `Services/Caching/CacheWarmupService.cs`:
+        - [ ] `WarmupCacheAsync()` - warm up all critical cache data
+        - [ ] `WarmupProductCacheAsync()` - warm up product catalog cache
+        - [ ] `WarmupUserCacheAsync()` - warm up user profile cache
+        - [ ] `WarmupConfigurationCacheAsync()` - warm up configuration cache
+        - [ ] `ScheduleCacheWarmupAsync()` - schedule periodic cache warming
+    - [ ] Implement warmup strategies:
+        - [ ] Application startup warmup for critical data
+        - [ ] Scheduled warmup during low-traffic periods
+        - [ ] Predictive warmup based on usage patterns
+        - [ ] On-demand warmup for specific cache regions
+        - [ ] Gradual warmup to avoid system overload
+    - [ ] Configure warmup data sources:
+        - [ ] Most popular products (top 1000)
+        - [ ] Active user profiles (logged in last 24h)
+        - [ ] Current promotions and pricing
+        - [ ] Category and navigation data
+        - [ ] Search suggestions and autocomplete data
+    - [ ] Add warmup monitoring:
+        - [ ] Track warmup completion time and success rate
+        - [ ] Monitor cache hit rates after warmup
+        - [ ] Alert on warmup failures or timeouts
+        - [ ] Log warmup performance metrics
 - [ ] Add cache performance monitoring
+    - [ ] Create `Services/Monitoring/CacheMonitoringService.cs`:
+        - [ ] `TrackCacheHit(string cacheType, string key)` - track cache hits
+        - [ ] `TrackCacheMiss(string cacheType, string key)` - track cache misses
+        - [ ] `TrackCacheOperation(string operation, TimeSpan duration)` - track operation performance
+        - [ ] `GenerateCacheReport()` - generate cache performance report
+        - [ ] `GetCacheMetrics()` - get real-time cache metrics
+    - [ ] Implement cache metrics collection:
+        - [ ] Hit ratio by cache type and time period
+        - [ ] Average response time for cache operations
+        - [ ] Cache memory usage and eviction rates
+        - [ ] Most frequently accessed cache keys
+        - [ ] Cache invalidation frequency and patterns
+    - [ ] Configure cache alerting:
+        - [ ] Low hit ratio alerts (<80% for critical cache)
+        - [ ] High memory usage alerts (>90% of allocated memory)
+        - [ ] Cache operation timeout alerts (>100ms)
+        - [ ] Redis connection failure alerts
+        - [ ] Cache warming failure alerts
+    - [ ] Add cache dashboards:
+        - [ ] Real-time cache performance dashboard
+        - [ ] Cache hit/miss ratio trends
+        - [ ] Memory usage and eviction patterns
+        - [ ] Top cached keys and access patterns
+        - [ ] Cache invalidation timeline and impact
+    - [ ] Implement cache health checks:
+        - [ ] Redis connectivity and response time checks
+        - [ ] Memory cache availability and performance checks
+        - [ ] Cache data integrity validation
+        - [ ] Cache synchronization status between instances
 - [ ] Create caching tests
+    - [ ] Unit tests in `Tests/Caching/`:
+        - [ ] `RedisCacheServiceTests.cs` - test Redis cache operations
+        - [ ] `MemoryCacheServiceTests.cs` - test memory cache operations
+        - [ ] `CacheInvalidationServiceTests.cs` - test cache invalidation logic
+        - [ ] `CacheWarmupServiceTests.cs` - test cache warming functionality
+        - [ ] `ResponseCachingMiddlewareTests.cs` - test response caching middleware
+    - [ ] Integration tests:
+        - [ ] `CacheIntegrationTests.cs` - test cache integration with Redis
+        - [ ] `CacheInvalidationIntegrationTests.cs` - test distributed cache invalidation
+        - [ ] `CachePerformanceTests.cs` - test cache performance under load
+        - [ ] `CacheFailoverTests.cs` - test cache failover scenarios
+    - [ ] Performance tests:
+        - [ ] Cache throughput testing (operations per second)
+        - [ ] Cache latency testing (response time percentiles)
+        - [ ] Memory usage testing under various loads
+        - [ ] Cache warming performance testing
+        - [ ] Concurrent access testing for thread safety
+    - [ ] Cache consistency tests:
+        - [ ] Test cache invalidation propagation
+        - [ ] Test cache coherence across multiple instances
+        - [ ] Test cache data integrity after failures
+        - [ ] Test cache synchronization mechanisms
 - [ ] Optimize cache hit ratios
 
 ### [ ] TASK-025: Performance Optimization
@@ -342,39 +3107,720 @@ This document outlines the atomic, developer-ready tasks for implementing the Sh
 
 #### Sub-tasks:
 - [ ] Optimize database queries and indexes
+    - [ ] Install performance analysis packages:
+        - [ ] `Microsoft.EntityFrameworkCore.Tools` v8.0.0
+        - [ ] `MiniProfiler.AspNetCore.Mvc` v4.3.8
+        - [ ] `Microsoft.EntityFrameworkCore.Proxies` v8.0.0
+        - [ ] `EFCore.BulkExtensions` v8.0.2
+    - [ ] Implement query optimization in `Data/Repositories/`:
+        - [ ] `ProductRepository.cs` - optimize product queries
+            - [ ] `GetProductsWithCategoriesAsync()` - use Include() for eager loading
+            - [ ] `SearchProductsAsync()` - optimize full-text search queries
+            - [ ] `GetProductsByIdsAsync()` - batch product retrieval
+            - [ ] `GetProductsWithInventoryAsync()` - optimize inventory joins
+        - [ ] `OrderRepository.cs` - optimize order queries
+            - [ ] `GetOrdersWithDetailsAsync()` - optimize order detail joins
+            - [ ] `GetOrdersByDateRangeAsync()` - use indexed date queries
+            - [ ] `GetOrdersByCustomerAsync()` - optimize customer order history
+            - [ ] `GetOrderStatisticsAsync()` - use aggregation queries
+        - [ ] `CustomerRepository.cs` - optimize customer queries
+            - [ ] `GetCustomersWithOrdersAsync()` - optimize customer-order joins
+            - [ ] `SearchCustomersAsync()` - optimize customer search
+            - [ ] `GetCustomerAnalyticsAsync()` - use computed columns
+    - [ ] Create database index migration in `Data/Migrations/`:
+        - [ ] `AddPerformanceIndexes.cs` - comprehensive indexing strategy
+    - [ ] Add indexes for Products table:
+        - [ ] Clustered index on `Id` (primary key)
+        - [ ] Non-clustered index on `CategoryId` for category filtering
+        - [ ] Composite index on `(IsActive, CreatedAt)` for active product queries
+        - [ ] Full-text index on `(Title, Description)` for search
+        - [ ] Index on `Sku` for unique product lookups
+        - [ ] Index on `Price` for price range queries
+        - [ ] Covering index on `(CategoryId, IsActive) INCLUDE (Title, Price)`
+    - [ ] Add indexes for Orders table:
+        - [ ] Clustered index on `Id` (primary key)
+        - [ ] Non-clustered index on `CustomerId` for customer orders
+        - [ ] Composite index on `(Status, CreatedAt)` for order filtering
+        - [ ] Index on `OrderNumber` for order lookups
+        - [ ] Index on `CreatedAt` for date range queries
+        - [ ] Covering index on `(CustomerId, Status) INCLUDE (TotalAmount, CreatedAt)`
+    - [ ] Add indexes for Customers table:
+        - [ ] Clustered index on `Id` (primary key)
+        - [ ] Unique index on `Email` for login queries
+        - [ ] Index on `LastLoginAt` for activity tracking
+        - [ ] Index on `CreatedAt` for registration analytics
+        - [ ] Full-text index on `(FirstName, LastName)` for customer search
+    - [ ] Optimize LINQ queries:
+        - [ ] Replace `Where().Count()` with `Count(predicate)`
+        - [ ] Use `Any()` instead of `Count() > 0`
+        - [ ] Implement `AsNoTracking()` for read-only queries
+        - [ ] Use `FirstOrDefault()` instead of `Where().First()`
+        - [ ] Optimize complex filtering with compiled queries
 - [ ] Implement query result caching
+    - [ ] Implement query caching service:
+        - [ ] Create `Services/Caching/QueryCacheService.cs`:
+            - [ ] `GetCachedQueryAsync<T>(string key, Func<Task<T>> query)` - cached query execution
+            - [ ] `InvalidateQueryCache(string pattern)` - invalidate related queries
+            - [ ] `GetQueryCacheKey(string query, object[] parameters)` - generate cache keys
+            - [ ] `CacheQueryResult<T>(string key, T result, TimeSpan expiry)` - cache results
+    - [ ] Configure query caching strategies:
+        - [ ] Cache expensive aggregation queries (5-15 minutes)
+        - [ ] Cache lookup table queries (30-60 minutes)
+        - [ ] Cache search results (5-10 minutes)
+        - [ ] Cache product catalog queries (10-30 minutes)
+        - [ ] Cache user profile queries (5-15 minutes)
+    - [ ] Implement cache-aside pattern:
+        - [ ] Check cache before executing query
+        - [ ] Execute query if cache miss
+        - [ ] Store result in cache with appropriate TTL
+        - [ ] Handle cache failures gracefully
+        - [ ] Implement cache warming for critical queries
+    - [ ] Add query cache monitoring:
+        - [ ] Track cache hit/miss ratios by query type
+        - [ ] Monitor cache performance impact
+        - [ ] Log slow queries that bypass cache
+        - [ ] Alert on cache invalidation patterns
+        - [ ] Generate cache optimization recommendations
 - [ ] Add database connection pooling
+    - [ ] Configure connection pooling in `Program.cs`:
+        - [ ] Set maximum pool size (100 connections default)
+        - [ ] Configure connection timeout (30 seconds)
+        - [ ] Set command timeout (60 seconds)
+        - [ ] Enable connection retry policy
+        - [ ] Configure connection lifetime (30 minutes)
+    - [ ] Implement connection pool monitoring:
+        - [ ] Track active connection count
+        - [ ] Monitor connection pool exhaustion
+        - [ ] Log connection acquisition times
+        - [ ] Alert on connection leaks
+        - [ ] Track connection pool efficiency
+    - [ ] Optimize connection usage:
+        - [ ] Use `using` statements for proper disposal
+        - [ ] Implement connection sharing for related operations
+        - [ ] Configure read-only connections for queries
+        - [ ] Use connection multiplexing for Redis
+        - [ ] Implement connection health checks
+    - [ ] Configure database-specific optimizations:
+        - [ ] SQL Server: Enable connection pooling and MARS
+        - [ ] PostgreSQL: Configure connection pool settings
+        - [ ] MySQL: Optimize connection parameters
+        - [ ] Redis: Configure connection multiplexing
 - [ ] Optimize API response times
+    - [ ] Implement response compression in `Program.cs`:
+        - [ ] Enable Gzip compression for responses >1KB
+        - [ ] Configure Brotli compression for modern browsers
+        - [ ] Set compression levels based on content type
+        - [ ] Exclude already compressed content (images, videos)
+    - [ ] Add response optimization middleware:
+        - [ ] Create `Middleware/ResponseOptimizationMiddleware.cs`:
+            - [ ] `CompressResponseAsync()` - compress large responses
+            - [ ] `MinifyJsonResponse()` - remove unnecessary whitespace
+            - [ ] `OptimizeHeaders()` - optimize response headers
+            - [ ] `AddPerformanceHeaders()` - add timing headers
+    - [ ] Implement API response caching:
+        - [ ] Cache GET responses for read-only endpoints
+        - [ ] Use ETags for conditional requests
+        - [ ] Implement Last-Modified headers
+        - [ ] Add Vary headers for content negotiation
+        - [ ] Configure cache-control headers
+    - [ ] Optimize JSON serialization:
+        - [ ] Configure `System.Text.Json` options for performance
+        - [ ] Use source generators for AOT compilation
+        - [ ] Implement custom converters for complex types
+        - [ ] Optimize DateTime and decimal serialization
+        - [ ] Use JsonIgnore for unnecessary properties
 - [ ] Implement lazy loading for related data
+    - [ ] Configure lazy loading in `Data/ShopifyDbContext.cs`:
+        - [ ] Enable lazy loading proxies
+        - [ ] Configure lazy loading for navigation properties
+        - [ ] Implement selective lazy loading
+        - [ ] Add lazy loading performance monitoring
+    - [ ] Implement lazy loading patterns:
+        - [ ] Virtual navigation properties for automatic lazy loading
+        - [ ] Explicit loading with `Load()` method
+        - [ ] Lazy loading with `ILazyLoader` injection
+        - [ ] Conditional lazy loading based on context
+    - [ ] Optimize lazy loading scenarios:
+        - [ ] Product categories and subcategories
+        - [ ] Order items and product details
+        - [ ] Customer addresses and order history
+        - [ ] Product images and variants
+        - [ ] User roles and permissions
+    - [ ] Prevent N+1 problems:
+        - [ ] Use `Include()` for known related data
+        - [ ] Implement projection queries for specific fields
+        - [ ] Use `LoadMany()` for batch loading
+        - [ ] Add N+1 detection and alerting
 - [ ] Add query performance monitoring
+    - [ ] Integrate MiniProfiler:
+        - [ ] Configure MiniProfiler in `Program.cs`
+        - [ ] Add MiniProfiler middleware for request profiling
+        - [ ] Configure database profiling for EF Core
+        - [ ] Add custom profiling steps for business logic
+        - [ ] Configure profiling storage and retention
+    - [ ] Implement custom performance monitoring:
+        - [ ] Create `Services/Monitoring/PerformanceMonitoringService.cs`:
+            - [ ] `StartTimer(string operation)` - start performance timer
+            - [ ] `StopTimer(string operation)` - stop and record timer
+            - [ ] `RecordMetric(string name, double value)` - record custom metrics
+            - [ ] `GetPerformanceReport()` - generate performance report
+    - [ ] Add performance metrics collection:
+        - [ ] Request processing time by endpoint
+        - [ ] Database query execution times
+        - [ ] Cache operation performance
+        - [ ] Memory allocation patterns
+        - [ ] CPU usage by operation
+    - [ ] Configure performance alerting:
+        - [ ] Slow request alerts (>2 seconds)
+        - [ ] High memory usage alerts (>80%)
+        - [ ] Database timeout alerts
+        - [ ] Cache miss ratio alerts
+        - [ ] Error rate threshold alerts
 - [ ] Create performance benchmarks
+    - [ ] Implement benchmark testing framework:
+        - [ ] Install `BenchmarkDotNet` v0.13.12
+        - [ ] Create `Tests/Benchmarks/` directory
+        - [ ] Configure benchmark execution environment
+        - [ ] Set up automated benchmark runs
+    - [ ] Create API endpoint benchmarks:
+        - [ ] `ProductApiBenchmarks.cs` - benchmark product endpoints
+        - [ ] `OrderApiBenchmarks.cs` - benchmark order endpoints
+        - [ ] `CustomerApiBenchmarks.cs` - benchmark customer endpoints
+        - [ ] `SearchApiBenchmarks.cs` - benchmark search functionality
+    - [ ] Create database operation benchmarks:
+        - [ ] `DatabaseQueryBenchmarks.cs` - benchmark database queries
+        - [ ] `CachingBenchmarks.cs` - benchmark caching operations
+        - [ ] `SerializationBenchmarks.cs` - benchmark JSON serialization
+        - [ ] `MemoryUsageBenchmarks.cs` - benchmark memory allocation
+    - [ ] Configure benchmark reporting:
+        - [ ] Generate performance reports in HTML format
+        - [ ] Track performance trends over time
+        - [ ] Set performance regression thresholds
+        - [ ] Integrate with CI/CD pipeline
+        - [ ] Create performance dashboards
 - [ ] Implement database query optimization
+    - [ ] Add query performance monitoring:
+        - [ ] Enable EF Core query logging with execution times
+        - [ ] Add slow query detection (>100ms threshold)
+        - [ ] Implement query execution plan analysis
+        - [ ] Track N+1 query problems
+        - [ ] Monitor query cache hit ratios
+    - [ ] Implement query splitting strategies:
+        - [ ] Split complex queries into multiple simpler queries
+        - [ ] Use `AsSplitQuery()` for multi-include scenarios
+        - [ ] Implement pagination for large result sets
+        - [ ] Use projection (`Select()`) to limit returned columns
+        - [ ] Implement query batching for related data
+    - [ ] Optimize memory usage:
+        - [ ] Use `AsNoTracking()` for read-only queries
+        - [ ] Implement proper DbContext disposal
+        - [ ] Configure change tracking behavior
+        - [ ] Use streaming for large result sets
+        - [ ] Implement DbContext pooling
+    - [ ] Add index maintenance:
+        - [ ] Schedule index rebuild operations
+        - [ ] Monitor index fragmentation levels
+        - [ ] Implement index usage statistics collection
+        - [ ] Add index performance monitoring
+        - [ ] Create index optimization recommendations
 
 ### [ ] TASK-026: Monitoring and Observability
 **Priority**: High | **Effort**: 6h | **Dependencies**: TASK-001
 
 #### Sub-tasks:
 - [ ] Implement Application Insights integration
+    - [ ] Install Application Insights packages:
+        - [ ] `Microsoft.ApplicationInsights.AspNetCore` v2.21.0
+        - [ ] `Microsoft.ApplicationInsights.DependencyCollector` v2.21.0
+        - [ ] `Microsoft.ApplicationInsights.EventCounterCollector` v2.21.0
+        - [ ] `Microsoft.ApplicationInsights.PerfCounterCollector` v2.21.0
+    - [ ] Configure Application Insights in `Program.cs`:
+        - [ ] Add Application Insights connection string to `appsettings.json`
+        - [ ] Configure telemetry collection settings
+        - [ ] Enable adaptive sampling for high-volume scenarios
+        - [ ] Configure telemetry processors for filtering
+        - [ ] Set up custom telemetry initializers
+    - [ ] Create custom telemetry services:
+        - [ ] `Services/Monitoring/TelemetryService.cs`:
+            - [ ] `TrackEvent(string eventName, Dictionary<string, string> properties)` - track custom events
+            - [ ] `TrackMetric(string metricName, double value, Dictionary<string, string> properties)` - track metrics
+            - [ ] `TrackDependency(string dependencyType, string target, string data, TimeSpan duration, bool success)` - track dependencies
+            - [ ] `TrackException(Exception exception, Dictionary<string, string> properties)` - track exceptions
+            - [ ] `TrackRequest(string name, DateTimeOffset startTime, TimeSpan duration, string responseCode, bool success)` - track requests
+    - [ ] Configure custom telemetry collection:
+        - [ ] Business metrics (orders, revenue, user registrations)
+        - [ ] Performance metrics (response times, throughput)
+        - [ ] Error metrics (exception rates, failed requests)
+        - [ ] User behavior metrics (page views, feature usage)
+        - [ ] Infrastructure metrics (CPU, memory, disk usage)
+    - [ ] Implement telemetry correlation:
+        - [ ] Configure operation correlation across services
+        - [ ] Add custom correlation properties
+        - [ ] Implement user session tracking
+        - [ ] Track request flows across components
+        - [ ] Configure dependency correlation
+    - [ ] Set up Application Insights dashboards:
+        - [ ] Application performance dashboard
+        - [ ] Business metrics dashboard
+        - [ ] Error tracking dashboard
+        - [ ] User analytics dashboard
+        - [ ] Infrastructure monitoring dashboard
 - [ ] Add structured logging with correlation IDs
+    - [ ] Install logging packages:
+        - [ ] `Serilog.AspNetCore` v8.0.1
+        - [ ] `Serilog.Sinks.ApplicationInsights` v4.0.0
+        - [ ] `Serilog.Sinks.Console` v5.0.1
+        - [ ] `Serilog.Sinks.File` v5.0.0
+        - [ ] `Serilog.Enrichers.CorrelationId` v3.0.1
+    - [ ] Configure Serilog in `Program.cs`:
+        - [ ] Set up structured logging configuration
+        - [ ] Configure log levels by namespace
+        - [ ] Add correlation ID enricher
+        - [ ] Configure multiple sinks (Console, File, Application Insights)
+        - [ ] Set up log formatting templates
+    - [ ] Implement correlation ID middleware:
+        - [ ] Create `Middleware/CorrelationIdMiddleware.cs`:
+            - [ ] `InvokeAsync(HttpContext context, RequestDelegate next)` - handle correlation ID
+            - [ ] `GenerateCorrelationId()` - generate unique correlation ID
+            - [ ] `ExtractCorrelationId(HttpContext context)` - extract from headers
+            - [ ] `AddCorrelationIdToResponse(HttpContext context, string correlationId)` - add to response
+    - [ ] Create structured logging service:
+        - [ ] `Services/Logging/StructuredLoggingService.cs`:
+            - [ ] `LogInformation(string message, object data, string correlationId)` - log information with structure
+            - [ ] `LogWarning(string message, object data, string correlationId)` - log warnings
+            - [ ] `LogError(Exception exception, string message, object data, string correlationId)` - log errors
+            - [ ] `LogDebug(string message, object data, string correlationId)` - log debug information
+            - [ ] `LogCritical(Exception exception, string message, object data, string correlationId)` - log critical errors
+    - [ ] Implement contextual logging:
+        - [ ] Add user context to logs (user ID, session ID)
+        - [ ] Include request context (endpoint, method, parameters)
+        - [ ] Add business context (order ID, product ID, customer ID)
+        - [ ] Include performance context (execution time, memory usage)
+        - [ ] Add security context (authentication status, permissions)
+    - [ ] Configure log retention and archival:
+        - [ ] Set up log rotation policies
+        - [ ] Configure log compression
+        - [ ] Implement log archival to Azure Storage
+        - [ ] Set up log retention periods by severity
+        - [ ] Configure log cleanup procedures
 - [ ] Implement distributed tracing
+    - [ ] Install distributed tracing packages:
+        - [ ] `System.Diagnostics.DiagnosticSource` v8.0.0
+        - [ ] `Microsoft.Extensions.Logging.ApplicationInsights` v2.21.0
+        - [ ] `OpenTelemetry` v1.7.0
+        - [ ] `OpenTelemetry.Extensions.Hosting` v1.7.0
+        - [ ] `OpenTelemetry.Instrumentation.AspNetCore` v1.7.1
+    - [ ] Configure distributed tracing in `Program.cs`:
+        - [ ] Set up Activity sources for custom tracing
+        - [ ] Configure trace sampling rates
+        - [ ] Add custom trace processors
+        - [ ] Configure trace exporters (Application Insights, Jaeger)
+        - [ ] Set up trace correlation headers
+    - [ ] Implement custom tracing:
+        - [ ] Create `Services/Tracing/TracingService.cs`:
+            - [ ] `StartActivity(string activityName, ActivityKind kind)` - start custom activity
+            - [ ] `AddTag(Activity activity, string key, string value)` - add tags to activity
+            - [ ] `AddEvent(Activity activity, string eventName, object data)` - add events to activity
+            - [ ] `SetStatus(Activity activity, ActivityStatusCode status, string description)` - set activity status
+            - [ ] `CreateChildActivity(Activity parent, string name)` - create child activities
+    - [ ] Add tracing to key operations:
+        - [ ] Database operations (queries, transactions)
+        - [ ] External API calls (payment, shipping, inventory)
+        - [ ] Cache operations (Redis, memory cache)
+        - [ ] Business logic operations (order processing, inventory updates)
+        - [ ] Authentication and authorization flows
+    - [ ] Configure trace visualization:
+        - [ ] Set up Application Insights Application Map
+        - [ ] Configure dependency tracking
+        - [ ] Implement custom trace dashboards
+        - [ ] Set up trace search and filtering
+        - [ ] Configure trace performance analysis
+    - [ ] Implement trace-based alerting:
+        - [ ] Alert on high trace error rates
+        - [ ] Monitor trace duration anomalies
+        - [ ] Track dependency failure patterns
+        - [ ] Alert on missing trace data
+        - [ ] Monitor trace sampling effectiveness
 - [ ] Add custom business metrics
+    - [ ] Create business metrics service:
+        - [ ] `Services/Metrics/BusinessMetricsService.cs`:
+            - [ ] `TrackOrderCreated(Order order)` - track order creation metrics
+            - [ ] `TrackPaymentProcessed(Payment payment)` - track payment metrics
+            - [ ] `TrackUserRegistration(User user)` - track user registration metrics
+            - [ ] `TrackProductView(Product product, User user)` - track product view metrics
+            - [ ] `TrackSearchQuery(string query, int resultCount, User user)` - track search metrics
+    - [ ] Implement key business metrics:
+        - [ ] Revenue metrics (daily/monthly revenue, average order value)
+        - [ ] Order metrics (order count, conversion rate, cart abandonment)
+        - [ ] User metrics (new registrations, active users, retention rate)
+        - [ ] Product metrics (views, purchases, inventory turnover)
+        - [ ] Performance metrics (page load times, API response times)
+    - [ ] Configure metric aggregation:
+        - [ ] Real-time metric calculation
+        - [ ] Hourly metric aggregation
+        - [ ] Daily metric summaries
+        - [ ] Weekly and monthly reports
+        - [ ] Custom metric dimensions (region, user segment, product category)
+    - [ ] Implement metric visualization:
+        - [ ] Create custom Application Insights workbooks
+        - [ ] Set up Power BI integration for business reporting
+        - [ ] Configure Grafana dashboards for technical metrics
+        - [ ] Implement real-time metric displays
+        - [ ] Create executive summary dashboards
+    - [ ] Add metric-based alerting:
+        - [ ] Revenue drop alerts (>20% decrease)
+        - [ ] Order volume alerts (unusual patterns)
+        - [ ] Error rate alerts (>5% error rate)
+        - [ ] Performance degradation alerts (>2s response time)
+        - [ ] Business KPI threshold alerts
 - [ ] Implement health check endpoints
+    - [ ] Install health check packages:
+        - [ ] `Microsoft.Extensions.Diagnostics.HealthChecks` v8.0.0
+        - [ ] `Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore` v8.0.0
+        - [ ] `AspNetCore.HealthChecks.Redis` v7.0.0
+        - [ ] `AspNetCore.HealthChecks.SqlServer` v7.0.0
+        - [ ] `AspNetCore.HealthChecks.UI` v7.0.2
+    - [ ] Configure health checks in `Program.cs`:
+        - [ ] Add database health checks
+        - [ ] Add Redis health checks
+        - [ ] Add external service health checks
+        - [ ] Configure health check UI
+        - [ ] Set up health check endpoints
+    - [ ] Implement custom health checks:
+        - [ ] `HealthChecks/DatabaseHealthCheck.cs` - check database connectivity and performance
+        - [ ] `HealthChecks/RedisHealthCheck.cs` - check Redis connectivity and performance
+        - [ ] `HealthChecks/ExternalApiHealthCheck.cs` - check external API availability
+        - [ ] `HealthChecks/DiskSpaceHealthCheck.cs` - check available disk space
+        - [ ] `HealthChecks/MemoryHealthCheck.cs` - check memory usage
+    - [ ] Configure health check responses:
+        - [ ] Healthy status with detailed information
+        - [ ] Degraded status for partial failures
+        - [ ] Unhealthy status with error details
+        - [ ] Custom health check response format
+        - [ ] Health check response caching
+    - [ ] Implement health check monitoring:
+        - [ ] Set up health check dashboards
+        - [ ] Configure health check alerting
+        - [ ] Implement health check history tracking
+        - [ ] Add health check performance metrics
+        - [ ] Create health check reports
+    - [ ] Add liveness and readiness probes:
+        - [ ] Kubernetes liveness probe configuration
+        - [ ] Kubernetes readiness probe configuration
+        - [ ] Docker health check configuration
+        - [ ] Load balancer health check integration
+        - [ ] Service mesh health check integration
 - [ ] Add performance monitoring dashboards
+    - [ ] Create Application Insights dashboards:
+        - [ ] Application Performance Dashboard:
+            - [ ] Request rate and response time trends
+            - [ ] Error rate and exception tracking
+            - [ ] Dependency performance metrics
+            - [ ] User session analytics
+            - [ ] Geographic performance distribution
+        - [ ] Infrastructure Monitoring Dashboard:
+            - [ ] CPU and memory utilization
+            - [ ] Disk I/O and network metrics
+            - [ ] Database performance metrics
+            - [ ] Cache hit ratios and performance
+            - [ ] Queue lengths and processing times
+        - [ ] Business Metrics Dashboard:
+            - [ ] Revenue and order volume trends
+            - [ ] User acquisition and retention metrics
+            - [ ] Product performance analytics
+            - [ ] Conversion funnel analysis
+            - [ ] Customer satisfaction metrics
+    - [ ] Configure dashboard automation:
+        - [ ] Automated dashboard updates
+        - [ ] Scheduled dashboard reports
+        - [ ] Dashboard sharing and permissions
+        - [ ] Mobile-friendly dashboard views
+        - [ ] Dashboard export capabilities
+    - [ ] Implement custom visualizations:
+        - [ ] Real-time performance charts
+        - [ ] Heat maps for geographic data
+        - [ ] Funnel charts for conversion analysis
+        - [ ] Trend analysis with forecasting
+        - [ ] Comparative performance analysis
+    - [ ] Add dashboard alerting:
+        - [ ] Dashboard-based alert rules
+        - [ ] Threshold-based notifications
+        - [ ] Anomaly detection alerts
+        - [ ] Trend-based alerting
+        - [ ] Multi-condition alert rules
 - [ ] Create alerting rules
+    - [ ] Configure Application Insights alerts:
+        - [ ] Performance alerts (response time >2s, error rate >5%)
+        - [ ] Availability alerts (uptime <99.9%)
+        - [ ] Exception alerts (critical exceptions)
+        - [ ] Dependency alerts (external service failures)
+        - [ ] Custom metric alerts (business KPIs)
+    - [ ] Implement alert escalation:
+        - [ ] Primary alert notifications (email, SMS)
+        - [ ] Escalation to on-call engineers
+        - [ ] Integration with PagerDuty/OpsGenie
+        - [ ] Slack/Teams integration for team notifications
+        - [ ] Executive escalation for critical issues
+    - [ ] Configure alert suppression:
+        - [ ] Duplicate alert suppression
+        - [ ] Maintenance window suppression
+        - [ ] Alert grouping and batching
+        - [ ] Smart alert correlation
+        - [ ] Alert fatigue prevention
+    - [ ] Add alert automation:
+        - [ ] Auto-remediation for known issues
+        - [ ] Automated scaling based on alerts
+        - [ ] Incident creation and tracking
+        - [ ] Alert acknowledgment workflows
+        - [ ] Post-incident analysis automation
+    - [ ] Implement alert testing:
+        - [ ] Alert rule validation
+        - [ ] Alert delivery testing
+        - [ ] Alert escalation testing
+        - [ ] Alert suppression testing
+        - [ ] End-to-end alert workflow testing
 - [ ] Implement log aggregation
+    - [ ] Configure centralized logging:
+        - [ ] Set up Azure Log Analytics workspace
+        - [ ] Configure log forwarding from all services
+        - [ ] Implement log parsing and structuring
+        - [ ] Set up log retention policies
+        - [ ] Configure log access controls
+    - [ ] Implement log analysis:
+        - [ ] Create KQL queries for common scenarios
+        - [ ] Set up log-based alerts
+        - [ ] Implement log correlation analysis
+        - [ ] Create log analysis dashboards
+        - [ ] Add log trend analysis
+    - [ ] Configure log search and filtering:
+        - [ ] Full-text search capabilities
+        - [ ] Advanced filtering options
+        - [ ] Saved search queries
+        - [ ] Log export capabilities
+        - [ ] Real-time log streaming
+    - [ ] Implement log security:
+        - [ ] Log data encryption at rest and in transit
+        - [ ] Access logging and audit trails
+        - [ ] PII data masking in logs
+        - [ ] Log integrity verification
+        - [ ] Compliance reporting for log data
+    - [ ] Add log analytics automation:
+        - [ ] Automated log analysis for anomalies
+        - [ ] Log-based incident detection
+        - [ ] Automated log summarization
+        - [ ] Log pattern recognition
+        - [ ] Predictive analysis based on log data
 
 ### [ ] TASK-027: Error Handling and Resilience
 **Priority**: High | **Effort**: 4h | **Dependencies**: TASK-001
 
 #### Sub-tasks:
 - [ ] Implement global exception handling
+    - [ ] Install exception handling packages:
+        - [ ] `Microsoft.AspNetCore.Diagnostics` v8.0.0
+        - [ ] `Serilog.AspNetCore` v8.0.1
+        - [ ] `Microsoft.Extensions.Logging` v8.0.0
+        - [ ] `System.Text.Json` v8.0.0
+    - [ ] Create global exception handler:
+        - [ ] Create `Middleware/GlobalExceptionHandlerMiddleware.cs`:
+            - [ ] `InvokeAsync(HttpContext context, RequestDelegate next)` - handle exceptions globally
+            - [ ] `HandleExceptionAsync(HttpContext context, Exception exception)` - process exceptions
+            - [ ] `CreateErrorResponse(Exception exception, string correlationId)` - create error response
+            - [ ] `LogException(Exception exception, HttpContext context)` - log exceptions
+            - [ ] `DetermineStatusCode(Exception exception)` - map exception to status code
+    - [ ] Implement exception categorization:
+        - [ ] Business logic exceptions (400 Bad Request)
+        - [ ] Validation exceptions (422 Unprocessable Entity)
+        - [ ] Authentication exceptions (401 Unauthorized)
+        - [ ] Authorization exceptions (403 Forbidden)
+        - [ ] Not found exceptions (404 Not Found)
+        - [ ] Conflict exceptions (409 Conflict)
+        - [ ] Rate limit exceptions (429 Too Many Requests)
+        - [ ] Internal server exceptions (500 Internal Server Error)
+    - [ ] Create custom exception types:
+        - [ ] `Exceptions/BusinessLogicException.cs` - business rule violations
+        - [ ] `Exceptions/ValidationException.cs` - input validation failures
+        - [ ] `Exceptions/ExternalServiceException.cs` - external service failures
+        - [ ] `Exceptions/DataAccessException.cs` - database access failures
+        - [ ] `Exceptions/SecurityException.cs` - security-related failures
+    - [ ] Configure exception response formatting:
+        - [ ] Standardized error response format with correlation ID
+        - [ ] Error code mapping and localization
+        - [ ] Detailed error information for development environment
+        - [ ] Sanitized error information for production environment
+        - [ ] JSON error response with proper HTTP status codes
 - [ ] Add circuit breaker patterns
+    - [ ] Install circuit breaker packages:
+        - [ ] `Polly` v8.2.0
+        - [ ] `Polly.Extensions.Http` v3.0.0
+        - [ ] `Microsoft.Extensions.Http.Polly` v8.0.0
+        - [ ] `Polly.Contrib.WaitAndRetry` v1.1.1
+    - [ ] Configure circuit breaker policies:
+        - [ ] Create `Services/Resilience/CircuitBreakerService.cs`:
+            - [ ] `CreateCircuitBreakerPolicy<T>(string policyName, int handledEventsAllowedBeforeBreaking, TimeSpan durationOfBreak)` - create circuit breaker
+            - [ ] `GetCircuitBreakerState(string policyName)` - get current state
+            - [ ] `ResetCircuitBreaker(string policyName)` - manually reset circuit breaker
+            - [ ] `ConfigureCircuitBreakerEvents(string policyName, Action<CircuitBreakerStateChange> onStateChange)` - configure events
+    - [ ] Implement circuit breaker for external services:
+        - [ ] Payment service circuit breaker (5 failures, 30s break)
+        - [ ] Inventory service circuit breaker (3 failures, 15s break)
+        - [ ] Shipping service circuit breaker (5 failures, 30s break)
+        - [ ] Email service circuit breaker (10 failures, 60s break)
+        - [ ] Database circuit breaker (3 failures, 10s break)
+    - [ ] Configure circuit breaker monitoring:
+        - [ ] Circuit breaker state dashboards in Application Insights
+        - [ ] Circuit breaker metrics collection and alerting
+        - [ ] Circuit breaker health checks integration
+        - [ ] Circuit breaker performance analysis and optimization
+        - [ ] Circuit breaker configuration management
 - [ ] Implement retry policies
+    - [ ] Configure retry policies with Polly:
+        - [ ] Create `Services/Resilience/RetryPolicyService.cs`:
+            - [ ] `CreateRetryPolicy<T>(int retryCount, TimeSpan baseDelay, double backoffMultiplier)` - create retry policy
+            - [ ] `CreateExponentialBackoffPolicy<T>(int retryCount, TimeSpan baseDelay, TimeSpan maxDelay)` - exponential backoff
+            - [ ] `CreateJitteredRetryPolicy<T>(int retryCount, TimeSpan baseDelay)` - jittered retry
+            - [ ] `CreateConditionalRetryPolicy<T>(Func<Exception, bool> shouldRetry, int retryCount)` - conditional retry
+    - [ ] Implement retry policies for different scenarios:
+        - [ ] Database transient failures (3 retries, exponential backoff)
+        - [ ] HTTP client failures (5 retries, jittered backoff)
+        - [ ] Message queue failures (3 retries, linear backoff)
+        - [ ] File system operations (2 retries, fixed delay)
+        - [ ] Cache operations (2 retries, exponential backoff)
+    - [ ] Configure retry policy monitoring:
+        - [ ] Retry attempt tracking and success/failure rates
+        - [ ] Retry delay analysis and optimization
+        - [ ] Retry policy effectiveness metrics
+        - [ ] Retry pattern identification and improvement
+        - [ ] Service-specific retry configuration management
 - [ ] Add graceful degradation
+    - [ ] Create degradation service:
+        - [ ] Create `Services/Resilience/GracefulDegradationService.cs`:
+            - [ ] `IsServiceAvailable(string serviceName)` - check service availability
+            - [ ] `GetFallbackData<T>(string dataType, object parameters)` - get fallback data
+            - [ ] `EnableDegradedMode(string serviceName, DegradationLevel level)` - enable degradation
+            - [ ] `DisableDegradedMode(string serviceName)` - disable degradation
+            - [ ] `GetDegradationStatus()` - get current degradation status
+    - [ ] Implement degradation strategies:
+        - [ ] Cache-based fallbacks for product data
+        - [ ] Static content fallbacks for recommendations
+        - [ ] Simplified UI for payment failures
+        - [ ] Offline mode for critical operations
+        - [ ] Read-only mode for database issues
+    - [ ] Configure degradation triggers:
+        - [ ] Service health check failures
+        - [ ] High error rates (>10%) and response times (>5s)
+        - [ ] Resource exhaustion (CPU >90%, Memory >85%)
+        - [ ] External dependency failures
+        - [ ] Manual degradation activation for maintenance
+    - [ ] Implement degradation monitoring:
+        - [ ] Degradation event tracking and impact analysis
+        - [ ] Degradation recovery monitoring
+        - [ ] User experience metrics during degradation
+        - [ ] Degradation effectiveness measurement
+        - [ ] Automated degradation testing and validation
 - [ ] Implement error logging and tracking
+    - [ ] Configure structured error logging:
+        - [ ] Enhance existing Serilog configuration for error tracking
+        - [ ] Add error-specific log enrichers and formatters
+        - [ ] Configure error log retention and archival policies
+        - [ ] Implement error log correlation with Application Insights
+        - [ ] Set up error log analysis and pattern detection
+    - [ ] Create error tracking service:
+        - [ ] Create `Services/ErrorTracking/ErrorTrackingService.cs`:
+            - [ ] `TrackError(Exception exception, Dictionary<string, object> context)` - track errors
+            - [ ] `TrackErrorWithUser(Exception exception, User user, Dictionary<string, object> context)` - track user-specific errors
+            - [ ] `GetErrorStatistics(TimeSpan period)` - get error statistics
+            - [ ] `GetErrorTrends(TimeSpan period)` - analyze error trends
+            - [ ] `CreateErrorReport(DateTime startDate, DateTime endDate)` - generate error reports
+    - [ ] Implement error categorization and analysis:
+        - [ ] Error severity classification (Critical, High, Medium, Low)
+        - [ ] Error frequency analysis and trending
+        - [ ] Error impact assessment on business operations
+        - [ ] Error root cause analysis automation
+        - [ ] Error pattern recognition and alerting
+    - [ ] Configure error tracking dashboards:
+        - [ ] Real-time error monitoring dashboard
+        - [ ] Error trend analysis and forecasting
+        - [ ] Error impact on user experience metrics
+        - [ ] Error resolution tracking and SLA monitoring
+        - [ ] Error prevention effectiveness measurement
 - [ ] Add error notification system
+    - [ ] Configure error alerting:
+        - [ ] Create `Services/Notifications/ErrorNotificationService.cs`:
+            - [ ] `SendCriticalErrorAlert(Exception exception, Dictionary<string, object> context)` - send critical alerts
+            - [ ] `SendErrorSummaryReport(ErrorSummary summary, List<string> recipients)` - send summary reports
+            - [ ] `ConfigureAlertThresholds(string errorType, int threshold, TimeSpan window)` - configure thresholds
+            - [ ] `SuppressAlerts(string errorType, TimeSpan duration)` - suppress alerts
+            - [ ] `EscalateAlert(string alertId, EscalationLevel level)` - escalate alerts
+    - [ ] Implement multi-channel notifications:
+        - [ ] Email notifications for critical errors
+        - [ ] Slack/Teams integration for team alerts
+        - [ ] SMS notifications for high-priority incidents
+        - [ ] PagerDuty integration for on-call escalation
+        - [ ] Dashboard notifications for real-time monitoring
+    - [ ] Configure notification rules:
+        - [ ] Error rate thresholds (>5% error rate triggers alert)
+        - [ ] Critical error immediate notifications
+        - [ ] Error pattern detection alerts
+        - [ ] Service degradation notifications
+        - [ ] Recovery confirmation notifications
+    - [ ] Implement notification management:
+        - [ ] Alert suppression during maintenance windows
+        - [ ] Alert grouping and deduplication
+        - [ ] Notification delivery confirmation
+        - [ ] Alert acknowledgment and resolution tracking
+        - [ ] Notification effectiveness analysis
 - [ ] Create error handling tests
+    - [ ] Implement unit tests for error handling:
+        - [ ] Test global exception handler middleware
+        - [ ] Test custom exception types and responses
+        - [ ] Test circuit breaker behavior and state transitions
+        - [ ] Test retry policy execution and backoff strategies
+        - [ ] Test graceful degradation activation and recovery
+    - [ ] Create integration tests for error scenarios:
+        - [ ] Test end-to-end error handling workflows
+        - [ ] Test error propagation across service boundaries
+        - [ ] Test error notification delivery and escalation
+        - [ ] Test error logging and correlation
+        - [ ] Test error recovery and system restoration
+    - [ ] Implement chaos engineering tests:
+        - [ ] Inject database connection failures
+        - [ ] Simulate external service timeouts
+        - [ ] Test high CPU/memory usage scenarios
+        - [ ] Simulate network connectivity issues
+        - [ ] Test disk space exhaustion scenarios
+    - [ ] Configure automated error testing:
+        - [ ] Scheduled error injection tests
+        - [ ] Continuous error handling validation
+        - [ ] Error handling performance testing
+        - [ ] Error recovery time measurement
+        - [ ] Error handling regression testing
 - [ ] Implement fallback mechanisms
+    - [ ] Create fallback service:
+        - [ ] Create `Services/Resilience/FallbackService.cs`:
+            - [ ] `GetFallbackResponse<T>(string operationType, object parameters)` - get fallback response
+            - [ ] `RegisterFallbackProvider<T>(string operationType, IFallbackProvider<T> provider)` - register providers
+            - [ ] `ExecuteWithFallback<T>(Func<Task<T>> primaryOperation, Func<Task<T>> fallbackOperation)` - execute with fallback
+            - [ ] `GetFallbackMetrics(string operationType)` - get fallback metrics
+            - [ ] `ConfigureFallbackStrategy(string operationType, FallbackStrategy strategy)` - configure strategy
+    - [ ] Implement operation-specific fallbacks:
+        - [ ] Product catalog fallback (cached data, static content)
+        - [ ] Search functionality fallback (simplified search, cached results)
+        - [ ] Payment processing fallback (alternative payment methods)
+        - [ ] Inventory check fallback (estimated availability)
+        - [ ] User authentication fallback (cached credentials, guest mode)
+    - [ ] Configure fallback data sources:
+        - [ ] Redis cache for frequently accessed data
+        - [ ] Static JSON files for critical configuration
+        - [ ] Read replicas for database fallbacks
+        - [ ] CDN for static content fallbacks
+        - [ ] Local storage for offline capabilities
+    - [ ] Implement fallback monitoring:
+        - [ ] Fallback activation frequency tracking
+        - [ ] Fallback effectiveness measurement
+        - [ ] Fallback data freshness monitoring
+        - [ ] Fallback performance impact analysis
+        - [ ] Fallback user experience metrics
 
 ---
 
@@ -385,39 +3831,645 @@ This document outlines the atomic, developer-ready tasks for implementing the Sh
 
 #### Sub-tasks:
 - [ ] Create unit tests for all service classes
+    - [ ] Install testing packages:
+        - [ ] `Microsoft.NET.Test.Sdk` v17.8.0
+        - [ ] `NUnit` v4.0.1
+        - [ ] `NUnit3TestAdapter` v4.5.0
+        - [ ] `Moq` v4.20.69
+        - [ ] `FluentAssertions` v6.12.0
+        - [ ] `AutoFixture` v4.18.1
+        - [ ] `Microsoft.EntityFrameworkCore.InMemory` v8.0.0
+        - [ ] `Microsoft.AspNetCore.Mvc.Testing` v8.0.0
+    - [ ] Create test project structure:
+        - [ ] `Tests/Unit/Services/` - service layer tests
+        - [ ] `Tests/Unit/Controllers/` - controller tests
+        - [ ] `Tests/Unit/Repositories/` - repository tests
+        - [ ] `Tests/Unit/Middleware/` - middleware tests
+        - [ ] `Tests/Unit/Validators/` - validation tests
+        - [ ] `Tests/Helpers/` - test utilities and fixtures
+        - [ ] `Tests/TestData/` - test data and mock objects
+    - [ ] Test ProductService class:
+        - [ ] `Tests/Unit/Services/ProductServiceTests.cs`:
+            - [ ] `GetProductAsync_ValidId_ReturnsProduct()` - test product retrieval
+            - [ ] `GetProductAsync_InvalidId_ReturnsNull()` - test invalid ID handling
+            - [ ] `CreateProductAsync_ValidProduct_ReturnsCreatedProduct()` - test product creation
+            - [ ] `CreateProductAsync_InvalidProduct_ThrowsValidationException()` - test validation
+            - [ ] `UpdateProductAsync_ValidProduct_ReturnsUpdatedProduct()` - test product updates
+            - [ ] `UpdateProductAsync_NonExistentProduct_ThrowsNotFoundException()` - test not found
+            - [ ] `DeleteProductAsync_ValidId_DeletesProduct()` - test product deletion
+            - [ ] `SyncWithShopifyAsync_ValidData_UpdatesProducts()` - test Shopify sync
+    - [ ] Test OrderService class:
+        - [ ] `Tests/Unit/Services/OrderServiceTests.cs`:
+            - [ ] `CreateOrderAsync_ValidOrder_ReturnsCreatedOrder()` - test order creation
+            - [ ] `ProcessPaymentAsync_ValidPayment_ProcessesSuccessfully()` - test payment processing
+            - [ ] `UpdateOrderStatusAsync_ValidStatus_UpdatesOrder()` - test status updates
+            - [ ] `CalculateOrderTotalAsync_ValidItems_ReturnsCorrectTotal()` - test calculations
+            - [ ] `ApplyDiscountAsync_ValidDiscount_AppliesCorrectly()` - test discount logic
+            - [ ] `ValidateInventoryAsync_SufficientStock_ReturnsTrue()` - test inventory validation
+            - [ ] `ValidateInventoryAsync_InsufficientStock_ReturnsFalse()` - test stock validation
+    - [ ] Test UserService class:
+        - [ ] `Tests/Unit/Services/UserServiceTests.cs`:
+            - [ ] `RegisterUserAsync_ValidUser_ReturnsRegisteredUser()` - test user registration
+            - [ ] `AuthenticateUserAsync_ValidCredentials_ReturnsToken()` - test authentication
+            - [ ] `AuthenticateUserAsync_InvalidCredentials_ThrowsUnauthorizedException()` - test auth failure
+            - [ ] `UpdateUserProfileAsync_ValidProfile_UpdatesUser()` - test profile updates
+            - [ ] `ResetPasswordAsync_ValidEmail_SendsResetEmail()` - test password reset
+            - [ ] `VerifyEmailAsync_ValidToken_VerifiesEmail()` - test email verification
+    - [ ] Test InventoryService class:
+        - [ ] `Tests/Unit/Services/InventoryServiceTests.cs`:
+            - [ ] `CheckStockAsync_ValidProduct_ReturnsStockLevel()` - test stock checking
+            - [ ] `ReserveStockAsync_SufficientStock_ReservesSuccessfully()` - test stock reservation
+            - [ ] `ReserveStockAsync_InsufficientStock_ThrowsInsufficientStockException()` - test stock shortage
+            - [ ] `ReleaseStockAsync_ValidReservation_ReleasesStock()` - test stock release
+            - [ ] `UpdateStockLevelAsync_ValidLevel_UpdatesStock()` - test stock updates
+            - [ ] `SyncInventoryWithShopifyAsync_ValidData_UpdatesInventory()` - test Shopify sync
+    - [ ] Test PaymentService class:
+        - [ ] `Tests/Unit/Services/PaymentServiceTests.cs`:
+            - [ ] `ProcessPaymentAsync_ValidPayment_ReturnsSuccessResult()` - test payment processing
+            - [ ] `ProcessPaymentAsync_InvalidCard_ThrowsPaymentException()` - test payment failure
+            - [ ] `RefundPaymentAsync_ValidRefund_ProcessesRefund()` - test refund processing
+            - [ ] `ValidatePaymentMethodAsync_ValidMethod_ReturnsTrue()` - test payment validation
+            - [ ] `CalculateFeesAsync_ValidAmount_ReturnsCorrectFees()` - test fee calculation
 - [ ] Implement unit tests for API controllers
+    - [ ] Test ProductsController:
+        - [ ] `Tests/Unit/Controllers/ProductsControllerTests.cs`:
+            - [ ] `GetProducts_ValidRequest_ReturnsOkWithProducts()` - test GET products
+            - [ ] `GetProduct_ValidId_ReturnsOkWithProduct()` - test GET single product
+            - [ ] `GetProduct_InvalidId_ReturnsNotFound()` - test not found response
+            - [ ] `CreateProduct_ValidProduct_ReturnsCreatedWithProduct()` - test POST product
+            - [ ] `CreateProduct_InvalidProduct_ReturnsBadRequest()` - test validation errors
+            - [ ] `UpdateProduct_ValidProduct_ReturnsOkWithUpdatedProduct()` - test PUT product
+            - [ ] `DeleteProduct_ValidId_ReturnsNoContent()` - test DELETE product
+            - [ ] `SearchProducts_ValidQuery_ReturnsMatchingProducts()` - test search functionality
+    - [ ] Test OrdersController:
+        - [ ] `Tests/Unit/Controllers/OrdersControllerTests.cs`:
+            - [ ] `CreateOrder_ValidOrder_ReturnsCreatedWithOrder()` - test order creation
+            - [ ] `GetOrders_ValidRequest_ReturnsOkWithOrders()` - test GET orders
+            - [ ] `GetOrder_ValidId_ReturnsOkWithOrder()` - test GET single order
+            - [ ] `UpdateOrderStatus_ValidStatus_ReturnsOkWithUpdatedOrder()` - test status update
+            - [ ] `CancelOrder_ValidId_ReturnsOkWithCancelledOrder()` - test order cancellation
+            - [ ] `ProcessPayment_ValidPayment_ReturnsOkWithPaymentResult()` - test payment processing
+    - [ ] Test UsersController:
+        - [ ] `Tests/Unit/Controllers/UsersControllerTests.cs`:
+            - [ ] `Register_ValidUser_ReturnsCreatedWithUser()` - test user registration
+            - [ ] `Login_ValidCredentials_ReturnsOkWithToken()` - test user login
+            - [ ] `Login_InvalidCredentials_ReturnsUnauthorized()` - test login failure
+            - [ ] `GetProfile_AuthenticatedUser_ReturnsOkWithProfile()` - test profile retrieval
+            - [ ] `UpdateProfile_ValidProfile_ReturnsOkWithUpdatedProfile()` - test profile update
+            - [ ] `ResetPassword_ValidEmail_ReturnsOk()` - test password reset
+    - [ ] Test WebhooksController:
+        - [ ] `Tests/Unit/Controllers/WebhooksControllerTests.cs`:
+            - [ ] `HandleShopifyWebhook_ValidPayload_ReturnsOk()` - test webhook handling
+            - [ ] `HandleShopifyWebhook_InvalidSignature_ReturnsUnauthorized()` - test signature validation
+            - [ ] `HandleOrderWebhook_ValidOrder_ProcessesCorrectly()` - test order webhooks
+            - [ ] `HandleProductWebhook_ValidProduct_ProcessesCorrectly()` - test product webhooks
+            - [ ] `HandleInventoryWebhook_ValidInventory_ProcessesCorrectly()` - test inventory webhooks
 - [ ] Add unit tests for data access layer
+    - [ ] Test ProductRepository:
+        - [ ] `Tests/Unit/Repositories/ProductRepositoryTests.cs`:
+            - [ ] `GetByIdAsync_ValidId_ReturnsProduct()` - test product retrieval
+            - [ ] `GetByIdAsync_InvalidId_ReturnsNull()` - test invalid ID
+            - [ ] `GetAllAsync_NoFilter_ReturnsAllProducts()` - test get all products
+            - [ ] `GetAllAsync_WithFilter_ReturnsFilteredProducts()` - test filtering
+            - [ ] `AddAsync_ValidProduct_AddsProduct()` - test product addition
+            - [ ] `UpdateAsync_ValidProduct_UpdatesProduct()` - test product update
+            - [ ] `DeleteAsync_ValidId_DeletesProduct()` - test product deletion
+            - [ ] `SearchAsync_ValidQuery_ReturnsMatchingProducts()` - test search functionality
+    - [ ] Test OrderRepository:
+        - [ ] `Tests/Unit/Repositories/OrderRepositoryTests.cs`:
+            - [ ] `GetByIdAsync_ValidId_ReturnsOrder()` - test order retrieval
+            - [ ] `GetByUserIdAsync_ValidUserId_ReturnsUserOrders()` - test user orders
+            - [ ] `AddAsync_ValidOrder_AddsOrder()` - test order addition
+            - [ ] `UpdateAsync_ValidOrder_UpdatesOrder()` - test order update
+            - [ ] `GetOrdersByStatusAsync_ValidStatus_ReturnsOrdersWithStatus()` - test status filtering
+            - [ ] `GetOrdersByDateRangeAsync_ValidRange_ReturnsOrdersInRange()` - test date filtering
+    - [ ] Test UserRepository:
+        - [ ] `Tests/Unit/Repositories/UserRepositoryTests.cs`:
+            - [ ] `GetByIdAsync_ValidId_ReturnsUser()` - test user retrieval
+            - [ ] `GetByEmailAsync_ValidEmail_ReturnsUser()` - test email lookup
+            - [ ] `AddAsync_ValidUser_AddsUser()` - test user addition
+            - [ ] `UpdateAsync_ValidUser_UpdatesUser()` - test user update
+            - [ ] `DeleteAsync_ValidId_DeletesUser()` - test user deletion
+            - [ ] `ExistsByEmailAsync_ExistingEmail_ReturnsTrue()` - test email existence check
 - [ ] Create unit tests for business logic
+    - [ ] Test validation logic:
+        - [ ] `Tests/Unit/Validators/ProductValidatorTests.cs`:
+            - [ ] `ValidateProduct_ValidProduct_ReturnsTrue()` - test valid product validation
+            - [ ] `ValidateProduct_InvalidProduct_ReturnsFalse()` - test invalid product validation
+            - [ ] `ValidateProductName_ValidName_ReturnsTrue()` - test name validation
+            - [ ] `ValidateProductPrice_ValidPrice_ReturnsTrue()` - test price validation
+            - [ ] `ValidateProductSku_ValidSku_ReturnsTrue()` - test SKU validation
+        - [ ] `Tests/Unit/Validators/OrderValidatorTests.cs`:
+            - [ ] `ValidateOrder_ValidOrder_ReturnsTrue()` - test valid order validation
+            - [ ] `ValidateOrderItems_ValidItems_ReturnsTrue()` - test order items validation
+            - [ ] `ValidateShippingAddress_ValidAddress_ReturnsTrue()` - test address validation
+            - [ ] `ValidatePaymentMethod_ValidMethod_ReturnsTrue()` - test payment validation
+    - [ ] Test business rule enforcement:
+        - [ ] `Tests/Unit/BusinessRules/InventoryBusinessRulesTests.cs`:
+            - [ ] `CanReserveStock_SufficientStock_ReturnsTrue()` - test stock reservation rules
+            - [ ] `CanReserveStock_InsufficientStock_ReturnsFalse()` - test stock shortage rules
+            - [ ] `CalculateReorderPoint_ValidData_ReturnsCorrectPoint()` - test reorder calculations
+        - [ ] `Tests/Unit/BusinessRules/PricingBusinessRulesTests.cs`:
+            - [ ] `CalculateDiscount_ValidDiscount_ReturnsCorrectAmount()` - test discount calculations
+            - [ ] `CalculateTax_ValidLocation_ReturnsCorrectTax()` - test tax calculations
+            - [ ] `CalculateShipping_ValidOrder_ReturnsCorrectShipping()` - test shipping calculations
 - [ ] Implement unit tests for webhook handlers
+    - [ ] Test ShopifyWebhookHandler:
+        - [ ] `Tests/Unit/Handlers/ShopifyWebhookHandlerTests.cs`:
+            - [ ] `HandleOrderCreated_ValidPayload_ProcessesOrder()` - test order creation webhook
+            - [ ] `HandleOrderUpdated_ValidPayload_UpdatesOrder()` - test order update webhook
+            - [ ] `HandleProductCreated_ValidPayload_CreatesProduct()` - test product creation webhook
+            - [ ] `HandleProductUpdated_ValidPayload_UpdatesProduct()` - test product update webhook
+            - [ ] `HandleInventoryUpdated_ValidPayload_UpdatesInventory()` - test inventory webhook
+            - [ ] `ValidateWebhookSignature_ValidSignature_ReturnsTrue()` - test signature validation
+            - [ ] `ValidateWebhookSignature_InvalidSignature_ReturnsFalse()` - test invalid signature
 - [ ] Add unit tests for authentication/authorization
+    - [ ] Test JWT token handling:
+        - [ ] `Tests/Unit/Auth/JwtTokenServiceTests.cs`:
+            - [ ] `GenerateToken_ValidUser_ReturnsValidToken()` - test token generation
+            - [ ] `ValidateToken_ValidToken_ReturnsTrue()` - test token validation
+            - [ ] `ValidateToken_ExpiredToken_ReturnsFalse()` - test expired token
+            - [ ] `ValidateToken_InvalidToken_ReturnsFalse()` - test invalid token
+            - [ ] `RefreshToken_ValidRefreshToken_ReturnsNewToken()` - test token refresh
+    - [ ] Test authorization policies:
+        - [ ] `Tests/Unit/Auth/AuthorizationTests.cs`:
+            - [ ] `CanAccessResource_AuthorizedUser_ReturnsTrue()` - test authorized access
+            - [ ] `CanAccessResource_UnauthorizedUser_ReturnsFalse()` - test unauthorized access
+            - [ ] `HasPermission_ValidPermission_ReturnsTrue()` - test permission checking
+            - [ ] `HasRole_ValidRole_ReturnsTrue()` - test role checking
 - [ ] Create unit tests for caching logic
+    - [ ] Test Redis caching:
+        - [ ] `Tests/Unit/Caching/RedisCacheServiceTests.cs`:
+            - [ ] `GetAsync_ExistingKey_ReturnsValue()` - test cache retrieval
+            - [ ] `GetAsync_NonExistingKey_ReturnsNull()` - test cache miss
+            - [ ] `SetAsync_ValidData_StoresInCache()` - test cache storage
+            - [ ] `RemoveAsync_ExistingKey_RemovesFromCache()` - test cache removal
+            - [ ] `ExistsAsync_ExistingKey_ReturnsTrue()` - test cache existence
+            - [ ] `GetOrSetAsync_CacheMiss_ExecutesFunctionAndCaches()` - test cache-aside pattern
+    - [ ] Test memory caching:
+        - [ ] `Tests/Unit/Caching/MemoryCacheServiceTests.cs`:
+            - [ ] `Get_ExistingKey_ReturnsValue()` - test memory cache retrieval
+            - [ ] `Set_ValidData_StoresInMemory()` - test memory cache storage
+            - [ ] `Remove_ExistingKey_RemovesFromMemory()` - test memory cache removal
+            - [ ] `TryGetValue_ExistingKey_ReturnsTrue()` - test memory cache existence
 - [ ] Achieve 90%+ code coverage
+    - [ ] Configure code coverage tools:
+        - [ ] Install `coverlet.collector` v6.0.0
+        - [ ] Install `ReportGenerator` v5.2.0
+        - [ ] Configure coverage collection in test projects
+        - [ ] Set up coverage reporting in CI/CD pipeline
+    - [ ] Generate coverage reports:
+        - [ ] Run `dotnet test --collect:"XPlat Code Coverage"` - collect coverage
+        - [ ] Generate HTML reports with ReportGenerator
+        - [ ] Set coverage thresholds (90% line coverage, 85% branch coverage)
+        - [ ] Configure coverage gates in build pipeline
+    - [ ] Analyze and improve coverage:
+        - [ ] Identify uncovered code paths
+        - [ ] Add tests for edge cases and error scenarios
+        - [ ] Ensure all public methods have test coverage
+        - [ ] Test exception handling and error paths
+        - [ ] Validate coverage meets quality standards
 
 ### [ ] TASK-029: Integration Testing
 **Priority**: High | **Effort**: 10h | **Dependencies**: TASK-028
 
 #### Sub-tasks:
 - [ ] Create integration tests for API endpoints
+    - [ ] Install integration testing packages:
+        - [ ] `Microsoft.AspNetCore.Mvc.Testing` v8.0.0
+        - [ ] `Microsoft.EntityFrameworkCore.InMemory` v8.0.0
+        - [ ] `Testcontainers` v3.6.0
+        - [ ] `Testcontainers.PostgreSql` v3.6.0
+        - [ ] `Testcontainers.Redis` v3.6.0
+        - [ ] `WireMock.Net` v1.5.51
+        - [ ] `Microsoft.AspNetCore.Authentication.JwtBearer` v8.0.0
+        - [ ] `Bogus` v35.4.0
+    - [ ] Set up test infrastructure:
+        - [ ] Create `Tests/Integration/` directory structure
+        - [ ] Create `Tests/Integration/Infrastructure/TestWebApplicationFactory.cs`:
+            - [ ] `CreateHost(IHostBuilder builder)` - configure test host
+            - [ ] `ConfigureWebHost(IWebHostBuilder builder)` - configure web host
+            - [ ] `ConfigureServices(IServiceCollection services)` - configure test services
+            - [ ] `ConfigureTestDatabase()` - set up test database
+            - [ ] `SeedTestData()` - populate test data
+        - [ ] Create `Tests/Integration/Infrastructure/IntegrationTestBase.cs`:
+            - [ ] `SetUpAsync()` - initialize test environment
+            - [ ] `TearDownAsync()` - clean up test environment
+            - [ ] `GetAuthenticatedClient(string role)` - get authenticated HTTP client
+            - [ ] `CreateTestUser(string role)` - create test user
+            - [ ] `SeedDatabase(params object[] entities)` - seed test data
+    - [ ] Test Products API endpoints:
+        - [ ] `Tests/Integration/Controllers/ProductsControllerIntegrationTests.cs`:
+            - [ ] `GetProducts_WithValidRequest_ReturnsProductsList()` - test GET /api/products
+            - [ ] `GetProducts_WithPagination_ReturnsPagedResults()` - test pagination
+            - [ ] `GetProducts_WithFiltering_ReturnsFilteredResults()` - test filtering
+            - [ ] `GetProduct_WithValidId_ReturnsProduct()` - test GET /api/products/{id}
+            - [ ] `GetProduct_WithInvalidId_ReturnsNotFound()` - test 404 response
+            - [ ] `CreateProduct_WithValidData_ReturnsCreatedProduct()` - test POST /api/products
+            - [ ] `CreateProduct_WithInvalidData_ReturnsBadRequest()` - test validation
+            - [ ] `UpdateProduct_WithValidData_ReturnsUpdatedProduct()` - test PUT /api/products/{id}
+            - [ ] `UpdateProduct_WithInvalidId_ReturnsNotFound()` - test update not found
+            - [ ] `DeleteProduct_WithValidId_ReturnsNoContent()` - test DELETE /api/products/{id}
+            - [ ] `SearchProducts_WithQuery_ReturnsMatchingProducts()` - test search functionality
+    - [ ] Test Orders API endpoints:
+        - [ ] `Tests/Integration/Controllers/OrdersControllerIntegrationTests.cs`:
+            - [ ] `CreateOrder_WithValidData_ReturnsCreatedOrder()` - test POST /api/orders
+            - [ ] `CreateOrder_WithInsufficientStock_ReturnsBadRequest()` - test stock validation
+            - [ ] `GetOrders_WithAuthentication_ReturnsUserOrders()` - test GET /api/orders
+            - [ ] `GetOrder_WithValidId_ReturnsOrder()` - test GET /api/orders/{id}
+            - [ ] `UpdateOrderStatus_WithValidStatus_ReturnsUpdatedOrder()` - test status update
+            - [ ] `CancelOrder_WithValidId_ReturnsCancelledOrder()` - test order cancellation
+            - [ ] `ProcessPayment_WithValidPayment_ReturnsPaymentResult()` - test payment processing
+            - [ ] `ProcessPayment_WithInvalidCard_ReturnsPaymentError()` - test payment failure
+    - [ ] Test Users API endpoints:
+        - [ ] `Tests/Integration/Controllers/UsersControllerIntegrationTests.cs`:
+            - [ ] `Register_WithValidData_ReturnsCreatedUser()` - test POST /api/users/register
+            - [ ] `Register_WithExistingEmail_ReturnsConflict()` - test duplicate email
+            - [ ] `Login_WithValidCredentials_ReturnsToken()` - test POST /api/users/login
+            - [ ] `Login_WithInvalidCredentials_ReturnsUnauthorized()` - test login failure
+            - [ ] `GetProfile_WithAuthentication_ReturnsUserProfile()` - test GET /api/users/profile
+            - [ ] `UpdateProfile_WithValidData_ReturnsUpdatedProfile()` - test PUT /api/users/profile
+            - [ ] `ResetPassword_WithValidEmail_ReturnsSuccess()` - test password reset
+            - [ ] `VerifyEmail_WithValidToken_ReturnsSuccess()` - test email verification
+    - [ ] Test Webhooks API endpoints:
+        - [ ] `Tests/Integration/Controllers/WebhooksControllerIntegrationTests.cs`:
+            - [ ] `HandleShopifyWebhook_WithValidSignature_ReturnsOk()` - test webhook processing
+            - [ ] `HandleShopifyWebhook_WithInvalidSignature_ReturnsUnauthorized()` - test signature validation
+            - [ ] `HandleOrderWebhook_WithValidPayload_ProcessesOrder()` - test order webhook
+            - [ ] `HandleProductWebhook_WithValidPayload_ProcessesProduct()` - test product webhook
+            - [ ] `HandleInventoryWebhook_WithValidPayload_ProcessesInventory()` - test inventory webhook
 - [ ] Implement database integration tests
+    - [ ] Set up database test infrastructure:
+        - [ ] Configure PostgreSQL test container
+        - [ ] Create database migration tests
+        - [ ] Set up test data seeding and cleanup
+        - [ ] Configure connection string management
+        - [ ] Implement database isolation between tests
+    - [ ] Test repository layer integration:
+        - [ ] `Tests/Integration/Repositories/ProductRepositoryIntegrationTests.cs`:
+            - [ ] `AddProduct_WithValidData_PersistsToDatabase()` - test product persistence
+            - [ ] `GetProduct_WithComplexQuery_ReturnsCorrectResults()` - test complex queries
+            - [ ] `UpdateProduct_WithConcurrency_HandlesOptimisticLocking()` - test concurrency
+            - [ ] `DeleteProduct_WithRelatedData_HandlesConstraints()` - test referential integrity
+            - [ ] `SearchProducts_WithFullTextSearch_ReturnsRelevantResults()` - test search functionality
+        - [ ] `Tests/Integration/Repositories/OrderRepositoryIntegrationTests.cs`:
+            - [ ] `CreateOrder_WithMultipleItems_PersistsCorrectly()` - test order creation
+            - [ ] `GetOrdersByUser_WithPagination_ReturnsCorrectPage()` - test pagination
+            - [ ] `UpdateOrderStatus_WithWorkflow_MaintainsConsistency()` - test status workflow
+            - [ ] `GetOrderStatistics_WithDateRange_ReturnsAccurateData()` - test aggregations
+        - [ ] `Tests/Integration/Repositories/UserRepositoryIntegrationTests.cs`:
+            - [ ] `CreateUser_WithUniqueConstraints_EnforcesUniqueness()` - test constraints
+            - [ ] `AuthenticateUser_WithHashedPassword_ValidatesCorrectly()` - test authentication
+            - [ ] `UpdateUserProfile_WithValidation_PersistsChanges()` - test profile updates
+            - [ ] `GetUsersByRole_WithFiltering_ReturnsCorrectUsers()` - test role filtering
+    - [ ] Test Entity Framework integration:
+        - [ ] `Tests/Integration/Data/DbContextIntegrationTests.cs`:
+            - [ ] `SaveChanges_WithTransactions_MaintainsConsistency()` - test transactions
+            - [ ] `BulkOperations_WithLargeDatasets_PerformsEfficiently()` - test bulk operations
+            - [ ] `ChangeTracking_WithComplexEntities_TracksCorrectly()` - test change tracking
+            - [ ] `LazyLoading_WithNavigationProperties_LoadsCorrectly()` - test lazy loading
+            - [ ] `Migrations_WithSchemaChanges_AppliesCorrectly()` - test migrations
 - [ ] Add Shopify API integration tests
+    - [ ] Set up Shopify API test infrastructure:
+        - [ ] Configure WireMock for Shopify API simulation
+        - [ ] Create Shopify API response mocks
+        - [ ] Set up webhook signature validation
+        - [ ] Configure rate limiting simulation
+        - [ ] Implement error scenario testing
+    - [ ] Test Shopify service integration:
+        - [ ] `Tests/Integration/Services/ShopifyServiceIntegrationTests.cs`:
+            - [ ] `SyncProducts_WithShopifyAPI_UpdatesLocalDatabase()` - test product sync
+            - [ ] `SyncOrders_WithShopifyAPI_UpdatesLocalDatabase()` - test order sync
+            - [ ] `SyncInventory_WithShopifyAPI_UpdatesLocalDatabase()` - test inventory sync
+            - [ ] `HandleRateLimit_WithThrottling_RetriesAppropriately()` - test rate limiting
+            - [ ] `HandleAPIError_WithFailure_LogsAndRetries()` - test error handling
+            - [ ] `ValidateWebhookSignature_WithShopifySignature_ValidatesCorrectly()` - test signature validation
+        - [ ] `Tests/Integration/Services/ShopifyWebhookIntegrationTests.cs`:
+            - [ ] `ProcessOrderWebhook_WithValidPayload_UpdatesOrder()` - test order webhook processing
+            - [ ] `ProcessProductWebhook_WithValidPayload_UpdatesProduct()` - test product webhook processing
+            - [ ] `ProcessInventoryWebhook_WithValidPayload_UpdatesInventory()` - test inventory webhook processing
+            - [ ] `HandleDuplicateWebhook_WithIdempotency_IgnoresDuplicate()` - test idempotency
+            - [ ] `HandleMalformedWebhook_WithInvalidPayload_LogsError()` - test error handling
 - [ ] Create webhook integration tests
+    - [ ] Set up webhook test infrastructure:
+        - [ ] Create webhook test server
+        - [ ] Configure webhook signature generation
+        - [ ] Set up webhook payload validation
+        - [ ] Implement webhook retry testing
+        - [ ] Configure webhook security testing
+    - [ ] Test webhook processing workflows:
+        - [ ] `Tests/Integration/Webhooks/WebhookProcessingIntegrationTests.cs`:
+            - [ ] `ProcessOrderCreatedWebhook_EndToEnd_UpdatesSystemCorrectly()` - test order creation flow
+            - [ ] `ProcessOrderUpdatedWebhook_EndToEnd_UpdatesSystemCorrectly()` - test order update flow
+            - [ ] `ProcessProductCreatedWebhook_EndToEnd_UpdatesSystemCorrectly()` - test product creation flow
+            - [ ] `ProcessProductUpdatedWebhook_EndToEnd_UpdatesSystemCorrectly()` - test product update flow
+            - [ ] `ProcessInventoryUpdatedWebhook_EndToEnd_UpdatesSystemCorrectly()` - test inventory update flow
+            - [ ] `HandleWebhookFailure_WithRetry_RetriesAppropriately()` - test retry mechanism
+            - [ ] `HandleWebhookTimeout_WithTimeout_HandlesGracefully()` - test timeout handling
+            - [ ] `ProcessBatchWebhooks_WithMultiplePayloads_ProcessesInOrder()` - test batch processing
 - [ ] Implement end-to-end workflow tests
+    - [ ] Test complete user workflows:
+        - [ ] `Tests/Integration/Workflows/UserWorkflowIntegrationTests.cs`:
+            - [ ] `UserRegistrationToFirstOrder_EndToEnd_CompletesSuccessfully()` - test user journey
+            - [ ] `UserLoginToOrderCompletion_EndToEnd_CompletesSuccessfully()` - test authenticated flow
+            - [ ] `PasswordResetToLogin_EndToEnd_CompletesSuccessfully()` - test password reset flow
+            - [ ] `EmailVerificationToActivation_EndToEnd_CompletesSuccessfully()` - test email verification flow
+    - [ ] Test order processing workflows:
+        - [ ] `Tests/Integration/Workflows/OrderWorkflowIntegrationTests.cs`:
+            - [ ] `OrderCreationToPayment_EndToEnd_CompletesSuccessfully()` - test order creation flow
+            - [ ] `OrderPaymentToFulfillment_EndToEnd_CompletesSuccessfully()` - test fulfillment flow
+            - [ ] `OrderCancellationToRefund_EndToEnd_CompletesSuccessfully()` - test cancellation flow
+            - [ ] `OrderReturnToRefund_EndToEnd_CompletesSuccessfully()` - test return flow
+    - [ ] Test inventory management workflows:
+        - [ ] `Tests/Integration/Workflows/InventoryWorkflowIntegrationTests.cs`:
+            - [ ] `StockReservationToRelease_EndToEnd_CompletesSuccessfully()` - test stock management
+            - [ ] `InventorySyncFromShopify_EndToEnd_UpdatesCorrectly()` - test sync workflow
+            - [ ] `LowStockAlertToReorder_EndToEnd_TriggersCorrectly()` - test reorder workflow
+            - [ ] `StockAdjustmentToAudit_EndToEnd_TracksCorrectly()` - test audit workflow
 - [ ] Add performance integration tests
+    - [ ] Set up performance testing infrastructure:
+        - [ ] Configure performance test data generation
+        - [ ] Set up performance metrics collection
+        - [ ] Configure load testing scenarios
+        - [ ] Implement performance benchmarking
+        - [ ] Set up performance regression detection
+    - [ ] Test API performance:
+        - [ ] `Tests/Integration/Performance/APIPerformanceIntegrationTests.cs`:
+            - [ ] `GetProducts_WithLargeDataset_RespondsWithinSLA()` - test response time SLA
+            - [ ] `CreateOrder_WithConcurrentRequests_HandlesLoadCorrectly()` - test concurrent load
+            - [ ] `SearchProducts_WithComplexQuery_RespondsWithinSLA()` - test search performance
+            - [ ] `BulkOperations_WithLargePayload_ProcessesEfficiently()` - test bulk operations
+            - [ ] `DatabaseQueries_WithComplexJoins_ExecutesEfficiently()` - test query performance
+    - [ ] Test caching performance:
+        - [ ] `Tests/Integration/Performance/CachePerformanceIntegrationTests.cs`:
+            - [ ] `CacheHit_WithFrequentAccess_ImproveResponseTime()` - test cache effectiveness
+            - [ ] `CacheMiss_WithColdStart_PopulatesCacheCorrectly()` - test cache population
+            - [ ] `CacheInvalidation_WithDataChanges_InvalidatesCorrectly()` - test cache invalidation
+            - [ ] `DistributedCache_WithMultipleInstances_SynchronizesCorrectly()` - test distributed caching
 - [ ] Create security integration tests
+    - [ ] Set up security testing infrastructure:
+        - [ ] Configure security test scenarios
+        - [ ] Set up authentication test cases
+        - [ ] Configure authorization test cases
+        - [ ] Implement input validation testing
+        - [ ] Set up SQL injection testing
+    - [ ] Test authentication and authorization:
+        - [ ] `Tests/Integration/Security/AuthenticationIntegrationTests.cs`:
+            - [ ] `AccessProtectedEndpoint_WithoutToken_ReturnsUnauthorized()` - test authentication requirement
+            - [ ] `AccessProtectedEndpoint_WithExpiredToken_ReturnsUnauthorized()` - test token expiration
+            - [ ] `AccessProtectedEndpoint_WithValidToken_ReturnsSuccess()` - test valid authentication
+            - [ ] `AccessRoleProtectedEndpoint_WithWrongRole_ReturnsForbidden()` - test role authorization
+            - [ ] `AccessRoleProtectedEndpoint_WithCorrectRole_ReturnsSuccess()` - test role access
+        - [ ] `Tests/Integration/Security/InputValidationIntegrationTests.cs`:
+            - [ ] `CreateProduct_WithSQLInjection_RejectsInput()` - test SQL injection protection
+            - [ ] `CreateProduct_WithXSSPayload_SanitizesInput()` - test XSS protection
+            - [ ] `CreateProduct_WithOversizedPayload_RejectsInput()` - test payload size limits
+            - [ ] `CreateProduct_WithInvalidCharacters_RejectsInput()` - test input sanitization
+    - [ ] Test API security:
+        - [ ] `Tests/Integration/Security/APISecurityIntegrationTests.cs`:
+            - [ ] `RateLimiting_WithExcessiveRequests_ThrottlesCorrectly()` - test rate limiting
+            - [ ] `CORS_WithInvalidOrigin_RejectsRequest()` - test CORS policy
+            - [ ] `HTTPS_WithHTTPRequest_RedirectsToHTTPS()` - test HTTPS enforcement
+            - [ ] `SecurityHeaders_WithResponse_IncludesSecurityHeaders()` - test security headers
 - [ ] Implement data consistency tests
+    - [ ] Set up data consistency testing:
+        - [ ] Configure transaction testing scenarios
+        - [ ] Set up concurrent access testing
+        - [ ] Configure data integrity validation
+        - [ ] Implement eventual consistency testing
+        - [ ] Set up data synchronization testing
+    - [ ] Test transactional consistency:
+        - [ ] `Tests/Integration/Consistency/TransactionConsistencyIntegrationTests.cs`:
+            - [ ] `CreateOrder_WithInventoryUpdate_MaintainsConsistency()` - test transactional integrity
+            - [ ] `ProcessPayment_WithOrderUpdate_MaintainsConsistency()` - test payment consistency
+            - [ ] `CancelOrder_WithStockRelease_MaintainsConsistency()` - test cancellation consistency
+            - [ ] `ConcurrentOrderCreation_WithSameProduct_HandlesCorrectly()` - test concurrent access
+    - [ ] Test data synchronization:
+        - [ ] `Tests/Integration/Consistency/DataSyncIntegrationTests.cs`:
+            - [ ] `ShopifySync_WithLocalChanges_ResolvesConflictsCorrectly()` - test conflict resolution
+            - [ ] `WebhookProcessing_WithDuplicateEvents_MaintainsIdempotency()` - test idempotency
+            - [ ] `CacheInvalidation_WithDataChanges_SynchronizesCorrectly()` - test cache consistency
+            - [ ] `EventualConsistency_WithAsyncOperations_ConvergesCorrectly()` - test eventual consistency
 
 ### [ ] TASK-030: Load and Performance Testing
 **Priority**: Medium | **Effort**: 8h | **Dependencies**: TASK-029
 
 #### Sub-tasks:
 - [ ] Create load testing scenarios
+    - [ ] Install load testing packages:
+        - [ ] `NBomber` v5.0.0
+        - [ ] `k6` (external tool)
+        - [ ] `BenchmarkDotNet` v0.13.12
+        - [ ] `Microsoft.AspNetCore.Mvc.Testing` v8.0.0
+        - [ ] `Microsoft.Extensions.Diagnostics.HealthChecks` v8.0.0
+        - [ ] `Serilog.Sinks.Console` v5.0.1
+        - [ ] `Serilog.Sinks.File` v5.0.0
+        - [ ] `System.Diagnostics.PerformanceCounter` v8.0.0
+    - [ ] Set up load testing infrastructure:
+        - [ ] Create `Tests/LoadTesting/` directory structure
+        - [ ] Create `Tests/LoadTesting/Infrastructure/LoadTestBase.cs`:
+            - [ ] `SetupTestEnvironment()` - configure test environment
+            - [ ] `GenerateTestData(int count)` - create test data
+            - [ ] `CreateHttpClient()` - configure HTTP client
+            - [ ] `MeasurePerformance(Action action)` - measure execution time
+            - [ ] `CollectMetrics()` - gather performance metrics
+        - [ ] Create `Tests/LoadTesting/Infrastructure/TestDataGenerator.cs`:
+            - [ ] `GenerateProducts(int count)` - generate product test data
+            - [ ] `GenerateUsers(int count)` - generate user test data
+            - [ ] `GenerateOrders(int count)` - generate order test data
+            - [ ] `GenerateRandomPayload(int size)` - generate random payloads
+    - [ ] Create API load testing scenarios:
+        - [ ] `Tests/LoadTesting/Scenarios/ProductAPILoadTests.cs`:
+            - [ ] `GetProducts_NormalLoad_100UsersFor5Minutes()` - test normal load
+            - [ ] `GetProducts_HighLoad_500UsersFor10Minutes()` - test high load
+            - [ ] `SearchProducts_ComplexQueries_200UsersFor5Minutes()` - test search load
+            - [ ] `CreateProduct_ConcurrentWrites_50UsersFor3Minutes()` - test write load
+            - [ ] `MixedOperations_ReadWriteMix_300UsersFor10Minutes()` - test mixed operations
+        - [ ] `Tests/LoadTesting/Scenarios/OrderAPILoadTests.cs`:
+            - [ ] `CreateOrder_NormalCheckout_100UsersFor5Minutes()` - test order creation load
+            - [ ] `CreateOrder_PeakTraffic_1000UsersFor15Minutes()` - test peak traffic
+            - [ ] `ProcessPayment_ConcurrentPayments_200UsersFor5Minutes()` - test payment processing
+            - [ ] `OrderWorkflow_EndToEnd_150UsersFor10Minutes()` - test complete workflow
+        - [ ] `Tests/LoadTesting/Scenarios/UserAPILoadTests.cs`:
+            - [ ] `UserRegistration_SignupRush_500UsersFor5Minutes()` - test registration load
+            - [ ] `UserLogin_ConcurrentLogins_300UsersFor5Minutes()` - test login load
+            - [ ] `UserProfile_FrequentAccess_200UsersFor10Minutes()` - test profile access
+    - [ ] Create webhook load testing:
+        - [ ] `Tests/LoadTesting/Scenarios/WebhookLoadTests.cs`:
+            - [ ] `ProcessWebhooks_NormalVolume_100WebhooksPerMinute()` - test normal webhook volume
+            - [ ] `ProcessWebhooks_HighVolume_1000WebhooksPerMinute()` - test high volume
+            - [ ] `ProcessWebhooks_BurstTraffic_5000WebhooksIn1Minute()` - test burst traffic
+            - [ ] `ProcessWebhooks_MixedPayloads_VariousTypesAndSizes()` - test mixed payloads
 - [ ] Implement stress testing
+    - [ ] Set up stress testing infrastructure:
+        - [ ] Configure stress test environment
+        - [ ] Set up resource monitoring
+        - [ ] Configure failure detection
+        - [ ] Implement recovery testing
+        - [ ] Set up breaking point analysis
+    - [ ] Create system stress tests:
+        - [ ] `Tests/LoadTesting/Stress/SystemStressTests.cs`:
+            - [ ] `API_GradualLoadIncrease_FindBreakingPoint()` - find system limits
+            - [ ] `Database_ConnectionPoolExhaustion_TestRecovery()` - test connection limits
+            - [ ] `Memory_LargePayloadProcessing_TestMemoryLimits()` - test memory limits
+            - [ ] `CPU_IntensiveOperations_TestCPULimits()` - test CPU limits
+            - [ ] `Network_HighThroughput_TestNetworkLimits()` - test network limits
+    - [ ] Create component stress tests:
+        - [ ] `Tests/LoadTesting/Stress/ComponentStressTests.cs`:
+            - [ ] `Cache_HighVolumeOperations_TestCachePerformance()` - stress test caching
+            - [ ] `Authentication_ConcurrentTokenValidation_TestAuthPerformance()` - stress test auth
+            - [ ] `FileUpload_LargeFiles_TestUploadLimits()` - stress test file handling
+            - [ ] `Search_ComplexQueries_TestSearchPerformance()` - stress test search
 - [ ] Add performance benchmarking
+    - [ ] Set up benchmarking infrastructure:
+        - [ ] Configure BenchmarkDotNet
+        - [ ] Set up benchmark data collection
+        - [ ] Configure benchmark reporting
+        - [ ] Implement baseline comparisons
+        - [ ] Set up regression detection
+    - [ ] Create API performance benchmarks:
+        - [ ] `Tests/LoadTesting/Benchmarks/APIBenchmarks.cs`:
+            - [ ] `[Benchmark] GetProducts_Baseline()` - baseline product retrieval
+            - [ ] `[Benchmark] GetProducts_WithCaching()` - cached product retrieval
+            - [ ] `[Benchmark] GetProducts_WithPagination()` - paginated retrieval
+            - [ ] `[Benchmark] SearchProducts_SimpleQuery()` - simple search benchmark
+            - [ ] `[Benchmark] SearchProducts_ComplexQuery()` - complex search benchmark
+            - [ ] `[Benchmark] CreateOrder_StandardFlow()` - order creation benchmark
+            - [ ] `[Benchmark] ProcessPayment_StandardFlow()` - payment processing benchmark
+    - [ ] Create database performance benchmarks:
+        - [ ] `Tests/LoadTesting/Benchmarks/DatabaseBenchmarks.cs`:
+            - [ ] `[Benchmark] ProductQuery_SimpleSelect()` - simple query benchmark
+            - [ ] `[Benchmark] ProductQuery_ComplexJoin()` - complex join benchmark
+            - [ ] `[Benchmark] ProductInsert_SingleRecord()` - single insert benchmark
+            - [ ] `[Benchmark] ProductInsert_BulkInsert()` - bulk insert benchmark
+            - [ ] `[Benchmark] ProductUpdate_SingleRecord()` - single update benchmark
+            - [ ] `[Benchmark] ProductUpdate_BulkUpdate()` - bulk update benchmark
+    - [ ] Create service performance benchmarks:
+        - [ ] `Tests/LoadTesting/Benchmarks/ServiceBenchmarks.cs`:
+            - [ ] `[Benchmark] ShopifySync_ProductSync()` - Shopify sync benchmark
+            - [ ] `[Benchmark] EmailService_SendEmail()` - email service benchmark
+            - [ ] `[Benchmark] CacheService_GetSet()` - cache operations benchmark
+            - [ ] `[Benchmark] ValidationService_ValidateProduct()` - validation benchmark
 - [ ] Create scalability tests
+    - [ ] Set up scalability testing infrastructure:
+        - [ ] Configure horizontal scaling tests
+        - [ ] Set up vertical scaling tests
+        - [ ] Configure load balancer testing
+        - [ ] Implement auto-scaling tests
+        - [ ] Set up multi-instance testing
+    - [ ] Test horizontal scalability:
+        - [ ] `Tests/LoadTesting/Scalability/HorizontalScalabilityTests.cs`:
+            - [ ] `API_SingleInstance_BaselinePerformance()` - single instance baseline
+            - [ ] `API_TwoInstances_LoadDistribution()` - two instance performance
+            - [ ] `API_FourInstances_LoadDistribution()` - four instance performance
+            - [ ] `API_AutoScaling_DynamicScaling()` - auto-scaling performance
+            - [ ] `Database_ReadReplicas_ReadScaling()` - database read scaling
+    - [ ] Test vertical scalability:
+        - [ ] `Tests/LoadTesting/Scalability/VerticalScalabilityTests.cs`:
+            - [ ] `API_2CPU_4GB_PerformanceBaseline()` - 2 CPU baseline
+            - [ ] `API_4CPU_8GB_PerformanceImprovement()` - 4 CPU performance
+            - [ ] `API_8CPU_16GB_PerformanceImprovement()` - 8 CPU performance
+            - [ ] `Database_ResourceScaling_PerformanceGains()` - database scaling
 - [ ] Implement database performance tests
+    - [ ] Set up database performance testing:
+        - [ ] Configure database monitoring
+        - [ ] Set up query performance analysis
+        - [ ] Configure connection pool testing
+        - [ ] Implement transaction performance testing
+        - [ ] Set up index performance testing
+    - [ ] Test query performance:
+        - [ ] `Tests/LoadTesting/Database/QueryPerformanceTests.cs`:
+            - [ ] `ProductQueries_SimpleSelect_PerformanceBaseline()` - simple query performance
+            - [ ] `ProductQueries_ComplexJoin_PerformanceAnalysis()` - complex query performance
+            - [ ] `ProductQueries_FullTextSearch_PerformanceAnalysis()` - search performance
+            - [ ] `ProductQueries_AggregateOperations_PerformanceAnalysis()` - aggregation performance
+            - [ ] `ProductQueries_WithIndexes_PerformanceImprovement()` - index performance
+    - [ ] Test connection performance:
+        - [ ] `Tests/LoadTesting/Database/ConnectionPerformanceTests.cs`:
+            - [ ] `ConnectionPool_NormalLoad_PerformanceBaseline()` - normal connection load
+            - [ ] `ConnectionPool_HighLoad_PerformanceAnalysis()` - high connection load
+            - [ ] `ConnectionPool_Exhaustion_RecoveryTesting()` - connection exhaustion
+            - [ ] `ConnectionPool_Optimization_PerformanceGains()` - optimized connections
+    - [ ] Test transaction performance:
+        - [ ] `Tests/LoadTesting/Database/TransactionPerformanceTests.cs`:
+            - [ ] `Transactions_SimpleOperations_PerformanceBaseline()` - simple transactions
+            - [ ] `Transactions_ComplexOperations_PerformanceAnalysis()` - complex transactions
+            - [ ] `Transactions_ConcurrentAccess_PerformanceAnalysis()` - concurrent transactions
+            - [ ] `Transactions_LongRunning_PerformanceAnalysis()` - long-running transactions
 - [ ] Add API response time tests
+    - [ ] Set up response time testing:
+        - [ ] Configure response time monitoring
+        - [ ] Set up SLA validation
+        - [ ] Configure percentile analysis
+        - [ ] Implement response time alerting
+        - [ ] Set up response time trending
+    - [ ] Test API response times:
+        - [ ] `Tests/LoadTesting/ResponseTime/APIResponseTimeTests.cs`:
+            - [ ] `GetProducts_ResponseTime_Under200ms()` - product retrieval SLA
+            - [ ] `SearchProducts_ResponseTime_Under500ms()` - search SLA
+            - [ ] `CreateOrder_ResponseTime_Under1000ms()` - order creation SLA
+            - [ ] `ProcessPayment_ResponseTime_Under2000ms()` - payment processing SLA
+            - [ ] `UserLogin_ResponseTime_Under300ms()` - login SLA
+            - [ ] `UserRegistration_ResponseTime_Under1000ms()` - registration SLA
+    - [ ] Test response time under load:
+        - [ ] `Tests/LoadTesting/ResponseTime/ResponseTimeUnderLoadTests.cs`:
+            - [ ] `API_NormalLoad_ResponseTimeConsistency()` - consistent response times
+            - [ ] `API_HighLoad_ResponseTimeDegradation()` - response time degradation
+            - [ ] `API_PeakLoad_ResponseTimeRecovery()` - response time recovery
+            - [ ] `API_SustainedLoad_ResponseTimeStability()` - sustained load stability
 - [ ] Create memory and resource usage tests
+    - [ ] Set up resource monitoring:
+        - [ ] Configure memory usage monitoring
+        - [ ] Set up CPU usage monitoring
+        - [ ] Configure disk I/O monitoring
+        - [ ] Implement network usage monitoring
+        - [ ] Set up garbage collection monitoring
+    - [ ] Test memory usage:
+        - [ ] `Tests/LoadTesting/Resources/MemoryUsageTests.cs`:
+            - [ ] `API_NormalLoad_MemoryUsageBaseline()` - baseline memory usage
+            - [ ] `API_HighLoad_MemoryUsageAnalysis()` - high load memory usage
+            - [ ] `API_LargePayloads_MemoryUsageAnalysis()` - large payload memory usage
+            - [ ] `API_MemoryLeaks_LongRunningTest()` - memory leak detection
+            - [ ] `GarbageCollection_Frequency_PerformanceImpact()` - GC impact analysis
+    - [ ] Test CPU usage:
+        - [ ] `Tests/LoadTesting/Resources/CPUUsageTests.cs`:
+            - [ ] `API_NormalLoad_CPUUsageBaseline()` - baseline CPU usage
+            - [ ] `API_HighLoad_CPUUsageAnalysis()` - high load CPU usage
+            - [ ] `API_CPUIntensiveOperations_UsageAnalysis()` - CPU intensive operations
+            - [ ] `API_ConcurrentRequests_CPUScaling()` - concurrent request CPU scaling
+    - [ ] Test disk and network I/O:
+        - [ ] `Tests/LoadTesting/Resources/IOUsageTests.cs`:
+            - [ ] `Database_DiskIO_PerformanceAnalysis()` - disk I/O performance
+            - [ ] `FileUpload_DiskIO_PerformanceAnalysis()` - file upload I/O
+            - [ ] `API_NetworkIO_ThroughputAnalysis()` - network throughput
+            - [ ] `Cache_NetworkIO_PerformanceAnalysis()` - cache network I/O
 - [ ] Implement concurrent user testing
+    - [ ] Set up concurrent user testing:
+        - [ ] Configure user simulation
+        - [ ] Set up session management testing
+        - [ ] Configure user behavior modeling
+        - [ ] Implement realistic user scenarios
+        - [ ] Set up user journey testing
+    - [ ] Test concurrent user scenarios:
+        - [ ] `Tests/LoadTesting/ConcurrentUsers/ConcurrentUserTests.cs`:
+            - [ ] `ConcurrentUsers_100Users_BrowsingProducts()` - concurrent browsing
+            - [ ] `ConcurrentUsers_50Users_CreatingOrders()` - concurrent order creation
+            - [ ] `ConcurrentUsers_200Users_MixedOperations()` - mixed user operations
+            - [ ] `ConcurrentUsers_500Users_PeakTrafficSimulation()` - peak traffic simulation
+            - [ ] `ConcurrentUsers_1000Users_StressTestSimulation()` - stress test simulation
+    - [ ] Test user session management:
+        - [ ] `Tests/LoadTesting/ConcurrentUsers/SessionManagementTests.cs`:
+            - [ ] `Sessions_ConcurrentLogins_SessionIsolation()` - session isolation
+            - [ ] `Sessions_SessionTimeout_CleanupTesting()` - session cleanup
+            - [ ] `Sessions_SessionScaling_PerformanceAnalysis()` - session scaling
+            - [ ] `Sessions_SessionSecurity_ConcurrentAccess()` - session security
+    - [ ] Test realistic user journeys:
+        - [ ] `Tests/LoadTesting/ConcurrentUsers/UserJourneyTests.cs`:
+            - [ ] `UserJourney_BrowseToCheckout_RealisticFlow()` - browse to checkout
+            - [ ] `UserJourney_SearchToPurchase_RealisticFlow()` - search to purchase
+            - [ ] `UserJourney_RegistrationToFirstOrder_RealisticFlow()` - registration to order
+            - [ ] `UserJourney_ReturnCustomer_RealisticFlow()` - return customer flow
+            - [ ] `UserJourney_MobileUser_RealisticFlow()` - mobile user simulation
 
 ---
 
@@ -428,95 +4480,2418 @@ This document outlines the atomic, developer-ready tasks for implementing the Sh
 
 #### Sub-tasks:
 - [ ] Create optimized Dockerfile
+    - [ ] Set up multi-stage Docker build:
+        - [ ] Create `Dockerfile` in project root:
+            - [ ] Stage 1: Build stage using `mcr.microsoft.com/dotnet/sdk:8.0`
+            - [ ] Stage 2: Runtime stage using `mcr.microsoft.com/dotnet/aspnet:8.0`
+            - [ ] Copy only necessary files for build
+            - [ ] Restore packages in separate layer for caching
+            - [ ] Build application with optimizations
+            - [ ] Copy runtime files to final stage
+        - [ ] Configure build arguments:
+            - [ ] `ARG BUILD_CONFIGURATION=Release`
+            - [ ] `ARG ASPNETCORE_ENVIRONMENT=Production`
+            - [ ] `ARG APP_VERSION=1.0.0`
+        - [ ] Set environment variables:
+            - [ ] `ENV ASPNETCORE_URLS=http://+:8080`
+            - [ ] `ENV ASPNETCORE_ENVIRONMENT=Production`
+            - [ ] `ENV DOTNET_RUNNING_IN_CONTAINER=true`
+    - [ ] Optimize Docker layers:
+        - [ ] Copy `*.csproj` files first for dependency caching
+        - [ ] Run `dotnet restore` before copying source code
+        - [ ] Use `.dockerignore` to exclude unnecessary files:
+            - [ ] `bin/`, `obj/`, `.git/`, `.vs/`, `*.md`
+            - [ ] `Tests/`, `docs/`, `.plan/`
+            - [ ] `node_modules/`, `*.log`, `*.tmp`
+        - [ ] Minimize final image size with Alpine base images
+        - [ ] Remove development dependencies from final stage
 - [ ] Implement multi-stage Docker builds
+    - [ ] Create development Dockerfile:
+        - [ ] `Dockerfile.dev` for development environment:
+            - [ ] Include development tools and debugger
+            - [ ] Mount source code as volume
+            - [ ] Enable hot reload capabilities
+            - [ ] Include development certificates
+            - [ ] Configure development logging
+    - [ ] Create production Dockerfile:
+        - [ ] `Dockerfile.prod` for production environment:
+            - [ ] Minimal runtime dependencies
+            - [ ] Security hardening configurations
+            - [ ] Non-root user execution
+            - [ ] Optimized for size and performance
+    - [ ] Create testing Dockerfile:
+        - [ ] `Dockerfile.test` for testing environment:
+            - [ ] Include test dependencies
+            - [ ] Configure test database connections
+            - [ ] Set up test data seeding
+            - [ ] Enable code coverage collection
 - [ ] Add Docker Compose for local development
+    - [ ] Create `docker-compose.yml` for local development:
+        - [ ] API service configuration:
+            - [ ] Build from `Dockerfile.dev`
+            - [ ] Port mapping `8080:8080`
+            - [ ] Volume mounts for source code
+            - [ ] Environment variables from `.env.local`
+            - [ ] Depends on database and cache services
+        - [ ] PostgreSQL service configuration:
+            - [ ] Use `postgres:16-alpine` image
+            - [ ] Configure database credentials
+            - [ ] Set up persistent volume for data
+            - [ ] Initialize with development schema
+            - [ ] Port mapping `5432:5432`
+        - [ ] Redis service configuration:
+            - [ ] Use `redis:7-alpine` image
+            - [ ] Configure Redis persistence
+            - [ ] Set up Redis configuration file
+            - [ ] Port mapping `6379:6379`
+        - [ ] Nginx service configuration (optional):
+            - [ ] Use `nginx:alpine` image
+            - [ ] Configure reverse proxy
+            - [ ] Set up SSL termination
+            - [ ] Port mapping `80:80`, `443:443`
+    - [ ] Create `docker-compose.override.yml` for development overrides:
+        - [ ] Development-specific configurations
+        - [ ] Debug port mappings
+        - [ ] Additional development tools
+        - [ ] Hot reload configurations
+    - [ ] Create `docker-compose.test.yml` for testing:
+        - [ ] Test database configuration
+        - [ ] Test service configurations
+        - [ ] Test data seeding
+        - [ ] Isolated test environment
+    - [ ] Create `docker-compose.prod.yml` for production:
+        - [ ] Production-optimized configurations
+        - [ ] Security hardening
+        - [ ] Resource limits and reservations
+        - [ ] Production logging configuration
 - [ ] Create container health checks
+    - [ ] Implement health check endpoint:
+        - [ ] Create `Controllers/HealthController.cs`:
+            - [ ] `GET /health` - basic health check
+            - [ ] `GET /health/ready` - readiness probe
+            - [ ] `GET /health/live` - liveness probe
+            - [ ] Check database connectivity
+            - [ ] Check Redis connectivity
+            - [ ] Check external API connectivity
+            - [ ] Return detailed health status
+    - [ ] Configure Docker health checks:
+        - [ ] Add `HEALTHCHECK` instruction to Dockerfile:
+            - [ ] `HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3`
+            - [ ] `CMD curl -f http://localhost:8080/health || exit 1`
+        - [ ] Configure health check in docker-compose:
+            - [ ] Set appropriate intervals and timeouts
+            - [ ] Configure restart policies based on health
+            - [ ] Set up health check dependencies
+    - [ ] Implement comprehensive health monitoring:
+        - [ ] Database connection health
+        - [ ] Cache service health
+        - [ ] External service dependencies
+        - [ ] Application-specific health metrics
+        - [ ] Memory and CPU usage monitoring
 - [ ] Implement container security scanning
+    - [ ] Set up security scanning tools:
+        - [ ] Configure Trivy for vulnerability scanning:
+            - [ ] Install Trivy in CI/CD pipeline
+            - [ ] Scan base images for vulnerabilities
+            - [ ] Scan application dependencies
+            - [ ] Generate security reports
+            - [ ] Fail builds on critical vulnerabilities
+        - [ ] Configure Docker Bench for security:
+            - [ ] Run Docker security benchmarks
+            - [ ] Check Docker daemon configuration
+            - [ ] Validate container configurations
+            - [ ] Generate security compliance reports
+    - [ ] Implement security best practices:
+        - [ ] Run containers as non-root user:
+            - [ ] Create dedicated user in Dockerfile
+            - [ ] Set appropriate file permissions
+            - [ ] Configure user namespaces
+        - [ ] Use minimal base images:
+            - [ ] Prefer Alpine or distroless images
+            - [ ] Remove unnecessary packages
+            - [ ] Minimize attack surface
+        - [ ] Implement secrets management:
+            - [ ] Use Docker secrets for sensitive data
+            - [ ] Avoid hardcoded credentials
+            - [ ] Implement secret rotation
+        - [ ] Configure security contexts:
+            - [ ] Set read-only root filesystem
+            - [ ] Drop unnecessary capabilities
+            - [ ] Configure AppArmor/SELinux profiles
 - [ ] Add container resource limits
+    - [ ] Configure CPU limits:
+        - [ ] Set CPU limits in docker-compose:
+            - [ ] `cpus: '1.0'` for API service
+            - [ ] `cpus: '0.5'` for database service
+            - [ ] `cpus: '0.25'` for cache service
+        - [ ] Configure CPU reservations:
+            - [ ] Reserve minimum CPU for critical services
+            - [ ] Set CPU shares for priority
+    - [ ] Configure memory limits:
+        - [ ] Set memory limits in docker-compose:
+            - [ ] `mem_limit: 1g` for API service
+            - [ ] `mem_limit: 512m` for database service
+            - [ ] `mem_limit: 256m` for cache service
+        - [ ] Configure memory reservations:
+            - [ ] Reserve minimum memory for services
+            - [ ] Set swap limits
+    - [ ] Configure I/O limits:
+        - [ ] Set disk I/O limits
+        - [ ] Configure network bandwidth limits
+        - [ ] Set up storage quotas
+    - [ ] Implement resource monitoring:
+        - [ ] Monitor CPU usage
+        - [ ] Monitor memory consumption
+        - [ ] Monitor disk I/O
+        - [ ] Set up alerts for resource exhaustion
 - [ ] Create container deployment scripts
+    - [ ] Create deployment automation scripts:
+        - [ ] `scripts/deploy.sh` - main deployment script:
+            - [ ] Build and tag Docker images
+            - [ ] Push images to container registry
+            - [ ] Deploy to target environment
+            - [ ] Run health checks
+            - [ ] Rollback on failure
+        - [ ] `scripts/build.sh` - image building script:
+            - [ ] Build multi-architecture images
+            - [ ] Tag images with version and latest
+            - [ ] Run security scans
+            - [ ] Push to registry
+        - [ ] `scripts/rollback.sh` - rollback script:
+            - [ ] Identify previous stable version
+            - [ ] Deploy previous version
+            - [ ] Verify rollback success
+            - [ ] Update deployment status
+    - [ ] Create environment-specific scripts:
+        - [ ] `scripts/deploy-dev.sh` - development deployment
+        - [ ] `scripts/deploy-staging.sh` - staging deployment
+        - [ ] `scripts/deploy-prod.sh` - production deployment
+        - [ ] `scripts/local-setup.sh` - local development setup
+    - [ ] Implement deployment validation:
+        - [ ] Pre-deployment checks
+        - [ ] Post-deployment verification
+        - [ ] Health check validation
+        - [ ] Performance baseline validation
 - [ ] Optimize container image size
+    - [ ] Implement image optimization techniques:
+        - [ ] Use multi-stage builds to reduce final image size
+        - [ ] Remove unnecessary files and dependencies
+        - [ ] Use `.dockerignore` to exclude build artifacts
+        - [ ] Optimize layer caching
+        - [ ] Use Alpine-based images where possible
+    - [ ] Implement image compression:
+        - [ ] Configure Docker BuildKit for better compression
+        - [ ] Use image squashing techniques
+        - [ ] Optimize file system layers
+        - [ ] Remove package manager caches
+    - [ ] Monitor and measure image sizes:
+        - [ ] Track image size metrics
+        - [ ] Set up alerts for image size increases
+        - [ ] Compare image sizes across versions
+        - [ ] Generate image size reports
+    - [ ] Implement image scanning and optimization:
+        - [ ] Scan for unused dependencies
+        - [ ] Remove development tools from production images
+        - [ ] Optimize runtime configurations
+        - [ ] Use distroless images for maximum optimization
 
 ### [ ] TASK-032: CI/CD Pipeline
 **Priority**: High | **Effort**: 8h | **Dependencies**: TASK-031
 
 #### Sub-tasks:
 - [ ] Create GitHub Actions workflow
+    - [ ] Set up main CI/CD workflow:
+        - [ ] Create `.github/workflows/ci-cd.yml`:
+            - [ ] Trigger on push to main, develop, and pull requests
+            - [ ] Configure workflow permissions
+            - [ ] Set up environment variables and secrets
+            - [ ] Define job dependencies and parallelization
+            - [ ] Configure timeout and retry policies
+        - [ ] Configure build matrix:
+            - [ ] Multiple .NET versions (8.0)
+            - [ ] Multiple OS (ubuntu-latest, windows-latest)
+            - [ ] Multiple environments (dev, staging, prod)
+    - [ ] Set up workflow jobs:
+        - [ ] **Build Job**:
+            - [ ] Checkout code with full history
+            - [ ] Setup .NET SDK 8.0
+            - [ ] Restore NuGet packages
+            - [ ] Build solution in Release mode
+            - [ ] Upload build artifacts
+        - [ ] **Test Job**:
+            - [ ] Run unit tests with coverage
+            - [ ] Run integration tests
+            - [ ] Generate test reports
+            - [ ] Upload test results and coverage
+        - [ ] **Quality Job**:
+            - [ ] Run SonarQube analysis
+            - [ ] Run code formatting checks
+            - [ ] Run static analysis
+            - [ ] Generate quality reports
+        - [ ] **Security Job**:
+            - [ ] Run dependency vulnerability scans
+            - [ ] Run SAST (Static Application Security Testing)
+            - [ ] Run container security scans
+            - [ ] Generate security reports
+        - [ ] **Deploy Job**:
+            - [ ] Deploy to target environments
+            - [ ] Run post-deployment tests
+            - [ ] Update deployment status
+            - [ ] Send notifications
 - [ ] Implement automated testing in pipeline
+    - [ ] Configure unit testing:
+        - [ ] Set up test execution in pipeline:
+            - [ ] Install test dependencies
+            - [ ] Configure test databases
+            - [ ] Run `dotnet test` with coverage
+            - [ ] Generate test reports in JUnit format
+            - [ ] Upload test results to GitHub
+        - [ ] Configure test coverage:
+            - [ ] Use `coverlet` for coverage collection
+            - [ ] Generate coverage reports in multiple formats
+            - [ ] Upload coverage to Codecov/Coveralls
+            - [ ] Set coverage thresholds (minimum 80%)
+            - [ ] Fail pipeline if coverage drops below threshold
+    - [ ] Configure integration testing:
+        - [ ] Set up test environment:
+            - [ ] Start test database containers
+            - [ ] Start test Redis containers
+            - [ ] Configure test API endpoints
+            - [ ] Seed test data
+        - [ ] Run integration tests:
+            - [ ] Execute API integration tests
+            - [ ] Execute database integration tests
+            - [ ] Execute webhook integration tests
+            - [ ] Execute end-to-end workflow tests
+        - [ ] Cleanup test environment:
+            - [ ] Stop test containers
+            - [ ] Clean up test data
+            - [ ] Archive test logs
+    - [ ] Configure load testing:
+        - [ ] Set up performance testing:
+            - [ ] Configure load testing environment
+            - [ ] Run baseline performance tests
+            - [ ] Compare performance metrics
+            - [ ] Fail pipeline on performance regression
+        - [ ] Generate performance reports:
+            - [ ] Response time metrics
+            - [ ] Throughput metrics
+            - [ ] Resource utilization metrics
+            - [ ] Performance trend analysis
 - [ ] Add code quality checks
+    - [ ] Set up SonarQube integration:
+        - [ ] Configure SonarQube server connection
+        - [ ] Set up SonarQube project
+        - [ ] Configure quality gates:
+            - [ ] Code coverage > 80%
+            - [ ] Duplicated lines < 3%
+            - [ ] Maintainability rating A
+            - [ ] Reliability rating A
+            - [ ] Security rating A
+        - [ ] Configure SonarQube analysis:
+            - [ ] Run static code analysis
+            - [ ] Analyze code smells
+            - [ ] Detect security hotspots
+            - [ ] Check technical debt
+        - [ ] Generate quality reports:
+            - [ ] Code quality dashboard
+            - [ ] Technical debt reports
+            - [ ] Security vulnerability reports
+            - [ ] Code coverage reports
+    - [ ] Set up code formatting checks:
+        - [ ] Configure EditorConfig:
+            - [ ] Define coding standards
+            - [ ] Set indentation rules
+            - [ ] Configure line ending rules
+            - [ ] Set file encoding standards
+        - [ ] Configure .NET code formatting:
+            - [ ] Use `dotnet format` for formatting checks
+            - [ ] Configure StyleCop analyzers
+            - [ ] Set up code analysis rules
+            - [ ] Fail pipeline on formatting violations
+    - [ ] Set up static analysis:
+        - [ ] Configure Roslyn analyzers:
+            - [ ] Microsoft.CodeAnalysis.NetAnalyzers
+            - [ ] StyleCop.Analyzers
+            - [ ] SonarAnalyzer.CSharp
+            - [ ] SecurityCodeScan.VS2019
+        - [ ] Configure analysis rules:
+            - [ ] Set rule severity levels
+            - [ ] Configure custom rules
+            - [ ] Set up rule suppressions
+            - [ ] Generate analysis reports
 - [ ] Implement security scanning
+    - [ ] Set up dependency vulnerability scanning:
+        - [ ] Configure GitHub Dependabot:
+            - [ ] Enable automatic dependency updates
+            - [ ] Configure update schedules
+            - [ ] Set up security alerts
+            - [ ] Configure auto-merge for security updates
+        - [ ] Configure OWASP Dependency Check:
+            - [ ] Scan NuGet packages for vulnerabilities
+            - [ ] Generate vulnerability reports
+            - [ ] Set vulnerability thresholds
+            - [ ] Fail pipeline on critical vulnerabilities
+    - [ ] Set up SAST (Static Application Security Testing):
+        - [ ] Configure CodeQL analysis:
+            - [ ] Set up CodeQL workflow
+            - [ ] Configure security queries
+            - [ ] Generate security findings
+            - [ ] Upload results to GitHub Security tab
+        - [ ] Configure Semgrep security scanning:
+            - [ ] Set up Semgrep rules
+            - [ ] Scan for security patterns
+            - [ ] Generate security reports
+            - [ ] Integrate with security dashboard
+    - [ ] Set up container security scanning:
+        - [ ] Configure Trivy scanning:
+            - [ ] Scan Docker images for vulnerabilities
+            - [ ] Scan filesystem for secrets
+            - [ ] Generate security reports
+            - [ ] Fail pipeline on critical vulnerabilities
+        - [ ] Configure Docker Bench security:
+            - [ ] Run Docker security benchmarks
+            - [ ] Check container configurations
+            - [ ] Generate compliance reports
+    - [ ] Set up secrets scanning:
+        - [ ] Configure GitLeaks:
+            - [ ] Scan commit history for secrets
+            - [ ] Scan current codebase
+            - [ ] Generate secrets reports
+            - [ ] Fail pipeline on secret detection
+        - [ ] Configure TruffleHog:
+            - [ ] Deep scan for high-entropy strings
+            - [ ] Scan for API keys and tokens
+            - [ ] Generate detailed findings
 - [ ] Add automated deployment
+    - [ ] Set up environment-specific deployments:
+        - [ ] **Development Environment**:
+            - [ ] Auto-deploy on push to develop branch
+            - [ ] Deploy to development Kubernetes cluster
+            - [ ] Run smoke tests after deployment
+            - [ ] Update development status dashboard
+        - [ ] **Staging Environment**:
+            - [ ] Deploy on push to main branch
+            - [ ] Deploy to staging Kubernetes cluster
+            - [ ] Run full integration test suite
+            - [ ] Require manual approval for production
+        - [ ] **Production Environment**:
+            - [ ] Deploy on manual trigger or tag creation
+            - [ ] Deploy to production Kubernetes cluster
+            - [ ] Implement blue-green deployment
+            - [ ] Run production health checks
+    - [ ] Configure deployment strategies:
+        - [ ] **Blue-Green Deployment**:
+            - [ ] Deploy to green environment
+            - [ ] Run health checks on green
+            - [ ] Switch traffic to green
+            - [ ] Keep blue as rollback option
+        - [ ] **Canary Deployment**:
+            - [ ] Deploy to subset of instances
+            - [ ] Monitor canary metrics
+            - [ ] Gradually increase traffic
+            - [ ] Rollback on anomalies
+        - [ ] **Rolling Deployment**:
+            - [ ] Update instances one by one
+            - [ ] Monitor health during rollout
+            - [ ] Pause on health check failures
+            - [ ] Complete rollout on success
+    - [ ] Set up deployment validation:
+        - [ ] Pre-deployment checks:
+            - [ ] Validate deployment artifacts
+            - [ ] Check environment readiness
+            - [ ] Verify dependencies
+            - [ ] Run pre-deployment tests
+        - [ ] Post-deployment validation:
+            - [ ] Run health checks
+            - [ ] Validate API endpoints
+            - [ ] Check database connectivity
+            - [ ] Verify external integrations
 - [ ] Create rollback mechanisms
+    - [ ] Implement automatic rollback:
+        - [ ] Configure rollback triggers:
+            - [ ] Health check failures
+            - [ ] Error rate thresholds
+            - [ ] Performance degradation
+            - [ ] Manual rollback triggers
+        - [ ] Set up rollback procedures:
+            - [ ] Identify previous stable version
+            - [ ] Deploy previous version
+            - [ ] Verify rollback success
+            - [ ] Update deployment status
+        - [ ] Configure rollback validation:
+            - [ ] Run post-rollback health checks
+            - [ ] Validate system functionality
+            - [ ] Monitor system metrics
+            - [ ] Send rollback notifications
+    - [ ] Implement manual rollback:
+        - [ ] Create rollback workflow:
+            - [ ] Manual trigger for rollback
+            - [ ] Select target version
+            - [ ] Confirm rollback action
+            - [ ] Execute rollback procedure
+        - [ ] Set up rollback dashboard:
+            - [ ] Display deployment history
+            - [ ] Show rollback options
+            - [ ] Monitor rollback progress
+            - [ ] Display rollback status
 - [ ] Implement environment promotion
+    - [ ] Set up promotion pipeline:
+        - [ ] **Dev to Staging Promotion**:
+            - [ ] Trigger on successful dev deployment
+            - [ ] Run promotion validation tests
+            - [ ] Deploy to staging environment
+            - [ ] Run staging acceptance tests
+        - [ ] **Staging to Production Promotion**:
+            - [ ] Require manual approval
+            - [ ] Run pre-production validation
+            - [ ] Deploy to production environment
+            - [ ] Run production smoke tests
+    - [ ] Configure promotion gates:
+        - [ ] Quality gates:
+            - [ ] All tests must pass
+            - [ ] Code coverage above threshold
+            - [ ] Security scans clean
+            - [ ] Performance benchmarks met
+        - [ ] Approval gates:
+            - [ ] Technical lead approval
+            - [ ] Product owner approval
+            - [ ] Security team approval (for production)
+            - [ ] Operations team approval (for production)
+    - [ ] Set up promotion tracking:
+        - [ ] Track promotion history
+        - [ ] Monitor promotion success rates
+        - [ ] Generate promotion reports
+        - [ ] Set up promotion metrics dashboard
 - [ ] Add deployment notifications
+    - [ ] Configure notification channels:
+        - [ ] **Slack Integration**:
+            - [ ] Set up Slack webhook
+            - [ ] Configure deployment channels
+            - [ ] Send deployment status updates
+            - [ ] Include deployment details and links
+        - [ ] **Email Notifications**:
+            - [ ] Configure SMTP settings
+            - [ ] Set up notification templates
+            - [ ] Send to stakeholder groups
+            - [ ] Include deployment summaries
+        - [ ] **Microsoft Teams Integration**:
+            - [ ] Set up Teams webhook
+            - [ ] Configure team channels
+            - [ ] Send deployment cards
+            - [ ] Include action buttons
+    - [ ] Configure notification triggers:
+        - [ ] **Success Notifications**:
+            - [ ] Successful deployments
+            - [ ] Successful promotions
+            - [ ] Successful rollbacks
+            - [ ] Performance improvements
+        - [ ] **Failure Notifications**:
+            - [ ] Failed deployments
+            - [ ] Failed tests
+            - [ ] Security vulnerabilities
+            - [ ] Performance regressions
+        - [ ] **Warning Notifications**:
+            - [ ] Long-running deployments
+            - [ ] Resource usage alerts
+            - [ ] Dependency updates available
+            - [ ] Certificate expiration warnings
+    - [ ] Set up notification templates:
+        - [ ] Deployment start notifications
+        - [ ] Deployment success notifications
+        - [ ] Deployment failure notifications
+        - [ ] Rollback notifications
+        - [ ] Security alert notifications
+        - [ ] Performance alert notifications
 
 ### [ ] TASK-033: Kubernetes Deployment
 **Priority**: Medium | **Effort**: 10h | **Dependencies**: TASK-032
 
 #### Sub-tasks:
 - [ ] Create Kubernetes deployment manifests
+    - [ ] Set up namespace configuration:
+        - [ ] Create `k8s/namespaces/` directory
+        - [ ] Create namespace manifests:
+            - [ ] `development-namespace.yaml`:
+                - [ ] Define development namespace
+                - [ ] Set resource quotas
+                - [ ] Configure network policies
+                - [ ] Add labels and annotations
+            - [ ] `staging-namespace.yaml`:
+                - [ ] Define staging namespace
+                - [ ] Set resource quotas
+                - [ ] Configure network policies
+                - [ ] Add labels and annotations
+            - [ ] `production-namespace.yaml`:
+                - [ ] Define production namespace
+                - [ ] Set strict resource quotas
+                - [ ] Configure security policies
+                - [ ] Add compliance labels
+    - [ ] Create application deployment manifests:
+        - [ ] Create `k8s/deployments/` directory
+        - [ ] **API Deployment** (`api-deployment.yaml`):
+            - [ ] Define deployment metadata:
+                - [ ] Set deployment name and labels
+                - [ ] Configure namespace assignment
+                - [ ] Add version annotations
+                - [ ] Set owner references
+            - [ ] Configure pod template:
+                - [ ] Set container specifications:
+                    - [ ] Image name and tag
+                    - [ ] Resource requests and limits
+                    - [ ] Environment variables
+                    - [ ] Volume mounts
+                - [ ] Configure security context:
+                    - [ ] Run as non-root user
+                    - [ ] Set read-only root filesystem
+                    - [ ] Drop all capabilities
+                    - [ ] Set security context constraints
+                - [ ] Add health checks:
+                    - [ ] Liveness probe configuration
+                    - [ ] Readiness probe configuration
+                    - [ ] Startup probe configuration
+            - [ ] Configure deployment strategy:
+                - [ ] Rolling update strategy
+                - [ ] Max unavailable pods
+                - [ ] Max surge pods
+                - [ ] Revision history limit
+        - [ ] **Database Deployment** (`database-deployment.yaml`):
+            - [ ] Configure StatefulSet for database:
+                - [ ] Set StatefulSet metadata
+                - [ ] Configure pod template
+                - [ ] Set volume claim templates
+                - [ ] Configure service name
+            - [ ] Set database-specific configurations:
+                - [ ] PostgreSQL container configuration
+                - [ ] Environment variables for DB
+                - [ ] Persistent volume claims
+                - [ ] Init containers for setup
+        - [ ] **Redis Deployment** (`redis-deployment.yaml`):
+            - [ ] Configure Redis deployment
+            - [ ] Set Redis-specific configurations
+            - [ ] Configure persistence
+            - [ ] Set resource limits
+    - [ ] Create ConfigMaps and Secrets:
+        - [ ] Create `k8s/configmaps/` directory
+        - [ ] **Application ConfigMap** (`app-config.yaml`):
+            - [ ] Application settings
+            - [ ] Environment-specific configurations
+            - [ ] Feature flags
+            - [ ] Logging configurations
+        - [ ] **Database ConfigMap** (`db-config.yaml`):
+            - [ ] Database connection settings
+            - [ ] Connection pool configurations
+            - [ ] Migration settings
+        - [ ] Create `k8s/secrets/` directory
+        - [ ] **Database Secrets** (`db-secrets.yaml`):
+            - [ ] Database credentials
+            - [ ] Connection strings
+            - [ ] Encryption keys
+        - [ ] **API Secrets** (`api-secrets.yaml`):
+            - [ ] JWT signing keys
+            - [ ] External API keys
+            - [ ] Encryption secrets
 - [ ] Implement service discovery
+    - [ ] Create service manifests:
+        - [ ] Create `k8s/services/` directory
+        - [ ] **API Service** (`api-service.yaml`):
+            - [ ] Configure ClusterIP service:
+                - [ ] Set service metadata
+                - [ ] Define port configurations
+                - [ ] Set selector labels
+                - [ ] Configure session affinity
+            - [ ] Configure service endpoints:
+                - [ ] HTTP port (80)
+                - [ ] HTTPS port (443)
+                - [ ] Health check port
+                - [ ] Metrics port
+        - [ ] **Database Service** (`database-service.yaml`):
+            - [ ] Configure headless service:
+                - [ ] Set clusterIP to None
+                - [ ] Configure port 5432
+                - [ ] Set selector for StatefulSet
+                - [ ] Enable service discovery
+        - [ ] **Redis Service** (`redis-service.yaml`):
+            - [ ] Configure ClusterIP service
+            - [ ] Set port 6379
+            - [ ] Configure selector
+    - [ ] Configure service discovery mechanisms:
+        - [ ] **DNS-based discovery**:
+            - [ ] Configure CoreDNS settings
+            - [ ] Set up service DNS names
+            - [ ] Configure search domains
+            - [ ] Test DNS resolution
+        - [ ] **Environment variable injection**:
+            - [ ] Configure service environment variables
+            - [ ] Set up service host variables
+            - [ ] Configure port variables
+        - [ ] **Service mesh integration** (optional):
+            - [ ] Configure Istio service mesh
+            - [ ] Set up service mesh policies
+            - [ ] Configure traffic management
 - [ ] Add load balancing configuration
+    - [ ] Configure internal load balancing:
+        - [ ] **Service-level load balancing**:
+            - [ ] Configure service types (ClusterIP, NodePort)
+            - [ ] Set up session affinity
+            - [ ] Configure load balancing algorithms
+            - [ ] Set up health check policies
+        - [ ] **Pod-level load balancing**:
+            - [ ] Configure readiness probes
+            - [ ] Set up endpoint slices
+            - [ ] Configure traffic distribution
+    - [ ] Configure external load balancing:
+        - [ ] **LoadBalancer service type**:
+            - [ ] Create external LoadBalancer service
+            - [ ] Configure cloud provider integration
+            - [ ] Set up external IP allocation
+            - [ ] Configure load balancer annotations
+        - [ ] **Ingress-based load balancing**:
+            - [ ] Configure ingress controllers
+            - [ ] Set up load balancing rules
+            - [ ] Configure SSL termination
+            - [ ] Set up traffic routing
+    - [ ] Configure advanced load balancing:
+        - [ ] **Geographic load balancing**:
+            - [ ] Configure multi-region deployments
+            - [ ] Set up geo-based routing
+            - [ ] Configure failover policies
+        - [ ] **Weighted load balancing**:
+            - [ ] Configure traffic weights
+            - [ ] Set up A/B testing
+            - [ ] Configure canary deployments
 - [ ] Implement auto-scaling
+    - [ ] Configure Horizontal Pod Autoscaler (HPA):
+        - [ ] Create `k8s/autoscaling/` directory
+        - [ ] **API HPA** (`api-hpa.yaml`):
+            - [ ] Configure CPU-based scaling:
+                - [ ] Set target CPU utilization (70%)
+                - [ ] Configure min replicas (2)
+                - [ ] Configure max replicas (10)
+                - [ ] Set scaling policies
+            - [ ] Configure memory-based scaling:
+                - [ ] Set target memory utilization (80%)
+                - [ ] Configure memory thresholds
+                - [ ] Set memory scaling policies
+            - [ ] Configure custom metrics scaling:
+                - [ ] Set up custom metrics (requests/sec)
+                - [ ] Configure external metrics
+                - [ ] Set up scaling behaviors
+        - [ ] **Database HPA** (`database-hpa.yaml`):
+            - [ ] Configure read replica scaling
+            - [ ] Set connection-based scaling
+            - [ ] Configure query performance metrics
+    - [ ] Configure Vertical Pod Autoscaler (VPA):
+        - [ ] **API VPA** (`api-vpa.yaml`):
+            - [ ] Configure resource recommendations
+            - [ ] Set update policies
+            - [ ] Configure resource limits
+        - [ ] **Database VPA** (`database-vpa.yaml`):
+            - [ ] Configure memory recommendations
+            - [ ] Set CPU recommendations
+            - [ ] Configure update modes
+    - [ ] Configure Cluster Autoscaler:
+        - [ ] Set up node pool scaling
+        - [ ] Configure scaling policies
+        - [ ] Set resource constraints
+        - [ ] Configure node selection
+    - [ ] Set up custom autoscaling:
+        - [ ] **KEDA (Kubernetes Event-driven Autoscaling)**:
+            - [ ] Install KEDA operator
+            - [ ] Configure event-driven scaling
+            - [ ] Set up queue-based scaling
+            - [ ] Configure webhook scaling
 - [ ] Add persistent volume claims
+    - [ ] Create storage configurations:
+        - [ ] Create `k8s/storage/` directory
+        - [ ] **Storage Classes** (`storage-classes.yaml`):
+            - [ ] Configure SSD storage class:
+                - [ ] Set provisioner (cloud provider)
+                - [ ] Configure performance parameters
+                - [ ] Set reclaim policy
+                - [ ] Configure volume binding mode
+            - [ ] Configure HDD storage class:
+                - [ ] Set provisioner for bulk storage
+                - [ ] Configure cost-optimized parameters
+                - [ ] Set reclaim policy
+        - [ ] **Database PVC** (`database-pvc.yaml`):
+            - [ ] Configure persistent volume claim:
+                - [ ] Set storage size (100Gi)
+                - [ ] Configure access modes (ReadWriteOnce)
+                - [ ] Set storage class (SSD)
+                - [ ] Configure volume mode
+            - [ ] Set up backup volume claims:
+                - [ ] Configure backup PVC
+                - [ ] Set retention policies
+                - [ ] Configure snapshot policies
+        - [ ] **Application PVC** (`app-pvc.yaml`):
+            - [ ] Configure shared storage
+            - [ ] Set up log storage
+            - [ ] Configure temp storage
+    - [ ] Configure volume management:
+        - [ ] **Dynamic provisioning**:
+            - [ ] Configure dynamic volume provisioning
+            - [ ] Set up volume expansion
+            - [ ] Configure volume snapshots
+        - [ ] **Static provisioning**:
+            - [ ] Create persistent volumes
+            - [ ] Configure volume binding
+            - [ ] Set up volume monitoring
+    - [ ] Set up backup and recovery:
+        - [ ] Configure volume snapshots
+        - [ ] Set up automated backups
+        - [ ] Configure restore procedures
+        - [ ] Test backup and recovery
 - [ ] Create ingress configuration
+    - [ ] Set up ingress controller:
+        - [ ] Create `k8s/ingress/` directory
+        - [ ] **NGINX Ingress Controller**:
+            - [ ] Install NGINX ingress controller
+            - [ ] Configure controller settings
+            - [ ] Set up controller monitoring
+            - [ ] Configure rate limiting
+        - [ ] **Alternative: Traefik Ingress**:
+            - [ ] Install Traefik ingress controller
+            - [ ] Configure Traefik settings
+            - [ ] Set up dashboard
+            - [ ] Configure middleware
+    - [ ] Configure ingress rules:
+        - [ ] **API Ingress** (`api-ingress.yaml`):
+            - [ ] Configure host-based routing:
+                - [ ] Set up domain routing (api.example.com)
+                - [ ] Configure path-based routing
+                - [ ] Set up backend services
+                - [ ] Configure load balancing
+            - [ ] Configure SSL/TLS:
+                - [ ] Set up TLS certificates
+                - [ ] Configure SSL termination
+                - [ ] Set up certificate management
+                - [ ] Configure HTTPS redirects
+            - [ ] Configure advanced routing:
+                - [ ] Set up header-based routing
+                - [ ] Configure query parameter routing
+                - [ ] Set up weighted routing
+        - [ ] **Web Ingress** (`web-ingress.yaml`):
+            - [ ] Configure frontend routing
+            - [ ] Set up static asset routing
+            - [ ] Configure caching headers
+    - [ ] Configure ingress security:
+        - [ ] **Rate limiting**:
+            - [ ] Configure request rate limits
+            - [ ] Set up burst limits
+            - [ ] Configure IP-based limiting
+        - [ ] **Authentication**:
+            - [ ] Configure OAuth integration
+            - [ ] Set up JWT validation
+            - [ ] Configure basic auth
+        - [ ] **Security headers**:
+            - [ ] Configure CORS headers
+            - [ ] Set up security headers
+            - [ ] Configure CSP headers
 - [ ] Implement secrets management
+    - [ ] Set up Kubernetes secrets:
+        - [ ] **Database secrets management**:
+            - [ ] Create database credential secrets
+            - [ ] Configure secret rotation
+            - [ ] Set up secret encryption at rest
+            - [ ] Configure secret access policies
+        - [ ] **API secrets management**:
+            - [ ] Create API key secrets
+            - [ ] Configure JWT signing secrets
+            - [ ] Set up external service secrets
+            - [ ] Configure secret versioning
+    - [ ] Integrate external secret management:
+        - [ ] **HashiCorp Vault integration**:
+            - [ ] Install Vault agent
+            - [ ] Configure Vault authentication
+            - [ ] Set up secret injection
+            - [ ] Configure secret rotation
+        - [ ] **Cloud provider secret management**:
+            - [ ] Configure AWS Secrets Manager
+            - [ ] Set up Azure Key Vault
+            - [ ] Configure GCP Secret Manager
+            - [ ] Set up secret synchronization
+    - [ ] Configure secret security:
+        - [ ] **Encryption**:
+            - [ ] Configure encryption at rest
+            - [ ] Set up encryption in transit
+            - [ ] Configure key management
+        - [ ] **Access control**:
+            - [ ] Configure RBAC for secrets
+            - [ ] Set up service account permissions
+            - [ ] Configure secret policies
+        - [ ] **Auditing**:
+            - [ ] Configure secret access logging
+            - [ ] Set up audit trails
+            - [ ] Configure compliance reporting
 - [ ] Add monitoring and logging in K8s
+    - [ ] Set up cluster monitoring:
+        - [ ] Create `k8s/monitoring/` directory
+        - [ ] **Prometheus monitoring**:
+            - [ ] Install Prometheus operator
+            - [ ] Configure Prometheus server:
+                - [ ] Set up service discovery
+                - [ ] Configure scraping configs
+                - [ ] Set up alerting rules
+                - [ ] Configure retention policies
+            - [ ] Configure ServiceMonitors:
+                - [ ] API service monitoring
+                - [ ] Database monitoring
+                - [ ] Ingress monitoring
+                - [ ] Node monitoring
+        - [ ] **Grafana dashboards**:
+            - [ ] Install Grafana
+            - [ ] Configure data sources
+            - [ ] Create custom dashboards:
+                - [ ] Application performance dashboard
+                - [ ] Infrastructure dashboard
+                - [ ] Business metrics dashboard
+                - [ ] Security dashboard
+            - [ ] Set up dashboard provisioning
+        - [ ] **AlertManager configuration**:
+            - [ ] Configure alert routing
+            - [ ] Set up notification channels
+            - [ ] Configure alert grouping
+            - [ ] Set up alert silencing
+    - [ ] Set up application logging:
+        - [ ] **Centralized logging with ELK/EFK**:
+            - [ ] Install Elasticsearch cluster
+            - [ ] Configure Logstash/Fluentd:
+                - [ ] Set up log collection
+                - [ ] Configure log parsing
+                - [ ] Set up log enrichment
+                - [ ] Configure log routing
+            - [ ] Install Kibana:
+                - [ ] Configure dashboards
+                - [ ] Set up log visualization
+                - [ ] Configure search and filtering
+                - [ ] Set up alerting
+        - [ ] **Alternative: Loki + Grafana**:
+            - [ ] Install Loki
+            - [ ] Configure Promtail
+            - [ ] Set up log aggregation
+            - [ ] Configure Grafana integration
+    - [ ] Configure observability:
+        - [ ] **Distributed tracing**:
+            - [ ] Install Jaeger
+            - [ ] Configure trace collection
+            - [ ] Set up trace visualization
+            - [ ] Configure trace sampling
+        - [ ] **Metrics collection**:
+            - [ ] Configure custom metrics
+            - [ ] Set up business metrics
+            - [ ] Configure SLI/SLO monitoring
+        - [ ] **Health checks**:
+            - [ ] Configure liveness probes
+            - [ ] Set up readiness probes
+            - [ ] Configure startup probes
+            - [ ] Set up dependency health checks
 
 ### [ ] TASK-034: Production Deployment
-**Priority**: High | **Effort**: 6h | **Dependencies**: TASK-033
+**Priority**: High | **Effort**: 12h | **Dependencies**: TASK-033
 
 #### Sub-tasks:
 - [ ] Set up production environment
+    - [ ] Create production infrastructure:
+        - [ ] Create `deployment/production/` directory
+        - [ ] **Environment configuration** (`prod-config.yaml`):
+            - [ ] Define production environment variables:
+                - [ ] Database connection strings (encrypted)
+                - [ ] API endpoints and URLs
+                - [ ] Cache configuration
+                - [ ] Logging levels and destinations
+                - [ ] Feature flags for production
+                - [ ] Performance tuning parameters
+            - [ ] Configure resource allocations:
+                - [ ] CPU and memory limits
+                - [ ] Storage requirements
+                - [ ] Network bandwidth
+                - [ ] Connection pool sizes
+        - [ ] **Security configuration** (`prod-security.yaml`):
+            - [ ] Configure SSL/TLS certificates:
+                - [ ] Set up Let's Encrypt certificates
+                - [ ] Configure certificate auto-renewal
+                - [ ] Set up certificate monitoring
+                - [ ] Configure HTTPS redirects
+            - [ ] Configure firewall rules:
+                - [ ] Set up network security groups
+                - [ ] Configure ingress/egress rules
+                - [ ] Set up DDoS protection
+                - [ ] Configure rate limiting
+            - [ ] Configure authentication and authorization:
+                - [ ] Set up OAuth 2.0 / OpenID Connect
+                - [ ] Configure JWT token validation
+                - [ ] Set up role-based access control
+                - [ ] Configure API key management
+    - [ ] Set up production networking:
+        - [ ] **Load balancer configuration**:
+            - [ ] Set up Application Load Balancer
+            - [ ] Configure health checks
+            - [ ] Set up SSL termination
+            - [ ] Configure sticky sessions
+        - [ ] **CDN configuration**:
+            - [ ] Set up CloudFront/CloudFlare
+            - [ ] Configure caching policies
+            - [ ] Set up origin protection
+            - [ ] Configure geographic distribution
 - [ ] Configure production database
+    - [ ] Set up production database infrastructure:
+        - [ ] **Primary database configuration**:
+            - [ ] Configure PostgreSQL production instance:
+                - [ ] Set up high-availability cluster
+                - [ ] Configure read replicas
+                - [ ] Set up connection pooling
+                - [ ] Configure backup strategies
+            - [ ] Configure database security:
+                - [ ] Set up database encryption at rest
+                - [ ] Configure SSL connections
+                - [ ] Set up database firewall
+                - [ ] Configure audit logging
+        - [ ] **Cache configuration**:
+            - [ ] Set up Redis cluster:
+                - [ ] Configure Redis Sentinel
+                - [ ] Set up Redis persistence
+                - [ ] Configure memory optimization
+                - [ ] Set up cache monitoring
+    - [ ] Configure database performance:
+        - [ ] **Performance optimization**:
+            - [ ] Configure connection pooling:
+                - [ ] Set optimal pool sizes
+                - [ ] Configure connection timeouts
+                - [ ] Set up connection monitoring
+                - [ ] Configure pool health checks
+            - [ ] Configure query optimization:
+                - [ ] Set up query performance monitoring
+                - [ ] Configure slow query logging
+                - [ ] Set up index optimization
+                - [ ] Configure query plan analysis
+        - [ ] **Database monitoring**:
+            - [ ] Set up database metrics collection:
+                - [ ] Connection metrics
+                - [ ] Query performance metrics
+                - [ ] Storage metrics
+                - [ ] Replication metrics
 - [ ] Implement production monitoring
+    - [ ] Set up comprehensive monitoring:
+        - [ ] Create `monitoring/production/` directory
+        - [ ] **Application Performance Monitoring (APM)**:
+            - [ ] Configure APM tools:
+                - [ ] Install New Relic/Datadog/AppDynamics
+                - [ ] Set up application instrumentation
+                - [ ] Configure custom metrics
+                - [ ] Set up distributed tracing
+            - [ ] Configure performance monitoring:
+                - [ ] Response time monitoring
+                - [ ] Throughput monitoring
+                - [ ] Error rate monitoring
+                - [ ] User experience monitoring
+        - [ ] **Infrastructure monitoring**:
+            - [ ] Configure infrastructure metrics:
+                - [ ] Server performance metrics
+                - [ ] Network performance metrics
+                - [ ] Storage performance metrics
+                - [ ] Container metrics
+            - [ ] Set up log aggregation:
+                - [ ] Configure centralized logging
+                - [ ] Set up log parsing
+                - [ ] Configure log retention
+                - [ ] Set up log analysis
+    - [ ] Configure health checks:
+        - [ ] **Application health checks**:
+            - [ ] Create health check endpoints:
+                - [ ] Basic health endpoint (`/health`)
+                - [ ] Detailed health endpoint (`/health/detailed`)
+                - [ ] Readiness endpoint (`/ready`)
+                - [ ] Liveness endpoint (`/live`)
+            - [ ] Configure health check logic:
+                - [ ] Database connectivity checks
+                - [ ] External service checks
+                - [ ] Cache connectivity checks
+                - [ ] File system checks
+        - [ ] **Infrastructure health checks**:
+            - [ ] Configure system health monitoring:
+                - [ ] CPU utilization monitoring
+                - [ ] Memory usage monitoring
+                - [ ] Disk space monitoring
+                - [ ] Network connectivity monitoring
 - [ ] Add production security measures
+    - [ ] Configure production security:
+        - [ ] Create `security/production/` directory
+        - [ ] **Network security hardening**:
+            - [ ] Configure network segmentation:
+                - [ ] Set up VPC/VNET isolation
+                - [ ] Configure subnet isolation
+                - [ ] Set up network ACLs
+                - [ ] Configure security groups
+            - [ ] Implement network monitoring:
+                - [ ] Set up intrusion detection
+                - [ ] Configure traffic analysis
+                - [ ] Set up anomaly detection
+                - [ ] Configure threat intelligence
+        - [ ] **Application security hardening**:
+            - [ ] Configure application security:
+                - [ ] Set up Web Application Firewall
+                - [ ] Configure input validation
+                - [ ] Set up output encoding
+                - [ ] Configure CSRF protection
+            - [ ] Implement security monitoring:
+                - [ ] Set up security event logging
+                - [ ] Configure security alerting
+                - [ ] Set up compliance monitoring
+                - [ ] Configure vulnerability scanning
+    - [ ] Set up compliance and auditing:
+        - [ ] **Compliance configuration**:
+            - [ ] Configure compliance frameworks:
+                - [ ] GDPR compliance setup
+                - [ ] SOC 2 compliance
+                - [ ] PCI DSS compliance (if applicable)
+                - [ ] HIPAA compliance (if applicable)
+            - [ ] Set up audit trails:
+                - [ ] Configure audit logging
+                - [ ] Set up log retention
+                - [ ] Configure compliance reporting
+                - [ ] Set up audit procedures
 - [ ] Create backup and recovery procedures
+    - [ ] Implement data backup strategies:
+        - [ ] Create `backup-recovery/` directory
+        - [ ] **Database backup procedures**:
+            - [ ] Configure automated backups:
+                - [ ] Daily full backups
+                - [ ] Hourly incremental backups
+                - [ ] Transaction log backups
+                - [ ] Cross-region backup replication
+            - [ ] Set up backup validation:
+                - [ ] Backup integrity checks
+                - [ ] Restore testing procedures
+                - [ ] Backup performance monitoring
+                - [ ] Backup retention policies
+        - [ ] **Application backup procedures**:
+            - [ ] Configure application state backup:
+                - [ ] Configuration backup
+                - [ ] User-generated content backup
+                - [ ] Log file backup
+                - [ ] Certificate backup
+    - [ ] Set up backup automation:
+        - [ ] **Automated backup scheduling**:
+            - [ ] Create backup scripts:
+                - [ ] Database backup scripts
+                - [ ] Application backup scripts
+                - [ ] Configuration backup scripts
+                - [ ] Log backup scripts
+            - [ ] Configure backup monitoring:
+                - [ ] Backup success monitoring
+                - [ ] Backup failure alerting
+                - [ ] Backup performance tracking
+                - [ ] Storage usage monitoring
 - [ ] Implement disaster recovery plan
+    - [ ] Develop disaster recovery strategy:
+        - [ ] **Disaster recovery planning**:
+            - [ ] Create disaster recovery runbooks:
+                - [ ] Recovery time objectives (RTO)
+                - [ ] Recovery point objectives (RPO)
+                - [ ] Disaster scenarios
+                - [ ] Recovery procedures
+            - [ ] Set up disaster recovery infrastructure:
+                - [ ] Secondary data center setup
+                - [ ] Cross-region replication
+                - [ ] Failover procedures
+                - [ ] Failback procedures
+        - [ ] **Recovery testing**:
+            - [ ] Schedule regular recovery tests:
+                - [ ] Monthly recovery drills
+                - [ ] Quarterly disaster simulations
+                - [ ] Annual full-scale tests
+                - [ ] Recovery procedure validation
+    - [ ] Implement failover mechanisms:
+        - [ ] **Automated failover**:
+            - [ ] Configure automatic failover triggers:
+                - [ ] Health check failures
+                - [ ] Performance degradation
+                - [ ] Network connectivity issues
+                - [ ] Data center outages
+            - [ ] Set up failover automation:
+                - [ ] DNS failover configuration
+                - [ ] Load balancer failover
+                - [ ] Database failover
+                - [ ] Application failover
 - [ ] Add production alerting
+    - [ ] Configure alerting systems:
+        - [ ] **Alert configuration** (`alerts.yaml`):
+            - [ ] Configure critical alerts:
+                - [ ] Service downtime alerts
+                - [ ] High error rate alerts
+                - [ ] Performance degradation alerts
+                - [ ] Security incident alerts
+            - [ ] Configure warning alerts:
+                - [ ] Resource utilization alerts
+                - [ ] Performance threshold alerts
+                - [ ] Capacity planning alerts
+                - [ ] Maintenance reminders
+        - [ ] **Notification channels**:
+            - [ ] Configure multiple notification channels:
+                - [ ] Email notifications
+                - [ ] Slack/Teams integration
+                - [ ] SMS notifications
+                - [ ] PagerDuty integration
+            - [ ] Set up escalation procedures:
+                - [ ] Primary on-call rotation
+                - [ ] Secondary escalation
+                - [ ] Management escalation
+                - [ ] Emergency procedures
+    - [ ] Set up alert management:
+        - [ ] **Alert optimization**:
+            - [ ] Configure alert thresholds:
+                - [ ] Performance thresholds
+                - [ ] Error rate thresholds
+                - [ ] Resource utilization thresholds
+                - [ ] Business metric thresholds
+            - [ ] Implement alert correlation:
+                - [ ] Related alert grouping
+                - [ ] Alert dependency mapping
+                - [ ] Alert noise reduction
+                - [ ] Alert prioritization
 - [ ] Create production runbooks
+    - [ ] Develop operational procedures:
+        - [ ] Create `runbooks/production/` directory
+        - [ ] **Deployment runbooks**:
+            - [ ] Create deployment procedures:
+                - [ ] Standard deployment procedure
+                - [ ] Emergency deployment procedure
+                - [ ] Rollback procedures
+                - [ ] Blue-green deployment procedure
+            - [ ] Create deployment checklists:
+                - [ ] Pre-deployment checklist
+                - [ ] Deployment validation checklist
+                - [ ] Post-deployment checklist
+                - [ ] Rollback checklist
+        - [ ] **Incident response runbooks**:
+            - [ ] Create incident response procedures:
+                - [ ] Incident classification
+                - [ ] Incident escalation procedures
+                - [ ] Communication procedures
+                - [ ] Resolution procedures
+            - [ ] Create troubleshooting guides:
+                - [ ] Common issue troubleshooting
+                - [ ] Performance issue diagnosis
+                - [ ] Security incident response
+                - [ ] Data recovery procedures
+    - [ ] Set up operational documentation:
+        - [ ] **System documentation**:
+            - [ ] Create system architecture documentation:
+                - [ ] Infrastructure diagrams
+                - [ ] Network topology
+                - [ ] Security architecture
+                - [ ] Data flow diagrams
+            - [ ] Create operational procedures:
+                - [ ] Monitoring procedures
+                - [ ] Maintenance procedures
+                - [ ] Backup procedures
+                - [ ] Security procedures
+        - [ ] **Contact information**:
+            - [ ] Maintain contact lists:
+                - [ ] On-call rotation schedules
+                - [ ] Emergency contact information
+                - [ ] Vendor contact information
+                - [ ] Escalation contact lists
 
 ---
 
 ## Phase 9: Documentation and Maintenance
 
 ### [ ] TASK-035: API Documentation
-**Priority**: Medium | **Effort**: 6h | **Dependencies**: TASK-016, TASK-017, TASK-018, TASK-019
+**Priority**: Medium | **Effort**: 10h | **Dependencies**: TASK-016, TASK-017, TASK-018, TASK-019
 
 #### Sub-tasks:
 - [ ] Create comprehensive OpenAPI/Swagger documentation
+    - [ ] Set up documentation infrastructure:
+        - [ ] Create `docs/api/` directory
+        - [ ] **OpenAPI specification setup**:
+            - [ ] Install Swagger/OpenAPI tools:
+                - [ ] Install `@nestjs/swagger` for NestJS
+                - [ ] Install `swagger-ui-express`
+                - [ ] Install `redoc-cli` for alternative documentation
+                - [ ] Install `@apidevtools/swagger-parser` for validation
+            - [ ] Configure OpenAPI specification:
+                - [ ] Create base OpenAPI 3.0 specification (`openapi.yaml`)
+                - [ ] Define API metadata (title, version, description)
+                - [ ] Configure server definitions
+                - [ ] Set up security schemes
+        - [ ] **API endpoint documentation**:
+            - [ ] Document all REST endpoints:
+                - [ ] Product endpoints (`/api/products/*`)
+                - [ ] Order endpoints (`/api/orders/*`)
+                - [ ] Customer endpoints (`/api/customers/*`)
+                - [ ] Inventory endpoints (`/api/inventory/*`)
+                - [ ] Webhook endpoints (`/api/webhooks/*`)
+                - [ ] Health check endpoints (`/api/health/*`)
+            - [ ] Define request/response schemas:
+                - [ ] Request body schemas
+                - [ ] Response body schemas
+                - [ ] Error response schemas
+                - [ ] Query parameter schemas
+                - [ ] Path parameter schemas
+    - [ ] Configure documentation generation:
+        - [ ] **Automated documentation generation**:
+            - [ ] Set up decorators for automatic documentation:
+                - [ ] `@ApiOperation()` for endpoint descriptions
+                - [ ] `@ApiResponse()` for response documentation
+                - [ ] `@ApiParam()` for parameter documentation
+                - [ ] `@ApiBody()` for request body documentation
+            - [ ] Configure schema generation:
+                - [ ] Automatic DTO to schema conversion
+                - [ ] Custom schema definitions
+                - [ ] Enum documentation
+                - [ ] Nested object documentation
+        - [ ] **Documentation validation**:
+            - [ ] Set up OpenAPI specification validation:
+                - [ ] Schema validation scripts
+                - [ ] Endpoint coverage validation
+                - [ ] Documentation completeness checks
+                - [ ] Breaking change detection
 - [ ] Add API usage examples
+    - [ ] Create comprehensive usage examples:
+        - [ ] **Code examples in multiple languages**:
+            - [ ] Create `docs/api/examples/` directory
+            - [ ] JavaScript/TypeScript examples:
+                - [ ] Fetch API examples
+                - [ ] Axios examples
+                - [ ] Node.js examples
+                - [ ] React integration examples
+            - [ ] cURL examples:
+                - [ ] Basic request examples
+                - [ ] Authentication examples
+                - [ ] Complex query examples
+                - [ ] File upload examples
+            - [ ] Python examples:
+                - [ ] Requests library examples
+                - [ ] Authentication examples
+                - [ ] Batch operation examples
+                - [ ] Error handling examples
+            - [ ] C# examples:
+                - [ ] HttpClient examples
+                - [ ] Authentication examples
+                - [ ] Async/await patterns
+                - [ ] Error handling examples
+        - [ ] **Use case scenarios**:
+            - [ ] Create scenario-based examples:
+                - [ ] Product synchronization workflow
+                - [ ] Order processing workflow
+                - [ ] Inventory management workflow
+                - [ ] Customer data synchronization
+            - [ ] Create integration examples:
+                - [ ] Shopify to database sync
+                - [ ] Real-time webhook processing
+                - [ ] Batch data processing
+                - [ ] Error recovery scenarios
+    - [ ] Set up interactive examples:
+        - [ ] **Runnable code examples**:
+            - [ ] Create interactive code playground:
+                - [ ] Set up CodeSandbox integration
+                - [ ] Create Postman collection
+                - [ ] Set up Insomnia workspace
+                - [ ] Create interactive notebooks
+            - [ ] Configure example data:
+                - [ ] Sample request payloads
+                - [ ] Mock response data
+                - [ ] Test environment setup
+                - [ ] Authentication tokens for testing
 - [ ] Create authentication guides
+    - [ ] Document authentication mechanisms:
+        - [ ] Create `docs/api/authentication/` directory
+        - [ ] **API key authentication**:
+            - [ ] Document API key generation:
+                - [ ] Key creation process
+                - [ ] Key management procedures
+                - [ ] Key rotation guidelines
+                - [ ] Key security best practices
+            - [ ] Document API key usage:
+                - [ ] Header-based authentication
+                - [ ] Query parameter authentication
+                - [ ] Authentication error handling
+                - [ ] Rate limiting with API keys
+        - [ ] **OAuth 2.0 authentication**:
+            - [ ] Document OAuth 2.0 flows:
+                - [ ] Authorization code flow
+                - [ ] Client credentials flow
+                - [ ] Refresh token flow
+                - [ ] Token validation
+            - [ ] Create OAuth integration guides:
+                - [ ] Client registration process
+                - [ ] Scope definitions
+                - [ ] Token management
+                - [ ] Security considerations
+        - [ ] **JWT token authentication**:
+            - [ ] Document JWT token structure:
+                - [ ] Token payload structure
+                - [ ] Token expiration handling
+                - [ ] Token refresh mechanisms
+                - [ ] Token validation process
+            - [ ] Create JWT integration examples:
+                - [ ] Token generation examples
+                - [ ] Token validation examples
+                - [ ] Token refresh examples
+                - [ ] Error handling examples
+    - [ ] Create security documentation:
+        - [ ] **Security best practices**:
+            - [ ] Document security guidelines:
+                - [ ] HTTPS requirements
+                - [ ] Token storage security
+                - [ ] Rate limiting guidelines
+                - [ ] Input validation requirements
+            - [ ] Create security checklists:
+                - [ ] Authentication implementation checklist
+                - [ ] Authorization verification checklist
+                - [ ] Security testing checklist
+                - [ ] Compliance verification checklist
 - [ ] Implement interactive API explorer
+    - [ ] Set up interactive documentation:
+        - [ ] **Swagger UI integration**:
+            - [ ] Configure Swagger UI:
+                - [ ] Custom styling and branding
+                - [ ] Authentication integration
+                - [ ] Try-it-out functionality
+                - [ ] Response visualization
+            - [ ] Set up API testing environment:
+                - [ ] Test server configuration
+                - [ ] Sample data setup
+                - [ ] Authentication token management
+                - [ ] Request/response logging
+        - [ ] **Alternative documentation tools**:
+            - [ ] Set up Redoc documentation:
+                - [ ] Custom theme configuration
+                - [ ] Enhanced navigation
+                - [ ] Code sample generation
+                - [ ] Download options
+            - [ ] Configure Postman integration:
+                - [ ] Auto-generated Postman collections
+                - [ ] Environment variable setup
+                - [ ] Test script generation
+                - [ ] Documentation sync
+    - [ ] Enhance user experience:
+        - [ ] **Interactive features**:
+            - [ ] Implement advanced features:
+                - [ ] Real-time API testing
+                - [ ] Response schema validation
+                - [ ] Request history tracking
+                - [ ] Favorite endpoints
+            - [ ] Add user assistance:
+                - [ ] Contextual help tooltips
+                - [ ] Error message explanations
+                - [ ] Usage analytics
+                - [ ] Feedback collection
 - [ ] Add rate limiting documentation
+    - [ ] Document rate limiting policies:
+        - [ ] Create `docs/api/rate-limiting/` directory
+        - [ ] **Rate limit specifications**:
+            - [ ] Document rate limit tiers:
+                - [ ] Free tier limits
+                - [ ] Premium tier limits
+                - [ ] Enterprise tier limits
+                - [ ] Custom tier options
+            - [ ] Document rate limit headers:
+                - [ ] `X-RateLimit-Limit` header
+                - [ ] `X-RateLimit-Remaining` header
+                - [ ] `X-RateLimit-Reset` header
+                - [ ] `Retry-After` header
+        - [ ] **Rate limiting strategies**:
+            - [ ] Document rate limiting algorithms:
+                - [ ] Token bucket algorithm
+                - [ ] Fixed window algorithm
+                - [ ] Sliding window algorithm
+                - [ ] Distributed rate limiting
+            - [ ] Create rate limiting examples:
+                - [ ] Client-side rate limiting
+                - [ ] Exponential backoff strategies
+                - [ ] Queue management
+                - [ ] Error handling patterns
+    - [ ] Provide rate limiting guidance:
+        - [ ] **Best practices documentation**:
+            - [ ] Create optimization guides:
+                - [ ] Efficient API usage patterns
+                - [ ] Batch request strategies
+                - [ ] Caching recommendations
+                - [ ] Request prioritization
+            - [ ] Document monitoring approaches:
+                - [ ] Rate limit monitoring
+                - [ ] Usage analytics
+                - [ ] Performance optimization
+                - [ ] Capacity planning
 - [ ] Create error code reference
+    - [ ] Document comprehensive error handling:
+        - [ ] Create `docs/api/errors/` directory
+        - [ ] **HTTP status codes**:
+            - [ ] Document standard HTTP status codes:
+                - [ ] 2xx Success codes
+                - [ ] 4xx Client error codes
+                - [ ] 5xx Server error codes
+                - [ ] Custom status codes
+            - [ ] Create error response schemas:
+                - [ ] Standard error response format
+                - [ ] Detailed error information
+                - [ ] Error correlation IDs
+                - [ ] Debugging information
+        - [ ] **Application-specific errors**:
+            - [ ] Document business logic errors:
+                - [ ] Validation errors
+                - [ ] Business rule violations
+                - [ ] Resource conflicts
+                - [ ] Permission errors
+            - [ ] Create error handling guides:
+                - [ ] Error recovery strategies
+                - [ ] Retry mechanisms
+                - [ ] Fallback procedures
+                - [ ] Error reporting
+    - [ ] Provide troubleshooting guidance:
+        - [ ] **Error resolution guides**:
+            - [ ] Create troubleshooting workflows:
+                - [ ] Common error scenarios
+                - [ ] Diagnostic procedures
+                - [ ] Resolution steps
+                - [ ] Prevention strategies
+            - [ ] Document support procedures:
+                - [ ] Error reporting process
+                - [ ] Log collection guidelines
+                - [ ] Support ticket creation
+                - [ ] Escalation procedures
 - [ ] Add webhook documentation
+    - [ ] Document webhook implementation:
+        - [ ] Create `docs/api/webhooks/` directory
+        - [ ] **Webhook configuration**:
+            - [ ] Document webhook setup:
+                - [ ] Webhook registration process
+                - [ ] Endpoint configuration
+                - [ ] Authentication setup
+                - [ ] Retry configuration
+            - [ ] Document webhook events:
+                - [ ] Available event types
+                - [ ] Event payload structures
+                - [ ] Event filtering options
+                - [ ] Event ordering guarantees
+        - [ ] **Webhook security**:
+            - [ ] Document security measures:
+                - [ ] Webhook signature verification
+                - [ ] HTTPS requirements
+                - [ ] IP whitelisting
+                - [ ] Rate limiting
+            - [ ] Create security examples:
+                - [ ] Signature verification code
+                - [ ] Authentication examples
+                - [ ] Security testing procedures
+                - [ ] Vulnerability mitigation
+    - [ ] Provide webhook integration guidance:
+        - [ ] **Integration examples**:
+            - [ ] Create webhook handlers:
+                - [ ] Node.js webhook handler
+                - [ ] Python webhook handler
+                - [ ] C# webhook handler
+                - [ ] PHP webhook handler
+            - [ ] Document testing procedures:
+                - [ ] Webhook testing tools
+                - [ ] Local development setup
+                - [ ] Debugging techniques
+                - [ ] Performance testing
+        - [ ] **Operational guidance**:
+            - [ ] Document operational procedures:
+                - [ ] Webhook monitoring
+                - [ ] Error handling
+                - [ ] Retry strategies
+                - [ ] Scaling considerations
+            - [ ] Create maintenance guides:
+                - [ ] Webhook health monitoring
+                - [ ] Performance optimization
+                - [ ] Troubleshooting procedures
+                - [ ] Capacity planning
 - [ ] Create API versioning guide
+    - [ ] Document versioning strategy:
+        - [ ] Create `docs/api/versioning/` directory
+        - [ ] **Versioning approach**:
+            - [ ] Document versioning scheme:
+                - [ ] Semantic versioning (SemVer)
+                - [ ] API version numbering
+                - [ ] Backward compatibility policy
+                - [ ] Deprecation timeline
+            - [ ] Document version management:
+                - [ ] Version header usage
+                - [ ] URL-based versioning
+                - [ ] Content negotiation
+                - [ ] Default version handling
+        - [ ] **Migration guidance**:
+            - [ ] Create migration guides:
+                - [ ] Version upgrade procedures
+                - [ ] Breaking change documentation
+                - [ ] Migration timeline
+                - [ ] Rollback procedures
+            - [ ] Document compatibility:
+                - [ ] Cross-version compatibility
+                - [ ] Feature parity matrix
+                - [ ] Deprecation notices
+                - [ ] End-of-life policies
+    - [ ] Provide version management tools:
+        - [ ] **Developer tools**:
+            - [ ] Create version management utilities:
+                - [ ] Version detection tools
+                - [ ] Migration scripts
+                - [ ] Compatibility checkers
+                - [ ] Testing frameworks
+            - [ ] Document testing strategies:
+                - [ ] Multi-version testing
+                - [ ] Regression testing
+                - [ ] Performance testing
+                - [ ] Security testing
+        - [ ] **Documentation maintenance**:
+            - [ ] Set up documentation versioning:
+                - [ ] Version-specific documentation
+                - [ ] Change log maintenance
+                - [ ] Archive management
+                - [ ] Search functionality
 
 ### [ ] TASK-036: System Documentation
-**Priority**: Medium | **Effort**: 4h | **Dependencies**: All previous tasks
+**Priority**: Medium | **Effort**: 8h | **Dependencies**: All previous tasks
 
 #### Sub-tasks:
 - [ ] Create system architecture documentation
+    - [ ] Set up documentation infrastructure:
+        - [ ] Create `docs/system/` directory
+        - [ ] **Architecture documentation**:
+            - [ ] Create system overview documentation:
+                - [ ] High-level architecture diagram
+                - [ ] Component interaction diagrams
+                - [ ] Data flow diagrams
+                - [ ] Technology stack overview
+            - [ ] Document system components:
+                - [ ] Backend services architecture
+                - [ ] Database architecture
+                - [ ] API gateway configuration
+                - [ ] Caching layer architecture
+                - [ ] Message queue architecture
+                - [ ] External integrations
+        - [ ] **Infrastructure documentation**:
+            - [ ] Document infrastructure components:
+                - [ ] Server specifications
+                - [ ] Network topology
+                - [ ] Load balancer configuration
+                - [ ] CDN configuration
+                - [ ] Security infrastructure
+                - [ ] Monitoring infrastructure
+            - [ ] Create infrastructure diagrams:
+                - [ ] Network architecture diagrams
+                - [ ] Security architecture diagrams
+                - [ ] Deployment architecture diagrams
+                - [ ] Disaster recovery diagrams
+    - [ ] Document design decisions:
+        - [ ] **Technical decisions**:
+            - [ ] Create architecture decision records (ADRs):
+                - [ ] Technology selection rationale
+                - [ ] Design pattern choices
+                - [ ] Performance optimization decisions
+                - [ ] Security implementation decisions
+            - [ ] Document trade-offs and alternatives:
+                - [ ] Performance vs. complexity trade-offs
+                - [ ] Security vs. usability considerations
+                - [ ] Cost vs. performance analysis
+                - [ ] Scalability considerations
+        - [ ] **System constraints and assumptions**:
+            - [ ] Document system limitations:
+                - [ ] Performance limitations
+                - [ ] Scalability constraints
+                - [ ] Security constraints
+                - [ ] Compliance requirements
+            - [ ] Document assumptions:
+                - [ ] Load assumptions
+                - [ ] Data volume assumptions
+                - [ ] User behavior assumptions
+                - [ ] Integration assumptions
 - [ ] Add deployment guides
+    - [ ] Create comprehensive deployment documentation:
+        - [ ] Create `docs/deployment/` directory
+        - [ ] **Environment setup guides**:
+            - [ ] Development environment setup:
+                - [ ] Local development setup
+                - [ ] Development dependencies
+                - [ ] Configuration management
+                - [ ] Testing environment setup
+            - [ ] Staging environment setup:
+                - [ ] Staging infrastructure setup
+                - [ ] Data migration procedures
+                - [ ] Testing procedures
+                - [ ] Validation checklists
+            - [ ] Production environment setup:
+                - [ ] Production infrastructure setup
+                - [ ] Security hardening procedures
+                - [ ] Performance optimization
+                - [ ] Monitoring setup
+        - [ ] **Deployment procedures**:
+            - [ ] Create step-by-step deployment guides:
+                - [ ] Initial deployment procedure
+                - [ ] Update deployment procedure
+                - [ ] Rollback procedures
+                - [ ] Emergency deployment procedure
+            - [ ] Document deployment automation:
+                - [ ] CI/CD pipeline configuration
+                - [ ] Automated testing procedures
+                - [ ] Deployment validation
+                - [ ] Post-deployment verification
+    - [ ] Create deployment checklists:
+        - [ ] **Pre-deployment checklists**:
+            - [ ] Code review checklist
+            - [ ] Testing completion checklist
+            - [ ] Security validation checklist
+            - [ ] Performance validation checklist
+        - [ ] **Post-deployment checklists**:
+            - [ ] Deployment verification checklist
+            - [ ] Monitoring validation checklist
+            - [ ] Performance validation checklist
+            - [ ] User acceptance testing checklist
 - [ ] Create troubleshooting guides
+    - [ ] Develop comprehensive troubleshooting documentation:
+        - [ ] Create `docs/troubleshooting/` directory
+        - [ ] **Common issues and solutions**:
+            - [ ] Application issues:
+                - [ ] Startup failures
+                - [ ] Performance degradation
+                - [ ] Memory leaks
+                - [ ] Connection timeouts
+            - [ ] Database issues:
+                - [ ] Connection problems
+                - [ ] Query performance issues
+                - [ ] Lock contention
+                - [ ] Replication lag
+            - [ ] Infrastructure issues:
+                - [ ] Network connectivity problems
+                - [ ] Load balancer issues
+                - [ ] SSL certificate problems
+                - [ ] DNS resolution issues
+        - [ ] **Diagnostic procedures**:
+            - [ ] Create diagnostic workflows:
+                - [ ] Performance issue diagnosis
+                - [ ] Error investigation procedures
+                - [ ] Log analysis procedures
+                - [ ] System health checks
+            - [ ] Document diagnostic tools:
+                - [ ] Log analysis tools
+                - [ ] Performance monitoring tools
+                - [ ] Network diagnostic tools
+                - [ ] Database diagnostic tools
+    - [ ] Create escalation procedures:
+        - [ ] **Issue classification**:
+            - [ ] Severity level definitions:
+                - [ ] Critical issues (P0)
+                - [ ] High priority issues (P1)
+                - [ ] Medium priority issues (P2)
+                - [ ] Low priority issues (P3)
+            - [ ] Escalation timelines:
+                - [ ] Initial response times
+                - [ ] Escalation triggers
+                - [ ] Resolution targets
+                - [ ] Communication requirements
+        - [ ] **Support procedures**:
+            - [ ] Document support workflows:
+                - [ ] Issue intake procedures
+                - [ ] Investigation procedures
+                - [ ] Resolution procedures
+                - [ ] Follow-up procedures
+            - [ ] Create support resources:
+                - [ ] Contact information
+                - [ ] Escalation paths
+                - [ ] External vendor contacts
+                - [ ] Emergency procedures
 - [ ] Add monitoring and alerting documentation
+    - [ ] Document monitoring strategy:
+        - [ ] Create `docs/monitoring/` directory
+        - [ ] **Monitoring configuration**:
+            - [ ] Document monitoring tools:
+                - [ ] Application performance monitoring
+                - [ ] Infrastructure monitoring
+                - [ ] Log aggregation and analysis
+                - [ ] Synthetic monitoring
+            - [ ] Document metrics and KPIs:
+                - [ ] Application metrics
+                - [ ] Infrastructure metrics
+                - [ ] Business metrics
+                - [ ] Security metrics
+        - [ ] **Alerting configuration**:
+            - [ ] Document alert definitions:
+                - [ ] Critical alerts
+                - [ ] Warning alerts
+                - [ ] Informational alerts
+                - [ ] Custom alerts
+            - [ ] Document notification procedures:
+                - [ ] Notification channels
+                - [ ] Escalation procedures
+                - [ ] On-call procedures
+                - [ ] Alert acknowledgment
+    - [ ] Create monitoring runbooks:
+        - [ ] **Operational procedures**:
+            - [ ] Daily monitoring procedures:
+                - [ ] Health check procedures
+                - [ ] Performance review procedures
+                - [ ] Capacity planning procedures
+                - [ ] Trend analysis procedures
+            - [ ] Incident response procedures:
+                - [ ] Alert response procedures
+                - [ ] Investigation procedures
+                - [ ] Communication procedures
+                - [ ] Resolution procedures
+        - [ ] **Maintenance procedures**:
+            - [ ] Monitoring system maintenance:
+                - [ ] Tool updates and patches
+                - [ ] Configuration management
+                - [ ] Data retention management
+                - [ ] Performance optimization
+            - [ ] Alert tuning procedures:
+                - [ ] Threshold adjustment
+                - [ ] False positive reduction
+                - [ ] Alert correlation
+                - [ ] Notification optimization
 - [ ] Create backup and recovery procedures
+    - [ ] Document backup strategy:
+        - [ ] Create `docs/backup-recovery/` directory
+        - [ ] **Backup procedures**:
+            - [ ] Document backup types:
+                - [ ] Full backup procedures
+                - [ ] Incremental backup procedures
+                - [ ] Differential backup procedures
+                - [ ] Transaction log backup procedures
+            - [ ] Document backup schedules:
+                - [ ] Daily backup schedules
+                - [ ] Weekly backup schedules
+                - [ ] Monthly backup schedules
+                - [ ] On-demand backup procedures
+        - [ ] **Recovery procedures**:
+            - [ ] Document recovery scenarios:
+                - [ ] Point-in-time recovery
+                - [ ] Full system recovery
+                - [ ] Partial data recovery
+                - [ ] Cross-region recovery
+            - [ ] Create recovery runbooks:
+                - [ ] Step-by-step recovery procedures
+                - [ ] Recovery validation procedures
+                - [ ] Recovery testing procedures
+                - [ ] Recovery time estimation
+    - [ ] Document disaster recovery:
+        - [ ] **Disaster recovery planning**:
+            - [ ] Document disaster scenarios:
+                - [ ] Data center outage
+                - [ ] Regional disaster
+                - [ ] Cyber security incident
+                - [ ] Data corruption
+            - [ ] Create recovery procedures:
+                - [ ] Emergency response procedures
+                - [ ] Failover procedures
+                - [ ] Data recovery procedures
+                - [ ] Service restoration procedures
+        - [ ] **Business continuity planning**:
+            - [ ] Document business impact analysis:
+                - [ ] Critical business functions
+                - [ ] Recovery time objectives (RTO)
+                - [ ] Recovery point objectives (RPO)
+                - [ ] Business continuity requirements
+            - [ ] Create continuity procedures:
+                - [ ] Alternative operation procedures
+                - [ ] Communication procedures
+                - [ ] Vendor management procedures
+                - [ ] Stakeholder notification procedures
 - [ ] Add security configuration guides
+    - [ ] Document security implementation:
+        - [ ] Create `docs/security/` directory
+        - [ ] **Security configuration**:
+            - [ ] Document authentication configuration:
+                - [ ] User authentication setup
+                - [ ] API authentication configuration
+                - [ ] Multi-factor authentication
+                - [ ] Single sign-on configuration
+            - [ ] Document authorization configuration:
+                - [ ] Role-based access control
+                - [ ] Permission management
+                - [ ] API authorization
+                - [ ] Resource-level security
+        - [ ] **Network security configuration**:
+            - [ ] Document network security:
+                - [ ] Firewall configuration
+                - [ ] VPN configuration
+                - [ ] Network segmentation
+                - [ ] Intrusion detection systems
+            - [ ] Document encryption configuration:
+                - [ ] Data encryption at rest
+                - [ ] Data encryption in transit
+                - [ ] Key management
+                - [ ] Certificate management
+    - [ ] Create security procedures:
+        - [ ] **Security operations**:
+            - [ ] Document security monitoring:
+                - [ ] Security event monitoring
+                - [ ] Vulnerability scanning
+                - [ ] Penetration testing
+                - [ ] Compliance auditing
+            - [ ] Document incident response:
+                - [ ] Security incident classification
+                - [ ] Incident response procedures
+                - [ ] Forensic procedures
+                - [ ] Recovery procedures
+        - [ ] **Security maintenance**:
+            - [ ] Document security updates:
+                - [ ] Patch management procedures
+                - [ ] Security configuration updates
+                - [ ] Vulnerability remediation
+                - [ ] Security tool maintenance
+            - [ ] Document compliance procedures:
+                - [ ] Compliance monitoring
+                - [ ] Audit preparation
+                - [ ] Documentation maintenance
+                - [ ] Training procedures
 - [ ] Create performance tuning guides
+    - [ ] Document performance optimization:
+        - [ ] Create `docs/performance/` directory
+        - [ ] **Application performance tuning**:
+            - [ ] Document application optimization:
+                - [ ] Code optimization techniques
+                - [ ] Database query optimization
+                - [ ] Caching strategies
+                - [ ] Resource utilization optimization
+            - [ ] Document performance monitoring:
+                - [ ] Performance metrics collection
+                - [ ] Performance baseline establishment
+                - [ ] Performance trend analysis
+                - [ ] Performance bottleneck identification
+        - [ ] **Infrastructure performance tuning**:
+            - [ ] Document infrastructure optimization:
+                - [ ] Server performance tuning
+                - [ ] Network performance optimization
+                - [ ] Storage performance tuning
+                - [ ] Load balancer optimization
+            - [ ] Document capacity planning:
+                - [ ] Resource capacity planning
+                - [ ] Scaling strategies
+                - [ ] Performance forecasting
+                - [ ] Cost optimization
+    - [ ] Create performance procedures:
+        - [ ] **Performance testing procedures**:
+            - [ ] Document testing strategies:
+                - [ ] Load testing procedures
+                - [ ] Stress testing procedures
+                - [ ] Performance regression testing
+                - [ ] Capacity testing procedures
+            - [ ] Document testing tools:
+                - [ ] Performance testing tool setup
+                - [ ] Test data preparation
+                - [ ] Test execution procedures
+                - [ ] Results analysis procedures
+        - [ ] **Performance maintenance**:
+            - [ ] Document maintenance procedures:
+                - [ ] Regular performance reviews
+                - [ ] Performance optimization cycles
+                - [ ] Performance issue resolution
+                - [ ] Performance improvement tracking
+            - [ ] Document optimization procedures:
+                - [ ] Performance bottleneck analysis
+                - [ ] Optimization implementation
+                - [ ] Optimization validation
+                - [ ] Performance improvement measurement
 - [ ] Add maintenance procedures
+    - [ ] Document system maintenance:
+        - [ ] Create `docs/maintenance/` directory
+        - [ ] **Routine maintenance procedures**:
+            - [ ] Document daily maintenance:
+                - [ ] System health checks
+                - [ ] Log review procedures
+                - [ ] Backup verification
+                - [ ] Performance monitoring
+            - [ ] Document weekly maintenance:
+                - [ ] System updates and patches
+                - [ ] Security scans
+                - [ ] Performance analysis
+                - [ ] Capacity review
+            - [ ] Document monthly maintenance:
+                - [ ] Comprehensive system review
+                - [ ] Security audit
+                - [ ] Performance optimization
+                - [ ] Disaster recovery testing
+        - [ ] **Preventive maintenance procedures**:
+            - [ ] Document preventive measures:
+                - [ ] Proactive monitoring
+                - [ ] Predictive maintenance
+                - [ ] Capacity planning
+                - [ ] Risk assessment
+            - [ ] Document maintenance scheduling:
+                - [ ] Maintenance windows
+                - [ ] Change management
+                - [ ] Impact assessment
+                - [ ] Rollback procedures
+    - [ ] Create maintenance documentation:
+        - [ ] **Maintenance tracking**:
+            - [ ] Document maintenance records:
+                - [ ] Maintenance logs
+                - [ ] Change tracking
+                - [ ] Issue tracking
+                - [ ] Performance tracking
+            - [ ] Document maintenance metrics:
+                - [ ] System uptime metrics
+                - [ ] Maintenance effectiveness
+                - [ ] Issue resolution times
+                - [ ] Performance improvements
+        - [ ] **Maintenance procedures**:
+            - [ ] Document maintenance workflows:
+                - [ ] Maintenance planning
+                - [ ] Maintenance execution
+                - [ ] Maintenance validation
+                - [ ] Maintenance reporting
+            - [ ] Document maintenance tools:
+                - [ ] Maintenance automation tools
+                - [ ] Monitoring tools
+                - [ ] Documentation tools
+                - [ ] Communication tools
 
 ### [ ] TASK-037: User Training and Support
-**Priority**: Low | **Effort**: 4h | **Dependencies**: TASK-035, TASK-036
+**Priority**: Low | **Effort**: 10h | **Dependencies**: TASK-035, TASK-036
 
 #### Sub-tasks:
 - [ ] Create user training materials
+    - [ ] Develop comprehensive training content:
+        - [ ] Create `docs/training/` directory
+        - [ ] **End-user training materials**:
+            - [ ] Create basic user guides:
+                - [ ] Getting started guide
+                - [ ] Navigation and interface overview
+                - [ ] Basic functionality tutorials
+                - [ ] Common workflows and processes
+            - [ ] Create advanced user guides:
+                - [ ] Advanced feature tutorials
+                - [ ] Power user workflows
+                - [ ] Integration usage guides
+                - [ ] Customization options
+        - [ ] **Administrator training materials**:
+            - [ ] Create admin guides:
+                - [ ] System administration overview
+                - [ ] User management procedures
+                - [ ] Configuration management
+                - [ ] Security administration
+            - [ ] Create technical guides:
+                - [ ] API usage and integration
+                - [ ] Database administration
+                - [ ] System monitoring and maintenance
+                - [ ] Troubleshooting procedures
+    - [ ] Create training formats:
+        - [ ] **Written documentation**:
+            - [ ] Step-by-step tutorials:
+                - [ ] Screenshot-based guides
+                - [ ] Interactive walkthroughs
+                - [ ] Quick reference cards
+                - [ ] Cheat sheets
+            - [ ] Comprehensive manuals:
+                - [ ] User manual
+                - [ ] Administrator manual
+                - [ ] Developer guide
+                - [ ] Integration guide
+        - [ ] **Interactive training materials**:
+            - [ ] Create interactive elements:
+                - [ ] Interactive demos
+                - [ ] Guided tours
+                - [ ] Practice environments
+                - [ ] Simulation exercises
+            - [ ] Create assessment materials:
+                - [ ] Knowledge checks
+                - [ ] Skill assessments
+                - [ ] Certification tests
+                - [ ] Progress tracking
 - [ ] Add video tutorials
+    - [ ] Develop video training content:
+        - [ ] Create `docs/training/videos/` directory
+        - [ ] **Basic video tutorials**:
+            - [ ] Create introductory videos:
+                - [ ] System overview video
+                - [ ] Getting started tutorial
+                - [ ] Basic navigation guide
+                - [ ] First-time user walkthrough
+            - [ ] Create feature-specific videos:
+                - [ ] Core functionality tutorials
+                - [ ] Feature demonstration videos
+                - [ ] Workflow tutorials
+                - [ ] Best practices videos
+        - [ ] **Advanced video tutorials**:
+            - [ ] Create advanced training videos:
+                - [ ] Advanced feature tutorials
+                - [ ] Integration tutorials
+                - [ ] Customization guides
+                - [ ] Power user techniques
+            - [ ] Create technical videos:
+                - [ ] API usage tutorials
+                - [ ] Development tutorials
+                - [ ] Deployment guides
+                - [ ] Troubleshooting videos
+    - [ ] Set up video infrastructure:
+        - [ ] **Video hosting and delivery**:
+            - [ ] Set up video hosting platform:
+                - [ ] Video storage solution
+                - [ ] Content delivery network
+                - [ ] Video player integration
+                - [ ] Mobile-responsive playback
+            - [ ] Implement video features:
+                - [ ] Video search functionality
+                - [ ] Playlist organization
+                - [ ] Progress tracking
+                - [ ] Bookmark functionality
+        - [ ] **Video production workflow**:
+            - [ ] Establish production process:
+                - [ ] Video recording setup
+                - [ ] Editing workflow
+                - [ ] Quality assurance process
+                - [ ] Publishing workflow
+            - [ ] Create video standards:
+                - [ ] Video quality standards
+                - [ ] Audio quality standards
+                - [ ] Branding guidelines
+                - [ ] Accessibility standards
 - [ ] Create FAQ documentation
+    - [ ] Develop comprehensive FAQ system:
+        - [ ] Create `docs/faq/` directory
+        - [ ] **General FAQ sections**:
+            - [ ] Create basic FAQ categories:
+                - [ ] Getting started questions
+                - [ ] Account and login issues
+                - [ ] Basic functionality questions
+                - [ ] Common error messages
+            - [ ] Create advanced FAQ categories:
+                - [ ] Advanced feature questions
+                - [ ] Integration questions
+                - [ ] Performance and optimization
+                - [ ] Security and privacy
+        - [ ] **Technical FAQ sections**:
+            - [ ] Create technical categories:
+                - [ ] API and development questions
+                - [ ] System requirements
+                - [ ] Compatibility issues
+                - [ ] Troubleshooting guides
+            - [ ] Create administrative categories:
+                - [ ] User management questions
+                - [ ] Configuration questions
+                - [ ] Backup and recovery
+                - [ ] Maintenance procedures
+    - [ ] Implement FAQ features:
+        - [ ] **FAQ functionality**:
+            - [ ] Implement search functionality:
+                - [ ] Full-text search
+                - [ ] Category filtering
+                - [ ] Tag-based search
+                - [ ] Auto-suggestions
+            - [ ] Add interactive features:
+                - [ ] Rating system for answers
+                - [ ] Comment system
+                - [ ] Related questions
+                - [ ] Recently viewed questions
+        - [ ] **FAQ management**:
+            - [ ] Create content management:
+                - [ ] FAQ authoring tools
+                - [ ] Content review workflow
+                - [ ] Version control
+                - [ ] Analytics and reporting
+            - [ ] Implement maintenance features:
+                - [ ] Content freshness tracking
+                - [ ] Usage analytics
+                - [ ] Gap analysis
+                - [ ] Continuous improvement
 - [ ] Implement support ticket system
+    - [ ] Set up comprehensive support infrastructure:
+        - [ ] **Ticket management system**:
+            - [ ] Install and configure ticketing platform:
+                - [ ] Ticket categories and priorities
+                - [ ] Automated workflows
+                - [ ] SLA management
+                - [ ] Integration capabilities
+            - [ ] **User interface**:
+                - [ ] Create user-friendly ticket submission:
+                    - [ ] Web-based ticket form
+                    - [ ] Email-to-ticket integration
+                    - [ ] Mobile-responsive interface
+                    - [ ] File attachment support
+                - [ ] Implement ticket tracking:
+                    - [ ] Ticket status tracking
+                    - [ ] Progress notifications
+                    - [ ] Communication history
+                    - [ ] Resolution tracking
+        - [ ] Configure support workflows:
+            - [ ] **Ticket routing and assignment**:
+                - [ ] Implement automatic routing:
+                    - [ ] Category-based routing
+                    - [ ] Priority-based assignment
+                    - [ ] Skill-based routing
+                    - [ ] Load balancing
+                - [ ] Set up escalation procedures:
+                    - [ ] Time-based escalation
+                    - [ ] Priority escalation
+                    - [ ] Management escalation
+                    - [ ] External vendor escalation
+            - [ ] **Support team management**:
+                - [ ] Configure team structure:
+                    - [ ] Support tier definitions
+                    - [ ] Role-based permissions
+                    - [ ] Team assignments
+                    - [ ] Shift management
+                - [ ] Implement performance tracking:
+                    - [ ] Response time metrics
+                    - [ ] Resolution time tracking
+                    - [ ] Customer satisfaction scores
+                    - [ ] Agent performance metrics
+    - [ ] Set up support processes:
+        - [ ] **Support procedures**:
+            - [ ] Create standard operating procedures:
+                - [ ] Ticket intake procedures
+                - [ ] Investigation procedures
+                - [ ] Resolution procedures
+                - [ ] Follow-up procedures
+            - [ ] Implement quality assurance:
+                - [ ] Ticket review processes
+                - [ ] Quality scoring
+                - [ ] Feedback collection
+                - [ ] Continuous improvement
+        - [ ] **Integration and automation**:
+            - [ ] Integrate with existing systems:
+                - [ ] CRM integration
+                - [ ] Knowledge base integration
+                - [ ] Monitoring system integration
+                - [ ] Communication platform integration
+            - [ ] Implement automation features:
+                - [ ] Auto-response templates
+                - [ ] Workflow automation
+                - [ ] Notification automation
+                - [ ] Reporting automation
 - [ ] Add user onboarding guides
+    - [ ] Create comprehensive onboarding experience:
+        - [ ] Design onboarding workflow:
+            - [ ] **Onboarding strategy**:
+                - [ ] Define onboarding objectives:
+                    - [ ] User activation goals
+                    - [ ] Feature adoption targets
+                    - [ ] Time-to-value metrics
+                    - [ ] Success criteria
+                - [ ] Create user journey maps:
+                    - [ ] New user journey
+                    - [ ] Role-specific journeys
+                    - [ ] Feature discovery paths
+                    - [ ] Milestone achievements
+            - [ ] **Onboarding content**:
+                - [ ] Create welcome materials:
+                    - [ ] Welcome email sequence
+                    - [ ] Getting started checklist
+                    - [ ] Quick wins guide
+                    - [ ] Success stories
+                - [ ] Create guided tutorials:
+                    - [ ] Interactive product tours
+                    - [ ] Step-by-step walkthroughs
+                    - [ ] Progressive disclosure
+                    - [ ] Contextual help
+        - [ ] Implement onboarding features:
+            - [ ] **Interactive onboarding**:
+                - [ ] Create guided experiences:
+                    - [ ] Product tour implementation
+                    - [ ] Interactive tooltips
+                    - [ ] Progress indicators
+                    - [ ] Achievement badges
+                - [ ] Implement personalization:
+                    - [ ] Role-based onboarding
+                    - [ ] Customized content
+                    - [ ] Adaptive learning paths
+                    - [ ] Personal progress tracking
+            - [ ] **Onboarding support**:
+                - [ ] Provide assistance options:
+                    - [ ] Live chat support
+                    - [ ] Scheduled onboarding calls
+                    - [ ] Email support
+                    - [ ] Community forums
+                - [ ] Create feedback mechanisms:
+                    - [ ] Onboarding surveys
+                    - [ ] Progress feedback
+                    - [ ] Difficulty indicators
+                    - [ ] Improvement suggestions
+    - [ ] Optimize onboarding experience:
+        - [ ] **Performance monitoring**:
+            - [ ] Track onboarding metrics:
+                - [ ] Completion rates
+                - [ ] Drop-off points
+                - [ ] Time-to-completion
+                - [ ] User satisfaction scores
+            - [ ] Implement analytics:
+                - [ ] User behavior tracking
+                - [ ] Feature usage analytics
+                - [ ] Conversion tracking
+                - [ ] Retention analysis
+        - [ ] **Continuous improvement**:
+            - [ ] Optimize onboarding flow:
+                - [ ] A/B testing
+                - [ ] User feedback integration
+                - [ ] Performance optimization
+                - [ ] Content updates
+            - [ ] Maintain onboarding quality:
+                - [ ] Regular content review
+                - [ ] User experience testing
+                - [ ] Accessibility compliance
+                - [ ] Mobile optimization
 - [ ] Create best practices documentation
+    - [ ] Develop comprehensive best practices guides:
+        - [ ] Create `docs/best-practices/` directory
+        - [ ] **Usage best practices**:
+            - [ ] Create operational guidelines:
+                - [ ] Daily usage best practices
+                - [ ] Workflow optimization
+                - [ ] Performance optimization
+                - [ ] Security best practices
+            - [ ] Create role-specific guidelines:
+                - [ ] End-user best practices
+                - [ ] Administrator best practices
+                - [ ] Developer best practices
+                - [ ] Manager best practices
+        - [ ] **Implementation best practices**:
+            - [ ] Create technical guidelines:
+                - [ ] Integration best practices
+                - [ ] Configuration best practices
+                - [ ] Customization guidelines
+                - [ ] Maintenance best practices
+            - [ ] Create organizational guidelines:
+                - [ ] Change management
+                - [ ] Training and adoption
+                - [ ] Governance and compliance
+                - [ ] Continuous improvement
+    - [ ] Create best practices resources:
+        - [ ] **Reference materials**:
+            - [ ] Create quick reference guides:
+                - [ ] Do's and don'ts checklists
+                - [ ] Common pitfalls and solutions
+                - [ ] Performance tips
+                - [ ] Security guidelines
+            - [ ] Create case studies:
+                - [ ] Success stories
+                - [ ] Implementation examples
+                - [ ] Lessons learned
+                - [ ] ROI demonstrations
+        - [ ] **Training integration**:
+            - [ ] Integrate with training materials:
+                - [ ] Best practices in tutorials
+                - [ ] Guidelines in documentation
+                - [ ] Tips in user interface
+                - [ ] Recommendations in support
+            - [ ] Create assessment tools:
+                - [ ] Best practices checklists
+                - [ ] Compliance assessments
+                - [ ] Maturity evaluations
+                - [ ] Improvement recommendations
 - [ ] Add troubleshooting guides for users
+    - [ ] Create user-focused troubleshooting resources:
+        - [ ] Create `docs/troubleshooting/user/` directory
+        - [ ] **Common user issues**:
+            - [ ] Create issue categories:
+                - [ ] Login and access issues
+                - [ ] Feature functionality problems
+                - [ ] Performance issues
+                - [ ] Data synchronization problems
+            - [ ] Create resolution guides:
+                - [ ] Step-by-step solutions
+                - [ ] Visual troubleshooting guides
+                - [ ] Self-service diagnostics
+                - [ ] Escalation procedures
+        - [ ] **Diagnostic tools for users**:
+            - [ ] Create user-friendly diagnostics:
+                - [ ] Self-diagnostic checklists
+                - [ ] Automated diagnostic tools
+                - [ ] System health checks
+                - [ ] Connection tests
+            - [ ] Create reporting tools:
+                - [ ] Issue reporting forms
+                - [ ] Log collection tools
+                - [ ] Screenshot capture tools
+                - [ ] System information gathering
+    - [ ] Implement troubleshooting features:
+        - [ ] **Interactive troubleshooting**:
+            - [ ] Create guided troubleshooting:
+                - [ ] Decision tree interfaces
+                - [ ] Interactive problem solvers
+                - [ ] Contextual help systems
+                - [ ] Progressive assistance
+            - [ ] Implement smart assistance:
+                - [ ] AI-powered suggestions
+                - [ ] Pattern recognition
+                - [ ] Predictive assistance
+                - [ ] Automated resolutions
+        - [ ] **Integration with support**:
+            - [ ] Connect to support systems:
+                - [ ] Seamless escalation
+                - [ ] Context preservation
+                - [ ] Automatic ticket creation
+                - [ ] Support handoff
+            - [ ] Provide feedback loops:
+                - [ ] Solution effectiveness tracking
+                - [ ] User satisfaction measurement
+                - [ ] Continuous improvement
+                - [ ] Knowledge base updates
 - [ ] Implement user feedback system
+    - [ ] Create comprehensive feedback infrastructure:
+        - [ ] Set up feedback collection:
+            - [ ] **Feedback channels**:
+                - [ ] In-app feedback widgets:
+                    - [ ] Feature-specific feedback
+                    - [ ] General feedback forms
+                    - [ ] Quick rating systems
+                    - [ ] Suggestion boxes
+                - [ ] External feedback channels:
+                    - [ ] Email feedback
+                    - [ ] Survey platforms
+                    - [ ] Community forums
+                    - [ ] Social media monitoring
+            - [ ] **Feedback types**:
+                - [ ] Implement feedback categories:
+                    - [ ] Bug reports
+                    - [ ] Feature requests
+                    - [ ] Usability feedback
+                    - [ ] Performance feedback
+                - [ ] Create feedback workflows:
+                    - [ ] Feedback intake process
+                    - [ ] Categorization and routing
+                    - [ ] Priority assessment
+                    - [ ] Response procedures
+        - [ ] Implement feedback management:
+            - [ ] **Feedback processing**:
+                - [ ] Create feedback workflows:
+                    - [ ] Automated categorization
+                    - [ ] Duplicate detection
+                    - [ ] Priority scoring
+                    - [ ] Assignment routing
+                - [ ] Implement tracking systems:
+                    - [ ] Feedback status tracking
+                    - [ ] Response time monitoring
+                    - [ ] Resolution tracking
+                    - [ ] Follow-up procedures
+            - [ ] **Analytics and reporting**:
+                - [ ] Create feedback analytics:
+                    - [ ] Feedback trend analysis
+                    - [ ] Sentiment analysis
+                    - [ ] Feature request prioritization
+                    - [ ] User satisfaction metrics
+                - [ ] Implement reporting systems:
+                    - [ ] Feedback dashboards
+                    - [ ] Regular reports
+                    - [ ] Stakeholder updates
+                    - [ ] Action item tracking
+    - [ ] Create feedback response system:
+        - [ ] **User communication**:
+            - [ ] Implement response procedures:
+                - [ ] Acknowledgment responses
+                - [ ] Status updates
+                - [ ] Resolution notifications
+                - [ ] Follow-up communications
+            - [ ] Create communication templates:
+                - [ ] Response templates
+                - [ ] Update notifications
+                - [ ] Resolution confirmations
+                - [ ] Thank you messages
+        - [ ] **Continuous improvement**:
+            - [ ] Implement improvement processes:
+                - [ ] Feedback analysis procedures
+                - [ ] Action planning
+                - [ ] Implementation tracking
+                - [ ] Impact measurement
+            - [ ] Create feedback loops:
+                - [ ] Product improvement cycles
+                - [ ] Process optimization
+                - [ ] User experience enhancement
+                - [ ] Service quality improvement
 
 ---
 
