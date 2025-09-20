@@ -1,7 +1,7 @@
-# Shopify Database Replication - Implementation Tasks
+# E-Commerce Platform Database Schema - Implementation Tasks
 
 ## Overview
-This document outlines the atomic, developer-ready tasks for implementing the Shopify database replication system. Each task includes clear descriptions, dependencies, effort estimates, and priority levels.
+This document outlines the atomic, developer-ready tasks for implementing the e-commerce platform database schema system. Each task includes clear descriptions, dependencies, effort estimates, and priority levels.
 
 ## Task Completion Tracking
 - `[ ]` indicates incomplete tasks or sub-tasks
@@ -16,7 +16,7 @@ This document outlines the atomic, developer-ready tasks for implementing the Sh
 **Priority**: High | **Effort**: 4h | **Dependencies**: None
 
 #### **Objective**:
-Establish a robust, scalable, and maintainable foundation for the Shopify Database Replication system using .NET 8, Entity Framework Core, and PostgreSQL with proper containerization, logging, and configuration management.
+Establish a robust, scalable, and maintainable foundation for the E-Commerce Platform Database Schema system using .NET 8, Entity Framework Core, and PostgreSQL with proper containerization, logging, and configuration management.
 
 #### **Expected Outcomes**:
 - Fully functional .NET 8 Web API project with proper structure and dependencies
@@ -45,21 +45,21 @@ Establish a robust, scalable, and maintainable foundation for the Shopify Databa
 
 #### Sub-tasks:
 - [ ] **Initialize .NET 8 Web API project**
-  - [ ] Run `dotnet new webapi -n ShopifyReplication.Api -f net8.0`
-  - [ ] Create solution file: `dotnet new sln -n ShopifyReplication`
-  - [ ] Add project to solution: `dotnet sln add ShopifyReplication.Api`
+  - [ ] Run `dotnet new webapi -n ECommerceSchema.Api -f net8.0`
+  - [ ] Create solution file: `dotnet new sln -n ECommerceSchema`
+  - [ ] Add project to solution: `dotnet sln add ECommerceSchema.Api`
   - [ ] Verify project builds: `dotnet build`
 
 - [ ] **Configure Entity Framework Core 8 with PostgreSQL**
   - [ ] Install packages: `dotnet add package Microsoft.EntityFrameworkCore.Design --version 8.0.0`
   - [ ] Install: `dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL --version 8.0.0`
   - [ ] Install: `dotnet add package Microsoft.EntityFrameworkCore.Tools --version 8.0.0`
-  - [ ] Create `Data/ShopifyReplicationContext.cs` with DbContext
-  - [ ] Configure connection string in `appsettings.json`: `"DefaultConnection": "Host=localhost;Database=shopify_replication;Username=postgres;Password=password"`
+  - [ ] Create `Data/ECommerceSchemaContext.cs` with DbContext
+- [ ] Configure connection string in `appsettings.json`: `"DefaultConnection": "Host=localhost;Database=ecommerce_schema;Username=postgres;Password=password"`
 
 - [ ] **Set up dependency injection container**
   - [ ] Configure services in `Program.cs`
-  - [ ] Register DbContext: `builder.Services.AddDbContext<ShopifyReplicationContext>()`
+  - [ ] Register DbContext: `builder.Services.AddDbContext<ECommerceSchemaContext>()`
   - [ ] Add service registrations for repositories and services
   - [ ] Configure AutoMapper: `builder.Services.AddAutoMapper(typeof(Program))`
 
@@ -75,7 +75,7 @@ Establish a robust, scalable, and maintainable foundation for the Shopify Databa
   - [ ] Create `appsettings.Production.json` with prod-specific settings
   - [ ] Configure environment variables support
   - [ ] Add user secrets: `dotnet user-secrets init`
-  - [ ] Store sensitive config in secrets: `dotnet user-secrets set "Shopify:ApiKey" "your-api-key"`
+  - [ ] Store sensitive config in secrets: `dotnet user-secrets set "ECommerce:ApiKey" "your-api-key"`
 
 - [ ] **Create project structure**
   - [ ] Create `Controllers/` folder
@@ -92,22 +92,22 @@ Establish a robust, scalable, and maintainable foundation for the Shopify Databa
   - [ ] Create `.dockerignore` file
   - [ ] Create `docker-compose.yml` with PostgreSQL service
   - [ ] Create `docker-compose.override.yml` for development
-  - [ ] Test container build: `docker build -t shopify-replication .`
+  - [ ] Test container build: `docker build -t ecommerce-schema .`
 
 - [ ] **Set up basic health checks**
   - [ ] Install: `dotnet add package Microsoft.Extensions.Diagnostics.HealthChecks.EntityFrameworkCore`
-  - [ ] Configure in `Program.cs`: `builder.Services.AddHealthChecks().AddDbContext<ShopifyReplicationContext>()`
+  - [ ] Configure in `Program.cs`: `builder.Services.AddHealthChecks().AddDbContext<ECommerceSchemaContext>()`
   - [ ] Add health check endpoint: `app.MapHealthChecks("/health")`
-  - [ ] Create custom health checks for Shopify API connectivity
+  - [ ] Create custom health checks for e-commerce API connectivity
 
 ### [ ] TASK-002: Database Schema Implementation
 **Priority**: High | **Effort**: 8h | **Dependencies**: TASK-001
 
 #### **Objective**:
-Design and implement a comprehensive database schema that accurately mirrors Shopify's data structure while optimizing for performance, data integrity, and scalability. The schema must support real-time replication, audit trails, and efficient querying patterns.
+Design and implement a comprehensive database schema that accurately mirrors e-commerce platform data structure while optimizing for performance, data integrity, and scalability. The schema must support real-time replication, audit trails, and efficient querying patterns.
 
 #### **Expected Outcomes**:
-- Complete Entity Framework DbContext with all Shopify entity mappings
+- Complete Entity Framework DbContext with all e-commerce entity mappings
 - Properly configured entity relationships with foreign keys and navigation properties
 - Optimized database indexes for query performance and data retrieval
 - Audit trail implementation for tracking data changes and compliance
@@ -117,24 +117,24 @@ Design and implement a comprehensive database schema that accurately mirrors Sho
 - Support for JSON columns for flexible data storage (product options, metadata)
 
 #### **Constraints & Considerations**:
-- **Data Fidelity**: Schema must maintain 1:1 mapping with Shopify API data structures
+- **Data Fidelity**: Schema must maintain 1:1 mapping with e-commerce API data structures
 - **Performance**: Indexes must be strategically placed to optimize common query patterns
 - **Scalability**: Schema design must support millions of products, customers, and orders
 - **Compliance**: Audit trails required for GDPR, PCI-DSS, and financial regulations
 - **Data Types**: Use appropriate PostgreSQL data types for optimal storage and performance
 - **Relationships**: Maintain referential integrity while allowing for soft deletes
-- **Extensibility**: Schema must accommodate future Shopify API changes and new fields
+- **Extensibility**: Schema must accommodate future e-commerce API changes and new fields
 
 #### **Risk Factors**:
 - **Data Migration**: Large datasets may require chunked migration strategies
 - **Index Performance**: Over-indexing could impact write performance
-- **Schema Changes**: Shopify API updates may require schema modifications
+- **Schema Changes**: E-commerce API updates may require schema modifications
 - **Data Consistency**: Concurrent updates could lead to data inconsistencies
 - **Storage Growth**: Audit trails and historical data may consume significant storage
 
 #### Sub-tasks:
 - [ ] **Create Entity Framework DbContext**
-  - [ ] Create `Data/ShopifyReplicationContext.cs` inheriting from `DbContext`
+  - [ ] Create `Data/ECommerceSchemaContext.cs` inheriting from `DbContext`
   - [ ] Configure connection string in `OnConfiguring()` method
   - [ ] Add `DbSet<T>` properties for all entities
   - [ ] Override `OnModelCreating()` for entity configurations
@@ -145,52 +145,52 @@ Design and implement a comprehensive database schema that accurately mirrors Sho
     - [ ] `Id` (long, primary key), `Title` (string, 255), `Handle` (string, 255, unique)
     - [ ] `BodyHtml` (text), `Vendor` (string, 100), `ProductType` (string, 100)
     - [ ] `CreatedAt`, `UpdatedAt`, `PublishedAt` (DateTime?), `Status` (enum)
-    - [ ] `Tags` (string), `TemplateSuffix` (string), `ShopifyId` (long, unique)
+    - [ ] `Tags` (string), `TemplateSuffix` (string), `ECommerceId` (long, unique)
   - [ ] Create `Models/Entities/ProductVariant.cs` with properties:
     - [ ] `Id`, `ProductId` (FK), `Title`, `Price` (decimal 18,2), `CompareAtPrice`
     - [ ] `Sku` (string, 100), `Barcode`, `Weight` (decimal), `WeightUnit`
-    - [ ] `InventoryQuantity` (int), `InventoryPolicy`, `ShopifyId` (long)
+    - [ ] `InventoryQuantity` (int), `InventoryPolicy`, `ECommerceId` (long)
   - [ ] Create `Models/Entities/ProductOption.cs` with properties:
     - [ ] `Id`, `ProductId` (FK), `Name` (string, 100), `Position` (int)
-    - [ ] `Values` (JSON array), `ShopifyId` (long)
+    - [ ] `Values` (JSON array), `ECommerceId` (long)
 
 - [ ] **Implement customer entities**
   - [ ] Create `Models/Entities/Customer.cs` with properties:
     - [ ] `Id`, `Email` (string, 255, unique), `FirstName`, `LastName`
     - [ ] `Phone`, `AcceptsMarketing` (bool), `CreatedAt`, `UpdatedAt`
-    - [ ] `OrdersCount` (int), `TotalSpent` (decimal), `ShopifyId` (long)
+    - [ ] `OrdersCount` (int), `TotalSpent` (decimal), `ECommerceId` (long)
   - [ ] Create `Models/Entities/CustomerAddress.cs` with properties:
     - [ ] `Id`, `CustomerId` (FK), `FirstName`, `LastName`, `Company`
     - [ ] `Address1`, `Address2`, `City`, `Province`, `Country`, `Zip`
-    - [ ] `Phone`, `IsDefault` (bool), `ShopifyId` (long)
+    - [ ] `Phone`, `IsDefault` (bool), `ECommerceId` (long)
 
 - [ ] **Implement order entities**
   - [ ] Create `Models/Entities/Order.cs` with properties:
     - [ ] `Id`, `OrderNumber` (string, unique), `Email`, `CreatedAt`, `UpdatedAt`
     - [ ] `TotalPrice` (decimal 18,2), `SubtotalPrice`, `TotalTax`, `Currency`
-    - [ ] `FinancialStatus`, `FulfillmentStatus`, `CustomerId` (FK), `ShopifyId`
+    - [ ] `FinancialStatus`, `FulfillmentStatus`, `CustomerId` (FK), `ECommerceId`
   - [ ] Create `Models/Entities/OrderLineItem.cs` with properties:
     - [ ] `Id`, `OrderId` (FK), `ProductId` (FK), `VariantId` (FK)
-    - [ ] `Quantity` (int), `Price` (decimal), `Title`, `Sku`, `ShopifyId`
+    - [ ] `Quantity` (int), `Price` (decimal), `Title`, `Sku`, `ECommerceId`
   - [ ] Create `Models/Entities/OrderFulfillment.cs` with properties:
     - [ ] `Id`, `OrderId` (FK), `Status`, `TrackingCompany`, `TrackingNumber`
-    - [ ] `CreatedAt`, `UpdatedAt`, `ShopifyId` (long)
+    - [ ] `CreatedAt`, `UpdatedAt`, `ECommerceId` (long)
 
 - [ ] **Implement inventory entities**
   - [ ] Create `Models/Entities/InventoryItem.cs` with properties:
-    - [ ] `Id`, `Sku` (string, unique), `CreatedAt`, `UpdatedAt`, `ShopifyId`
+    - [ ] `Id`, `Sku` (string, unique), `CreatedAt`, `UpdatedAt`, `ECommerceId`
     - [ ] `Cost` (decimal), `Tracked` (bool), `CountryCodeOfOrigin`
   - [ ] Create `Models/Entities/InventoryLevel.cs` with properties:
     - [ ] `Id`, `InventoryItemId` (FK), `LocationId` (FK), `Available` (int)
     - [ ] `UpdatedAt`, composite unique key on (InventoryItemId, LocationId)
   - [ ] Create `Models/Entities/Location.cs` with properties:
     - [ ] `Id`, `Name` (string, 255), `Address1`, `City`, `Province`, `Country`
-    - [ ] `Active` (bool), `ShopifyId` (long, unique)
+    - [ ] `Active` (bool), `ECommerceId` (long, unique)
 
 - [ ] **Implement collection entities**
   - [ ] Create `Models/Entities/Collection.cs` with properties:
     - [ ] `Id`, `Title` (string, 255), `Handle` (string, unique), `BodyHtml`
-    - [ ] `SortOrder`, `TemplateSuffix`, `CreatedAt`, `UpdatedAt`, `ShopifyId`
+    - [ ] `SortOrder`, `TemplateSuffix`, `CreatedAt`, `UpdatedAt`, `ECommerceId`
   - [ ] Create `Models/Entities/CollectionProduct.cs` (junction table):
     - [ ] `CollectionId` (FK), `ProductId` (FK), `Position` (int)
     - [ ] Composite primary key on (CollectionId, ProductId)
@@ -202,7 +202,7 @@ Design and implement a comprehensive database schema that accurately mirrors Sho
   - [ ] Verify tables created with: `dotnet ef dbcontext info`
 
 - [ ] **Add proper indexes and constraints**
-  - [ ] Add index on `Product.ShopifyId`: `CREATE INDEX IX_Products_ShopifyId`
+  - [ ] Add index on `Product.ECommerceId`: `CREATE INDEX IX_Products_ECommerceId`
   - [ ] Add index on `Customer.Email`: `CREATE INDEX IX_Customers_Email`
   - [ ] Add index on `Order.OrderNumber`: `CREATE INDEX IX_Orders_OrderNumber`
   - [ ] Add composite index on `InventoryLevel`: `CREATE INDEX IX_InventoryLevels_ItemLocation`
@@ -220,7 +220,7 @@ Design and implement a comprehensive database schema that accurately mirrors Sho
 **Priority**: High | **Effort**: 6h | **Dependencies**: TASK-002
 
 #### **Objective**:
-Extend the core database schema with advanced Shopify entities including metafields, smart collections, transactions, and abandoned checkouts. Implement complex relationships, polymorphic associations, and business rule validations to support comprehensive e-commerce functionality.
+Extend the core database schema with advanced e-commerce entities including metafields, smart collections, transactions, and abandoned checkouts. Implement complex relationships, polymorphic associations, and business rule validations to support comprehensive e-commerce functionality.
 
 #### **Expected Outcomes**:
 - Complete implementation of metafields system with polymorphic owner relationships
@@ -230,7 +230,7 @@ Extend the core database schema with advanced Shopify entities including metafie
 - Enhanced fulfillment tracking with line-item level granularity
 - Robust business rule validations ensuring data integrity and consistency
 - Optimized database migrations with proper indexing strategies
-- Full support for Shopify's advanced commerce features and workflows
+- Full support for advanced e-commerce platform features and workflows
 
 #### **Constraints & Considerations**:
 - **Polymorphic Relationships**: Metafields must support multiple owner types (Product, Customer, Order)
@@ -238,7 +238,7 @@ Extend the core database schema with advanced Shopify entities including metafie
 - **Performance**: Complex queries on smart collections must be optimized with proper indexing
 - **Data Integrity**: Business rules must be enforced at both application and database levels
 - **Migration Safety**: Large table alterations must be performed with minimal downtime
-- **Extensibility**: Schema must accommodate future Shopify API enhancements
+- **Extensibility**: Schema must accommodate future e-commerce API enhancements
 - **Compliance**: Financial transaction data requires audit trails and regulatory compliance
 
 #### **Risk Factors**:
@@ -253,17 +253,17 @@ Extend the core database schema with advanced Shopify entities including metafie
   - [ ] Create `Models/Entities/Metafield.cs` with properties:
     - [ ] `Id`, `Namespace` (string, 100), `Key` (string, 100), `Value` (text)
     - [ ] `Type` (enum: string, integer, json_string), `Description` (string, 500)
-    - [ ] `OwnerId` (long), `OwnerResource` (string, 50), `ShopifyId` (long)
+    - [ ] `OwnerId` (long), `OwnerResource` (string, 50), `ECommerceId` (long)
   - [ ] Create `Models/Entities/MetafieldDefinition.cs` with properties:
     - [ ] `Id`, `Namespace`, `Key`, `Name`, `Type`, `Description`
-    - [ ] `OwnerType` (enum), `Validations` (JSON), `ShopifyId` (long)
+    - [ ] `OwnerType` (enum), `Validations` (JSON), `ECommerceId` (long)
   - [ ] Add composite unique index on (Namespace, Key, OwnerId, OwnerResource)
 
 - [ ] **Implement SmartCollections entity**
   - [ ] Create `Models/Entities/SmartCollection.cs` with properties:
     - [ ] `Id`, `Title` (string, 255), `Handle` (string, unique), `BodyHtml`
     - [ ] `Rules` (JSON array), `Disjunctive` (bool), `SortOrder`
-    - [ ] `TemplateSuffix`, `CreatedAt`, `UpdatedAt`, `ShopifyId` (long)
+    - [ ] `TemplateSuffix`, `CreatedAt`, `UpdatedAt`, `ECommerceId` (long)
   - [ ] Create `Models/Entities/SmartCollectionRule.cs` for rule details:
     - [ ] `Id`, `SmartCollectionId` (FK), `Column`, `Relation`, `Condition`
 
@@ -271,10 +271,10 @@ Extend the core database schema with advanced Shopify entities including metafie
   - [ ] Create `Models/Entities/Transaction.cs` with properties:
     - [ ] `Id`, `OrderId` (FK), `Kind` (enum), `Gateway`, `Status`
     - [ ] `Amount` (decimal 18,2), `Currency`, `AuthorizationCode`
-    - [ ] `CreatedAt`, `ProcessedAt`, `DeviceId`, `ParentId` (FK), `ShopifyId`
+    - [ ] `CreatedAt`, `ProcessedAt`, `DeviceId`, `ParentId` (FK), `ECommerceId`
   - [ ] Create `Models/Entities/TransactionReceipt.cs` with properties:
     - [ ] `Id`, `TransactionId` (FK), `TestCase` (bool), `Authorization`
-    - [ ] `Receipt` (JSON), `ShopifyId` (long)
+    - [ ] `Receipt` (JSON), `ECommerceId` (long)
 
 - [ ] **Implement enhanced fulfillment entities**
   - [ ] Enhance `OrderFulfillment.cs` with additional properties:
@@ -290,7 +290,7 @@ Extend the core database schema with advanced Shopify entities including metafie
     - [ ] `CreatedAt`, `UpdatedAt`, `CompletedAt`, `Currency`
     - [ ] `TotalPrice` (decimal), `SubtotalPrice`, `TotalTax`
     - [ ] `CustomerId` (FK), `BillingAddress` (JSON), `ShippingAddress` (JSON)
-    - [ ] `ShopifyId` (long, unique)
+    - [ ] `ECommerceId` (long, unique)
   - [ ] Create `Models/Entities/AbandonedCheckoutLineItem.cs` with properties:
     - [ ] `Id`, `CheckoutId` (FK), `ProductId` (FK), `VariantId` (FK)
     - [ ] `Quantity` (int), `Price` (decimal), `Title`, `Sku`
@@ -353,31 +353,31 @@ Implement comprehensive B2B commerce entities to support business-to-business tr
   - [ ] Create `Models/Entities/Company.cs` with properties:
     - [ ] `Id`, `Name` (string, 255), `Note` (text), `ExternalId` (string, 100)
     - [ ] `MainContactId` (FK to Customer), `CreatedAt`, `UpdatedAt`
-    - [ ] `CustomerCount` (int), `ShopifyId` (long, unique)
+    - [ ] `CustomerCount` (int), `ECommerceId` (long, unique)
   - [ ] Create `Models/Entities/CompanyLocation.cs` with properties:
     - [ ] `Id`, `CompanyId` (FK), `Name`, `ExternalId`, `Phone`
-    - [ ] `Locale`, `CreatedAt`, `UpdatedAt`, `ShopifyId` (long)
+    - [ ] `Locale`, `CreatedAt`, `UpdatedAt`, `ECommerceId` (long)
   - [ ] Create `Models/Entities/CompanyContact.cs` with properties:
     - [ ] `Id`, `CompanyId` (FK), `CustomerId` (FK), `IsMainContact` (bool)
-    - [ ] `Title`, `CreatedAt`, `UpdatedAt`, `ShopifyId` (long)
+    - [ ] `Title`, `CreatedAt`, `UpdatedAt`, `ECommerceId` (long)
 
 - [ ] **Implement B2BPaymentTerms entity**
   - [ ] Create `Models/Entities/PaymentTerms.cs` with properties:
     - [ ] `Id`, `CompanyId` (FK), `PaymentTermsName` (string, 100)
     - [ ] `PaymentSchedules` (JSON array), `CreatedAt`, `UpdatedAt`
-    - [ ] `ShopifyId` (long, unique)
+    - [ ] `ECommerceId` (long, unique)
   - [ ] Create enum `PaymentTermsType`: Net15, Net30, Net60, Net90, DueOnReceipt
 
 - [ ] **Implement SellingPlanGroups and SellingPlans entities**
   - [ ] Create `Models/Entities/SellingPlanGroup.cs` with properties:
     - [ ] `Id`, `Name` (string, 255), `MerchantCode` (string, 100)
     - [ ] `Description` (text), `Options` (JSON array), `Position` (int)
-    - [ ] `CreatedAt`, `UpdatedAt`, `ShopifyId` (long, unique)
+    - [ ] `CreatedAt`, `UpdatedAt`, `ECommerceId` (long, unique)
   - [ ] Create `Models/Entities/SellingPlan.cs` with properties:
     - [ ] `Id`, `SellingPlanGroupId` (FK), `Name`, `Description`
     - [ ] `Options` (JSON), `Position`, `BillingPolicy` (JSON)
     - [ ] `DeliveryPolicy` (JSON), `PricingPolicies` (JSON array)
-    - [ ] `CreatedAt`, `UpdatedAt`, `ShopifyId` (long)
+    - [ ] `CreatedAt`, `UpdatedAt`, `ECommerceId` (long)
 
 - [ ] **Implement ProductSellingPlans junction table**
   - [ ] Create `Models/Entities/ProductSellingPlan.cs` with properties:
@@ -447,11 +447,11 @@ Implement international commerce capabilities including market segmentation, mul
   - [ ] Create `Models/Entities/Market.cs` with properties:
     - [ ] `Id`, `Name` (string, 255), `Handle` (string, 100, unique)
     - [ ] `Enabled` (bool), `PrimaryCurrency` (string, 3)
-    - [ ] `CreatedAt`, `UpdatedAt`, `ShopifyId` (long, unique)
+    - [ ] `CreatedAt`, `UpdatedAt`, `ECommerceId` (long, unique)
   - [ ] Create `Models/Entities/MarketRegion.cs` with properties:
     - [ ] `Id`, `MarketId` (FK), `Name` (string, 255)
     - [ ] `CountryCode` (string, 2), `CreatedAt`, `UpdatedAt`
-    - [ ] `ShopifyId` (long, unique)
+    - [ ] `ECommerceId` (long, unique)
   - [ ] Add navigation properties: Market.Regions, MarketRegion.Market
 
 - [ ] **Implement MarketRegions and MarketCurrencies entities**
@@ -468,7 +468,7 @@ Implement international commerce capabilities including market segmentation, mul
     - [ ] `Id`, `MarketId` (FK), `Domain` (string, 255)
     - [ ] `SubfolderSuffix` (string, 50), `DefaultLocale` (string, 5)
     - [ ] `AlternateLocales` (JSON array), `CreatedAt`, `UpdatedAt`
-    - [ ] `ShopifyId` (long, unique)
+    - [ ] `ECommerceId` (long, unique)
   - [ ] Add validation for domain format and locale codes
   - [ ] Create unique constraint on (MarketId, Domain)
 
@@ -627,17 +627,17 @@ Implement comprehensive compliance and security framework supporting GDPR, PCI-D
 
 ---
 
-## Phase 2: Shopify API Integration
+## Phase 2: E-Commerce API Integration
 
-### [ ] TASK-007: Shopify API Client Setup
+### [ ] TASK-007: E-Commerce API Client Setup
 **Priority**: High | **Effort**: 6h | **Dependencies**: TASK-001
 
 #### **Objective**:
-Establish secure and robust Shopify API integration with OAuth 2.0 authentication, rate limiting, error handling, and comprehensive API client services. Enable reliable data synchronization between Shopify and local database with proper security measures and performance optimization.
+Establish secure and robust e-commerce API integration with OAuth 2.0 authentication, rate limiting, error handling, and comprehensive API client services. Enable reliable data synchronization between e-commerce platform and local database with proper security measures and performance optimization.
 
 #### **Expected Outcomes**:
-- Complete Shopify API client with OAuth 2.0 authentication and token management
-- Robust rate limiting implementation respecting Shopify's API limits (40 req/sec REST, 1000 points/sec GraphQL)
+- Complete e-commerce API client with OAuth 2.0 authentication and token management
+- Robust rate limiting implementation respecting e-commerce platform API limits (40 req/sec REST, 1000 points/sec GraphQL)
 - Comprehensive error handling with retry logic and exponential backoff
 - Secure credential management and HMAC signature verification
 - Webhook endpoint setup for real-time data synchronization
@@ -645,7 +645,7 @@ Establish secure and robust Shopify API integration with OAuth 2.0 authenticatio
 - Performance monitoring and API usage analytics
 
 #### **Constraints & Considerations**:
-- **Rate Limits**: Must strictly adhere to Shopify's API rate limits to avoid throttling
+- **Rate Limits**: Must strictly adhere to e-commerce platform API rate limits to avoid throttling
 - **Security**: OAuth tokens and webhook secrets must be securely stored and managed
 - **API Versioning**: Support for multiple API versions and graceful migration paths
 - **Error Handling**: Robust retry mechanisms for transient failures and network issues
@@ -656,31 +656,31 @@ Establish secure and robust Shopify API integration with OAuth 2.0 authenticatio
 #### **Risk Factors**:
 - **Rate Limiting**: Exceeding API limits could result in temporary access suspension
 - **Token Expiration**: OAuth token management failures could disrupt data synchronization
-- **API Changes**: Shopify API updates may require immediate client modifications
+- **API Changes**: E-commerce API updates may require immediate client modifications
 - **Security Vulnerabilities**: Improper token handling could expose sensitive data
 - **Network Failures**: Unreliable network connections may cause data synchronization issues
 
 #### Sub-tasks:
-- [ ] **Create Shopify API client service**
-  - [ ] Create `Services/ShopifyApiClient.cs` with constructor:
-    - [ ] Inject `HttpClient`, `IConfiguration`, `ILogger<ShopifyApiClient>`
-    - [ ] Set base address: `https://{shop}.myshopify.com/admin/api/2024-01/`
-    - [ ] Add default headers: `X-Shopify-Access-Token`, `Content-Type: application/json`
-  - [ ] Create `Models/Configuration/ShopifyConfig.cs` with properties:
+- [ ] **Create e-commerce API client service**
+  - [ ] Create `Services/ECommerceApiClient.cs` with constructor:
+    - [ ] Inject `HttpClient`, `IConfiguration`, `ILogger<ECommerceApiClient>`
+    - [ ] Set base address: `https://{store}.ecommerce-api.com/admin/api/v1/`
+    - [ ] Add default headers: `X-ECommerce-Access-Token`, `Content-Type: application/json`
+  - [ ] Create `Models/Configuration/ECommerceConfig.cs` with properties:
     - [ ] `ShopDomain` (string), `AccessToken` (string), `ApiVersion` (string)
     - [ ] `WebhookSecret` (string), `RateLimitPerSecond` (int, default: 2)
   - [ ] Register HttpClient in `Program.cs`:
-    - [ ] `services.AddHttpClient<ShopifyApiClient>()`
+    - [ ] `services.AddHttpClient<ECommerceApiClient>()`
     - [ ] Configure timeout: 30 seconds, retry policy: 3 attempts
 
 - [ ] **Implement OAuth 2.0 authentication**
-  - [ ] Create `Services/ShopifyOAuthService.cs` with methods:
+  - [ ] Create `Services/ECommerceOAuthService.cs` with methods:
     - [ ] `GenerateAuthorizationUrl(string shopDomain, string[] scopes)`
     - [ ] `ExchangeCodeForToken(string code, string shopDomain)`
-    - [ ] `ValidateShop(string shopDomain)` - verify .myshopify.com domain
-  - [ ] Create `Models/OAuth/ShopifyOAuthRequest.cs` with properties:
+    - [ ] `ValidateStore(string storeDomain)` - verify .ecommerce-api.com domain
+  - [ ] Create `Models/OAuth/ECommerceOAuthRequest.cs` with properties:
     - [ ] `ClientId`, `ClientSecret`, `RedirectUri`, `Scopes`, `State`
-  - [ ] Create `Models/OAuth/ShopifyOAuthResponse.cs` with properties:
+  - [ ] Create `Models/OAuth/ECommerceOAuthResponse.cs` with properties:
     - [ ] `AccessToken`, `Scope`, `ExpiresIn`, `AssociatedUser`
   - [ ] Implement HMAC signature verification for OAuth callbacks
   - [ ] Add state parameter validation to prevent CSRF attacks
@@ -692,9 +692,9 @@ Establish secure and robust Shopify API integration with OAuth 2.0 authenticatio
     - [ ] `WaitForRateLimit()` - delays request if limit exceeded
     - [ ] `UpdateRateLimitFromHeaders(HttpResponseMessage response)`
   - [ ] Implement leaky bucket algorithm for rate limiting
-  - [ ] Parse Shopify rate limit headers:
-    - [ ] `X-Shopify-Shop-Api-Call-Limit`: current/max calls
-    - [ ] `X-Shopify-Shop-Api-Call-Limit-Cost`: GraphQL cost
+  - [ ] Parse e-commerce platform rate limit headers:
+    - [ ] `X-ECommerce-Api-Call-Limit`: current/max calls
+    - [ ] `X-ECommerce-Api-Call-Limit-Cost`: GraphQL cost
   - [ ] Add rate limit metrics and monitoring
 
 - [ ] **Implement exponential backoff and retry logic**
@@ -706,7 +706,7 @@ Establish secure and robust Shopify API integration with OAuth 2.0 authenticatio
   - [ ] Implement exponential backoff calculation:
     - [ ] Delay = BaseDelay * (2 ^ attempt) + Random(0, 1000ms)
   - [ ] Add retry attempt logging and metrics
-  - [ ] Handle `Retry-After` header from Shopify responses
+  - [ ] Handle `Retry-After` header from e-commerce platform responses
 
 - [ ] **Add circuit breaker pattern for API resilience**
   - [ ] Create `Policies/CircuitBreakerPolicy.cs`:
@@ -717,23 +717,23 @@ Establish secure and robust Shopify API integration with OAuth 2.0 authenticatio
   - [ ] Add circuit breaker metrics and alerts
   - [ ] Create fallback mechanisms for critical operations
 
-- [ ] **Create API response models matching Shopify schema**
-  - [ ] Create `Models/Shopify/Product/ShopifyProduct.cs` matching Shopify API:
+- [ ] **Create API response models matching e-commerce platform schema**
+  - [ ] Create `Models/ECommerce/Product/Product.cs` matching e-commerce API:
     - [ ] Properties: `id`, `title`, `handle`, `body_html`, `vendor`, `product_type`
     - [ ] `created_at`, `updated_at`, `published_at`, `status`, `tags`
     - [ ] `variants` (array), `options` (array), `images` (array)
-  - [ ] Create `Models/Shopify/Customer/ShopifyCustomer.cs`:
+  - [ ] Create `Models/ECommerce/Customer/Customer.cs`:
     - [ ] Properties: `id`, `email`, `first_name`, `last_name`, `phone`
     - [ ] `accepts_marketing`, `created_at`, `updated_at`, `orders_count`
     - [ ] `total_spent`, `addresses` (array), `default_address`
-  - [ ] Create `Models/Shopify/Order/ShopifyOrder.cs`:
+  - [ ] Create `Models/ECommerce/Order/Order.cs`:
     - [ ] Properties: `id`, `order_number`, `email`, `created_at`, `updated_at`
     - [ ] `total_price`, `subtotal_price`, `total_tax`, `currency`
     - [ ] `financial_status`, `fulfillment_status`, `line_items` (array)
   - [ ] Add JSON serialization attributes and converters
 
 - [ ] **Implement request/response logging**
-  - [ ] Create `Middleware/ShopifyApiLoggingHandler.cs` inheriting `DelegatingHandler`:
+  - [ ] Create `Middleware/ECommerceApiLoggingHandler.cs` inheriting `DelegatingHandler`:
     - [ ] Log request: method, URL, headers (excluding sensitive data)
     - [ ] Log response: status code, headers, execution time
     - [ ] Mask sensitive data: access tokens, webhook secrets
@@ -742,21 +742,21 @@ Establish secure and robust Shopify API integration with OAuth 2.0 authenticatio
   - [ ] Add performance metrics: request duration, success rate
 
 - [ ] **Add API health monitoring**
-  - [ ] Create `HealthChecks/ShopifyApiHealthCheck.cs`:
+  - [ ] Create `HealthChecks/ECommerceApiHealthCheck.cs`:
     - [ ] Implement `IHealthCheck` interface
     - [ ] Test connectivity with lightweight API call (shop info)
     - [ ] Check rate limit status and remaining quota
     - [ ] Verify authentication token validity
   - [ ] Register health check in `Program.cs`:
-    - [ ] `services.AddHealthChecks().AddCheck<ShopifyApiHealthCheck>("shopify-api")`
-  - [ ] Add health check endpoint: `/health/shopify`
+    - [ ] `services.AddHealthChecks().AddCheck<ECommerceApiHealthCheck>("ecommerce-api")`
+  - [ ] Add health check endpoint: `/health/ecommerce`
   - [ ] Create alerting for API health failures
 
 ### [ ] TASK-008: Product Data Synchronization
 **Priority**: High | **Effort**: 8h | **Dependencies**: TASK-002, TASK-007
 
 #### **Objective**:
-Implement comprehensive product data synchronization between Shopify and local database, including products, variants, images, and metadata. Establish real-time synchronization capabilities with conflict resolution, data validation, and performance optimization for large product catalogs.
+Implement comprehensive product data synchronization between e-commerce platform and local database, including products, variants, images, and metadata. Establish real-time synchronization capabilities with conflict resolution, data validation, and performance optimization for large product catalogs.
 
 #### **Expected Outcomes**:
 - Complete product synchronization system with full CRUD operations
@@ -769,7 +769,7 @@ Implement comprehensive product data synchronization between Shopify and local d
 - Comprehensive audit trails for all product data changes
 
 #### **Constraints & Considerations**:
-- **API Rate Limits**: Must respect Shopify's 40 requests/second limit for REST API
+- **API Rate Limits**: Must respect e-commerce platform 40 requests/second limit for REST API
 - **Data Volume**: Efficient handling of large product catalogs with thousands of items
 - **Real-time Updates**: Webhook processing must be reliable and handle failures gracefully
 - **Data Integrity**: Maintain referential integrity between products, variants, and related entities
@@ -785,26 +785,26 @@ Implement comprehensive product data synchronization between Shopify and local d
 - **Storage Costs**: Product images and metadata may significantly increase storage requirements
 
 #### Sub-tasks:
-- [ ] **Implement product data fetching from Shopify REST API**
+- [ ] **Implement product data fetching from e-commerce platform REST API**
   - [ ] Create `Services/ProductSyncService.cs` with methods:
     - [ ] `FetchProductsAsync(DateTime? since = null)` - fetch products with pagination
-    - [ ] `FetchProductByIdAsync(long shopifyId)` - fetch single product
+    - [ ] `FetchProductByIdAsync(long eCommerceId)` - fetch single product
     - [ ] `FetchProductCountAsync()` - get total product count
   - [ ] Implement REST API calls:
-    - [ ] GET `/admin/api/2024-01/products.json?limit=250&since_id={id}`
-    - [ ] GET `/admin/api/2024-01/products/{id}.json`
+    - [ ] GET `/admin/api/v1/products.json?limit=250&since_id={id}`
+    - [ ] GET `/admin/api/v1/products/{id}.json`
     - [ ] Handle pagination using `since_id` parameter
   - [ ] Add request throttling: max 2 requests per second
   - [ ] Implement error handling for API failures
 
 - [ ] **Implement product variant synchronization**
   - [ ] Create `Services/ProductVariantSyncService.cs` with methods:
-    - [ ] `SyncVariantsAsync(Product product, ShopifyProduct shopifyProduct)`
+    - [ ] `SyncVariantsAsync(Product product, ECommerceProduct ecommerceProduct)`
     - [ ] `CreateVariantAsync(ProductVariant variant)`
     - [ ] `UpdateVariantAsync(ProductVariant variant)`
     - [ ] `DeleteVariantAsync(long variantId)`
-  - [ ] Map Shopify variant fields to local entity:
-    - [ ] `id` → `ShopifyId`, `title` → `Title`, `price` → `Price`
+  - [ ] Map e-commerce variant fields to local entity:
+    - [ ] `id` → `ECommerceId`, `title` → `Title`, `price` → `Price`
     - [ ] `compare_at_price` → `CompareAtPrice`, `sku` → `Sku`
     - [ ] `inventory_quantity` → `InventoryQuantity`
   - [ ] Handle variant option values mapping
@@ -812,11 +812,11 @@ Implement comprehensive product data synchronization between Shopify and local d
 
 - [ ] **Implement product options and values sync**
   - [ ] Create `Services/ProductOptionSyncService.cs` with methods:
-    - [ ] `SyncOptionsAsync(Product product, ShopifyProduct shopifyProduct)`
+    - [ ] `SyncOptionsAsync(Product product, ECommerceProduct ecommerceProduct)`
     - [ ] `CreateOptionAsync(ProductOption option)`
     - [ ] `UpdateOptionAsync(ProductOption option)`
-  - [ ] Map Shopify options to local entities:
-    - [ ] `id` → `ShopifyId`, `name` → `Name`, `position` → `Position`
+  - [ ] Map e-commerce platform options to local entities:
+    - [ ] `id` → `ECommerceId`, `name` → `Name`, `position` → `Position`
     - [ ] `values` array → `Values` JSON field
   - [ ] Create option value lookup tables for performance
   - [ ] Handle option reordering and deletions
@@ -824,9 +824,9 @@ Implement comprehensive product data synchronization between Shopify and local d
 - [ ] **Implement product images and media sync**
   - [ ] Create `Models/Entities/ProductImage.cs` with properties:
     - [ ] `Id`, `ProductId` (FK), `Src` (string, 500), `AltText` (string, 255)
-    - [ ] `Position` (int), `Width` (int), `Height` (int), `ShopifyId` (long)
+    - [ ] `Position` (int), `Width` (int), `Height` (int), `ECommerceId` (long)
   - [ ] Create `Services/ProductImageSyncService.cs` with methods:
-    - [ ] `SyncImagesAsync(Product product, ShopifyProduct shopifyProduct)`
+    - [ ] `SyncImagesAsync(Product product, ECommerceProduct ecommerceProduct)`
     - [ ] `DownloadImageAsync(string imageUrl)` - optional local storage
   - [ ] Handle image variant associations
   - [ ] Implement image optimization and CDN integration
@@ -834,7 +834,7 @@ Implement comprehensive product data synchronization between Shopify and local d
 - [ ] **Add incremental sync based on updated_at timestamps**
   - [ ] Create `Models/Entities/SyncState.cs` with properties:
     - [ ] `Id`, `EntityType` (enum), `LastSyncAt` (DateTime)
-    - [ ] `LastShopifyId` (long), `SyncStatus` (enum), `ErrorCount` (int)
+    - [ ] `LastECommerceId` (long), `SyncStatus` (enum), `ErrorCount` (int)
   - [ ] Implement incremental sync logic:
     - [ ] Use `updated_at_min` parameter in API calls
     - [ ] Track last successful sync timestamp
@@ -847,17 +847,17 @@ Implement comprehensive product data synchronization between Shopify and local d
     - [ ] Compare `updated_at` timestamps
     - [ ] Detect concurrent modifications
   - [ ] Implement resolution strategies:
-    - [ ] Shopify wins (default), Local wins, Manual resolution
+    - [ ] E-commerce platform wins (default), Local wins, Manual resolution
     - [ ] Field-level merge for non-conflicting changes
   - [ ] Create `Models/Entities/SyncConflict.cs` for tracking:
     - [ ] `Id`, `EntityType`, `EntityId`, `ConflictType`
-    - [ ] `ShopifyData` (JSON), `LocalData` (JSON), `ResolvedAt`
+    - [ ] `ECommerceData` (JSON), `LocalData` (JSON), `ResolvedAt`
   - [ ] Add conflict resolution UI/API endpoints
 
 - [ ] **Add data validation and transformation logic**
   - [ ] Create `Services/ProductValidationService.cs` with methods:
-    - [ ] `ValidateProduct(ShopifyProduct shopifyProduct)`
-    - [ ] `TransformProduct(ShopifyProduct source)` → `Product`
+    - [ ] `ValidateProduct(ECommerceProduct ecommerceProduct)`
+    - [ ] `TransformProduct(ECommerceProduct source)` → `Product`
     - [ ] `ValidateBusinessRules(Product product)`
   - [ ] Implement validation rules:
     - [ ] Required fields: title, handle, vendor
@@ -879,14 +879,14 @@ Implement comprehensive product data synchronization between Shopify and local d
     - [ ] Test validation rules
     - [ ] Test data transformation
     - [ ] Test conflict resolution
-  - [ ] Mock Shopify API responses for testing
+  - [ ] Mock e-commerce API responses for testing
   - [ ] Test error scenarios and edge cases
 
 ### [ ] TASK-009: Customer Data Synchronization
 **Priority**: High | **Effort**: 6h | **Dependencies**: TASK-002, TASK-007
 
 #### **Objective**:
-Implement secure and compliant customer data synchronization between Shopify and local database, including customer profiles, addresses, preferences, and GDPR-compliant data handling. Establish real-time customer updates with privacy protection and consent management.
+Implement secure and compliant customer data synchronization between e-commerce platform and local database, including customer profiles, addresses, preferences, and GDPR-compliant data handling. Establish real-time customer updates with privacy protection and consent management.
 
 #### **Expected Outcomes**:
 - Complete customer synchronization system with profile and address management
@@ -915,18 +915,18 @@ Implement secure and compliant customer data synchronization between Shopify and
 - **Performance Impact**: Large customer databases may affect synchronization performance
 
 #### Sub-tasks:
-- [ ] **Implement customer data fetching from Shopify REST API**
+- [ ] **Implement customer data fetching from e-commerce platform REST API**
   - [ ] Create `Services/CustomerSyncService.cs` with methods:
     - [ ] `FetchCustomersAsync(DateTime? since = null)` - fetch with pagination
-    - [ ] `FetchCustomerByIdAsync(long shopifyId)` - fetch single customer
+    - [ ] `FetchCustomerByIdAsync(long eCommerceId)` - fetch single customer
     - [ ] `FetchCustomerCountAsync()` - get total customer count
     - [ ] `SearchCustomersAsync(string query)` - search by email/phone
   - [ ] Implement REST API calls:
-    - [ ] GET `/admin/api/2024-01/customers.json?limit=250&since_id={id}`
-    - [ ] GET `/admin/api/2024-01/customers/{id}.json`
-    - [ ] GET `/admin/api/2024-01/customers/search.json?query={query}`
-  - [ ] Map Shopify customer fields:
-    - [ ] `id` → `ShopifyId`, `email` → `Email`, `first_name` → `FirstName`
+    - [ ] GET `/admin/api/v1/customers.json?limit=250&since_id={id}`
+    - [ ] GET `/admin/api/v1/customers/{id}.json`
+    - [ ] GET `/admin/api/v1/customers/search.json?query={query}`
+  - [ ] Map e-commerce customer fields:
+    - [ ] `id` → `ECommerceId`, `email` → `Email`, `first_name` → `FirstName`
     - [ ] `last_name` → `LastName`, `phone` → `Phone`
     - [ ] `accepts_marketing` → `AcceptsMarketing`, `created_at` → `CreatedAt`
     - [ ] `orders_count` → `OrdersCount`, `total_spent` → `TotalSpent`
@@ -935,9 +935,9 @@ Implement secure and compliant customer data synchronization between Shopify and
   - [ ] Create `Models/Entities/CustomerAddress.cs` with properties:
     - [ ] `Id`, `CustomerId` (FK), `FirstName`, `LastName`, `Company`
     - [ ] `Address1`, `Address2`, `City`, `Province`, `Country`
-    - [ ] `Zip`, `Phone`, `IsDefault` (bool), `ShopifyId` (long)
+    - [ ] `Zip`, `Phone`, `IsDefault` (bool), `ECommerceId` (long)
   - [ ] Create `Services/CustomerAddressSyncService.cs` with methods:
-    - [ ] `SyncAddressesAsync(Customer customer, ShopifyCustomer shopifyCustomer)`
+    - [ ] `SyncAddressesAsync(Customer customer, ECommerceCustomer ecommerceCustomer)`
     - [ ] `CreateAddressAsync(CustomerAddress address)`
     - [ ] `UpdateAddressAsync(CustomerAddress address)`
     - [ ] `DeleteAddressAsync(long addressId)`
@@ -949,12 +949,12 @@ Implement secure and compliant customer data synchronization between Shopify and
     - [ ] `Id`, `CustomerId` (FK), `Tag` (string, 100), `CreatedAt`
     - [ ] Composite unique constraint on (CustomerId, Tag)
   - [ ] Create `Models/Entities/CustomerGroup.cs` with properties:
-    - [ ] `Id`, `Name` (string, 255), `Description` (text), `ShopifyId` (long)
+    - [ ] `Id`, `Name` (string, 255), `Description` (text), `ECommerceId` (long)
   - [ ] Create `Models/Entities/CustomerGroupMembership.cs`:
     - [ ] `CustomerId` (FK), `CustomerGroupId` (FK), `AddedAt`
   - [ ] Create `Services/CustomerTagSyncService.cs` with methods:
     - [ ] `SyncTagsAsync(Customer customer, string[] tags)`
-    - [ ] `SyncGroupMembershipsAsync(Customer customer, ShopifyCustomerGroup[] groups)`
+    - [ ] `SyncGroupMembershipsAsync(Customer customer, ECommerceCustomerGroup[] groups)`
   - [ ] Handle tag parsing from comma-separated string
   - [ ] Implement group membership updates
 
@@ -1015,7 +1015,7 @@ Implement secure and compliant customer data synchronization between Shopify and
     - [ ] Test anonymization rules
     - [ ] Test data preservation requirements
     - [ ] Test audit trail creation
-  - [ ] Mock Shopify API responses for testing
+  - [ ] Mock e-commerce API responses for testing
   - [ ] Test GDPR compliance scenarios
 
 - [ ] **Implement customer data retention policies**
@@ -1035,7 +1035,7 @@ Implement secure and compliant customer data synchronization between Shopify and
 **Priority**: High | **Effort**: 10h | **Dependencies**: TASK-002, TASK-007
 
 #### **Objective**:
-Implement comprehensive order data synchronization between Shopify and local database, including orders, line items, fulfillments, transactions, and refunds. Establish real-time order processing with financial accuracy, inventory management, and complete order lifecycle tracking.
+Implement comprehensive order data synchronization between e-commerce platform and local database, including orders, line items, fulfillments, transactions, and refunds. Establish real-time order processing with financial accuracy, inventory management, and complete order lifecycle tracking.
 
 #### **Expected Outcomes**:
 - Complete order synchronization system with full order lifecycle management
@@ -1064,19 +1064,19 @@ Implement comprehensive order data synchronization between Shopify and local dat
 - **Performance Bottlenecks**: High order volumes may overwhelm synchronization processes
 
 #### Sub-tasks:
-- [ ] **Implement order data fetching from Shopify API**
+- [ ] **Implement order data fetching from e-commerce platform API**
   - [ ] Create `Services/OrderSyncService.cs` with methods:
     - [ ] `FetchOrdersAsync(DateTime? since = null, string status = null)` - fetch with pagination
-    - [ ] `FetchOrderByIdAsync(long shopifyId)` - fetch single order
+    - [ ] `FetchOrderByIdAsync(long eCommerceId)` - fetch single order
     - [ ] `FetchOrderCountAsync(string status = null)` - get order count by status
     - [ ] `FetchOrdersByCustomerAsync(long customerId)` - customer orders
   - [ ] Implement REST API calls:
-    - [ ] GET `/admin/api/2024-01/orders.json?limit=250&since_id={id}&status={status}`
-    - [ ] GET `/admin/api/2024-01/orders/{id}.json`
-    - [ ] GET `/admin/api/2024-01/orders/count.json?status={status}`
-    - [ ] GET `/admin/api/2024-01/customers/{id}/orders.json`
-  - [ ] Map Shopify order fields:
-    - [ ] `id` → `ShopifyId`, `order_number` → `OrderNumber`, `name` → `Name`
+    - [ ] GET `/admin/api/v1/orders.json?limit=250&since_id={id}&status={status}`
+    - [ ] GET `/admin/api/v1/orders/{id}.json`
+    - [ ] GET `/admin/api/v1/orders/count.json?status={status}`
+    - [ ] GET `/admin/api/v1/customers/{id}/orders.json`
+  - [ ] Map e-commerce order fields:
+    - [ ] `id` → `ECommerceId`, `order_number` → `OrderNumber`, `name` → `Name`
     - [ ] `email` → `Email`, `created_at` → `CreatedAt`, `updated_at` → `UpdatedAt`
     - [ ] `total_price` → `TotalPrice`, `subtotal_price` → `SubtotalPrice`
     - [ ] `total_tax` → `TotalTax`, `total_discounts` → `TotalDiscounts`
@@ -1090,9 +1090,9 @@ Implement comprehensive order data synchronization between Shopify and local dat
     - [ ] `Title` (string, 255), `VariantTitle` (string, 255)
     - [ ] `Sku` (string, 100), `Vendor` (string, 100)
     - [ ] `Grams` (int), `RequiresShipping` (bool), `Taxable` (bool)
-    - [ ] `ShopifyId` (long), `ShopifyProductId` (long), `ShopifyVariantId` (long)
+    - [ ] `ECommerceId` (long), `ECommerceProductId` (long), `ECommerceVariantId` (long)
   - [ ] Create `Services/OrderLineItemSyncService.cs` with methods:
-    - [ ] `SyncLineItemsAsync(Order order, ShopifyLineItem[] lineItems)`
+    - [ ] `SyncLineItemsAsync(Order order, ECommerceLineItem[] lineItems)`
     - [ ] `CreateLineItemAsync(OrderLineItem lineItem)`
     - [ ] `UpdateLineItemAsync(OrderLineItem lineItem)`
     - [ ] `DeleteLineItemAsync(long lineItemId)`
@@ -1105,11 +1105,11 @@ Implement comprehensive order data synchronization between Shopify and local dat
     - [ ] `Id`, `OrderId` (FK), `Status` (enum), `TrackingCompany` (string, 100)
     - [ ] `TrackingNumber` (string, 100), `TrackingUrl` (string, 500)
     - [ ] `ShippedAt`, `DeliveredAt`, `EstimatedDelivery`
-    - [ ] `ShopifyId` (long), `CreatedAt`, `UpdatedAt`
+    - [ ] `ECommerceId` (long), `CreatedAt`, `UpdatedAt`
   - [ ] Create `Models/Entities/FulfillmentLineItem.cs`:
     - [ ] `FulfillmentId` (FK), `LineItemId` (FK), `Quantity` (int)
   - [ ] Create `Services/OrderFulfillmentSyncService.cs` with methods:
-    - [ ] `SyncFulfillmentsAsync(Order order, ShopifyFulfillment[] fulfillments)`
+    - [ ] `SyncFulfillmentsAsync(Order order, ECommerceFulfillment[] fulfillments)`
     - [ ] `UpdateTrackingInfoAsync(int fulfillmentId, string trackingNumber)`
     - [ ] `UpdateDeliveryStatusAsync(int fulfillmentId, FulfillmentStatus status)`
   - [ ] Implement fulfillment status enum:
@@ -1121,9 +1121,9 @@ Implement comprehensive order data synchronization between Shopify and local dat
     - [ ] `Id`, `OrderId` (FK), `Kind` (enum), `Gateway` (string, 100)
     - [ ] `Status` (enum), `Amount` (decimal), `Currency` (string, 3)
     - [ ] `ProcessedAt`, `AuthorizationCode` (string, 100)
-    - [ ] `ShopifyId` (long), `ParentId` (long?), `CreatedAt`
+    - [ ] `ECommerceId` (long), `ParentId` (long?), `CreatedAt`
   - [ ] Create `Services/OrderTransactionSyncService.cs` with methods:
-    - [ ] `SyncTransactionsAsync(Order order, ShopifyTransaction[] transactions)`
+    - [ ] `SyncTransactionsAsync(Order order, ECommerceTransaction[] transactions)`
     - [ ] `ProcessPaymentAsync(int orderId, decimal amount)`
     - [ ] `ProcessRefundAsync(int orderId, decimal amount, string reason)`
   - [ ] Implement transaction kind enum:
@@ -1135,13 +1135,13 @@ Implement comprehensive order data synchronization between Shopify and local dat
 - [ ] **Implement order refund synchronization**
   - [ ] Create `Models/Entities/OrderRefund.cs` with properties:
     - [ ] `Id`, `OrderId` (FK), `Amount` (decimal), `Reason` (string, 500)
-    - [ ] `Note` (text), `ProcessedAt`, `ShopifyId` (long)
+    - [ ] `Note` (text), `ProcessedAt`, `ECommerceId` (long)
     - [ ] `CreatedAt`, `CreatedBy` (string, 100)
   - [ ] Create `Models/Entities/RefundLineItem.cs`:
     - [ ] `RefundId` (FK), `LineItemId` (FK), `Quantity` (int)
     - [ ] `RestockType` (enum), `Amount` (decimal)
   - [ ] Create `Services/OrderRefundSyncService.cs` with methods:
-    - [ ] `SyncRefundsAsync(Order order, ShopifyRefund[] refunds)`
+    - [ ] `SyncRefundsAsync(Order order, ECommerceRefund[] refunds)`
     - [ ] `ProcessRefundAsync(int orderId, RefundRequest request)`
     - [ ] `CancelOrderAsync(int orderId, string reason)`
   - [ ] Implement restock type enum:
@@ -1172,7 +1172,7 @@ Implement comprehensive order data synchronization between Shopify and local dat
     - [ ] `TotalPrice` (decimal), `TotalRefunded` (decimal)
     - [ ] `Currency` (string, 3), `ExchangeRate` (decimal?)
   - [ ] Create `Services/OrderFinancialSyncService.cs` with methods:
-    - [ ] `SyncFinancialDataAsync(Order order, ShopifyOrder shopifyOrder)`
+    - [ ] `SyncFinancialDataAsync(Order order, ECommerceOrder ecommerceOrder)`
     - [ ] `CalculateOrderTotalsAsync(int orderId)`
     - [ ] `UpdateExchangeRatesAsync()`
   - [ ] Handle multi-currency orders
@@ -1197,11 +1197,36 @@ Implement comprehensive order data synchronization between Shopify and local dat
     - [ ] Test end-to-end order synchronization
     - [ ] Test webhook integration with order updates
     - [ ] Test performance with large order volumes
-  - [ ] Mock Shopify API responses for testing
+  - [ ] Mock e-commerce API responses for testing
   - [ ] Test order state transitions and edge cases
 
 ### [ ] TASK-011: Inventory Synchronization
 **Priority**: High | **Effort**: 6h | **Dependencies**: TASK-002, TASK-007
+
+#### Objective:
+Implement comprehensive inventory synchronization between e-commerce platform and local database, ensuring accurate stock levels, location-based tracking, and real-time inventory updates across all sales channels.
+
+#### Expected Outcomes:
+- Real-time inventory synchronization with e-commerce platform inventory levels
+- Multi-location inventory tracking and management
+- Automated inventory adjustments and reservation logic
+- Low stock alerting system for proactive inventory management
+- Bulk inventory update capabilities for efficient operations
+- Comprehensive inventory audit trail and reporting
+
+#### Constraints & Considerations:
+- E-commerce platform inventory API rate limits (40 calls/second for Plus merchants)
+- Inventory location hierarchy and multi-location complexity
+- Race conditions in concurrent inventory updates
+- Inventory reservation timing and release mechanisms
+- Integration with existing inventory management systems
+- Real-time synchronization performance requirements
+
+#### Risk Factors:
+- **High**: Inventory overselling due to synchronization delays
+- **Medium**: Performance degradation with large inventory datasets
+- **Medium**: Data inconsistency during bulk inventory operations
+- **Low**: Location mapping errors affecting inventory accuracy
 
 #### Sub-tasks:
 - [ ] Implement inventory levels synchronization
@@ -1220,10 +1245,36 @@ Implement comprehensive order data synchronization between Shopify and local dat
 ### [ ] TASK-012: Webhook Infrastructure
 **Priority**: High | **Effort**: 8h | **Dependencies**: TASK-001
 
+#### Objective:
+Establish secure and reliable webhook infrastructure to receive real-time notifications from e-commerce platform, enabling immediate data synchronization and event-driven processing for orders, products, customers, and inventory changes.
+
+#### Expected Outcomes:
+- Secure webhook endpoints with HMAC-SHA256 signature verification
+- Real-time event processing for all critical e-commerce platform data changes
+- Robust webhook payload validation and error handling
+- Asynchronous webhook processing with queue management
+- Comprehensive webhook monitoring and health checking
+- Scalable webhook infrastructure supporting high-volume events
+
+#### Constraints & Considerations:
+- E-commerce platform webhook delivery timeouts (5 seconds response requirement)
+- HMAC-SHA256 signature verification security requirements
+- Webhook payload size limitations and processing efficiency
+- Asynchronous processing queue capacity and scaling
+- Webhook secret rotation and security management
+- Network reliability and webhook delivery guarantees
+
+#### Risk Factors:
+- **High**: Security vulnerabilities from improper signature verification
+- **High**: Data loss from webhook processing failures
+- **Medium**: Performance bottlenecks during high-volume webhook events
+- **Medium**: Webhook endpoint availability and reliability issues
+- **Low**: Webhook secret compromise requiring rotation
+
 #### Sub-tasks:
 - [ ] **Create webhook endpoint controllers**
   - [ ] Create `Controllers/WebhookController.cs` with endpoints:
-    - [ ] `POST /api/webhooks/shopify` - main webhook receiver
+    - [ ] `POST /api/webhooks/ecommerce` - main webhook receiver
     - [ ] `GET /api/webhooks/health` - webhook health check
     - [ ] `POST /api/webhooks/test` - webhook testing endpoint
   - [ ] Implement webhook topic routing:
@@ -1236,15 +1287,15 @@ Implement comprehensive order data synchronization between Shopify and local dat
 
 - [ ] **Implement webhook signature verification**
   - [ ] Create `Services/WebhookVerificationService.cs` with methods:
-    - [ ] `VerifyShopifyWebhook(string payload, string signature, string secret)`
+    - [ ] `VerifyECommerceWebhook(string payload, string signature, string secret)`
     - [ ] `GenerateHmacSha256(string payload, string secret)`
     - [ ] `SecureCompare(string expected, string actual)` - timing-safe comparison
   - [ ] Implement HMAC-SHA256 verification:
-    - [ ] Extract `X-Shopify-Hmac-Sha256` header
+    - [ ] Extract `X-ECommerce-Hmac-Sha256` header
     - [ ] Calculate HMAC using webhook secret
     - [ ] Compare signatures using constant-time comparison
   - [ ] Add webhook secret configuration:
-    - [ ] Store in `appsettings.json` under `Shopify:WebhookSecret`
+    - [ ] Store in `appsettings.json` under `ECommerce:WebhookSecret`
     - [ ] Support environment variable override
     - [ ] Implement secret rotation capability
   - [ ] Handle verification failures:
@@ -1254,7 +1305,7 @@ Implement comprehensive order data synchronization between Shopify and local dat
 
 - [ ] **Add webhook payload validation**
   - [ ] Create `Models/Webhooks/` directory with DTOs:
-    - [ ] `ShopifyWebhookPayload.cs` - base webhook structure
+    - [ ] `ECommerceWebhookPayload.cs` - base webhook structure
     - [ ] `OrderWebhookPayload.cs` - order-specific payload
     - [ ] `ProductWebhookPayload.cs` - product-specific payload
     - [ ] `CustomerWebhookPayload.cs` - customer-specific payload
@@ -1263,10 +1314,10 @@ Implement comprehensive order data synchronization between Shopify and local dat
     - [ ] `[Required]` for mandatory fields
     - [ ] `[Range]` for numeric constraints
     - [ ] `[StringLength]` for text field limits
-    - [ ] Custom validation for Shopify IDs
+    - [ ] Custom validation for e-commerce platform IDs
   - [ ] Add JSON schema validation:
     - [ ] Create schema files in `Schemas/Webhooks/`
-    - [ ] Validate against Shopify webhook documentation
+    - [ ] Validate against e-commerce platform webhook documentation
     - [ ] Handle schema version compatibility
   - [ ] Implement payload sanitization:
     - [ ] Remove potentially harmful content
@@ -1292,7 +1343,7 @@ Implement comprehensive order data synchronization between Shopify and local dat
 
 - [ ] **Add webhook retry mechanism**
   - [ ] Create `Models/Entities/WebhookEvent.cs` with properties:
-    - [ ] `Id`, `Topic` (string, 100), `ShopifyId` (long)
+    - [ ] `Id`, `Topic` (string, 100), `ECommerceId` (long)
     - [ ] `Payload` (text), `ProcessedAt`, `Status` (enum)
     - [ ] `RetryCount` (int), `NextRetryAt`, `ErrorMessage` (text)
     - [ ] `CreatedAt`, `UpdatedAt`
@@ -1352,7 +1403,7 @@ Implement comprehensive order data synchronization between Shopify and local dat
 
 - [ ] **Add webhook security measures**
   - [ ] Implement IP allowlisting:
-    - [ ] Configure Shopify IP ranges in `appsettings.json`
+    - [ ] Configure e-commerce platform IP ranges in `appsettings.json`
     - [ ] Create middleware to validate source IPs
     - [ ] Support dynamic IP range updates
   - [ ] Add rate limiting:
@@ -1379,15 +1430,40 @@ Implement comprehensive order data synchronization between Shopify and local dat
 ### [ ] TASK-013: Product Webhook Handlers
 **Priority**: High | **Effort**: 4h | **Dependencies**: TASK-008, TASK-012
 
+#### Objective:
+Implement specialized webhook handlers for real-time product data synchronization, ensuring immediate updates to local database when products are created, updated, or deleted in e-commerce platform, maintaining data consistency across all systems.
+
+#### Expected Outcomes:
+- Real-time product synchronization via webhook events
+- Comprehensive product data mapping including variants and images
+- Robust error handling for webhook processing failures
+- Efficient product update detection and conflict resolution
+- Automated product deletion handling with referential integrity
+- Complete audit trail for all product webhook events
+
+#### Constraints & Considerations:
+- Webhook processing time limits (5-second response requirement)
+- Product variant complexity and nested data structures
+- Image processing and storage considerations
+- Concurrent webhook processing and race conditions
+- Product relationship dependencies and referential integrity
+- Large product catalogs and bulk update scenarios
+
+#### Risk Factors:
+- **High**: Data inconsistency from failed webhook processing
+- **Medium**: Performance issues with complex product structures
+- **Medium**: Race conditions in concurrent product updates
+- **Low**: Image processing failures affecting product completeness
+
 #### Sub-tasks:
 - [ ] **Implement product create webhook handler**
   - [ ] Create `Services/Webhooks/ProductCreateWebhookHandler.cs` implementing `IWebhookHandler`:
     - [ ] `HandleAsync(ProductWebhookPayload payload)` method
-    - [ ] Map Shopify product payload to local Product entity
+    - [ ] Map e-commerce platform product payload to local Product entity
     - [ ] Handle product images, variants, and options
     - [ ] Validate required fields: title, vendor, product_type
   - [ ] Implement product creation logic:
-    - [ ] Check for existing product by ShopifyId
+    - [ ] Check for existing product by ECommerceId
     - [ ] Create new Product entity with mapped fields
     - [ ] Process product variants and create ProductVariant entities
     - [ ] Handle product images and create ProductImage entities
@@ -1398,14 +1474,14 @@ Implement comprehensive order data synchronization between Shopify and local dat
     - [ ] Handle images array with alt text and position
     - [ ] Process options array (size, color, etc.)
   - [ ] Add error handling:
-    - [ ] Validate Shopify ID uniqueness
+    - [ ] Validate e-commerce platform ID uniqueness
     - [ ] Handle missing required fields gracefully
     - [ ] Log creation failures with detailed context
 
 - [ ] **Implement product update webhook handler**
   - [ ] Create `Services/Webhooks/ProductUpdateWebhookHandler.cs` implementing `IWebhookHandler`:
     - [ ] `HandleAsync(ProductWebhookPayload payload)` method
-    - [ ] Find existing product by ShopifyId
+    - [ ] Find existing product by ECommerceId
     - [ ] Compare updated_at timestamps to prevent stale updates
     - [ ] Update product fields selectively
   - [ ] Implement update logic:
@@ -1430,7 +1506,7 @@ Implement comprehensive order data synchronization between Shopify and local dat
 - [ ] **Implement product delete webhook handler**
   - [ ] Create `Services/Webhooks/ProductDeleteWebhookHandler.cs` implementing `IWebhookHandler`:
     - [ ] `HandleAsync(ProductWebhookPayload payload)` method
-    - [ ] Find product by ShopifyId from payload
+    - [ ] Find product by ECommerceId from payload
     - [ ] Implement soft delete strategy
   - [ ] Implement deletion logic:
     - [ ] Set product status to 'Deleted' instead of hard delete
@@ -1470,15 +1546,15 @@ Implement comprehensive order data synchronization between Shopify and local dat
 
 - [ ] **Add webhook event deduplication**
   - [ ] Create `Services/WebhookDeduplicationService.cs` with methods:
-    - [ ] `IsDuplicateEvent(string topic, long shopifyId, DateTime updatedAt)`
-    - [ ] `RecordProcessedEvent(string topic, long shopifyId, DateTime updatedAt)`
+    - [ ] `IsDuplicateEvent(string topic, long eCommerceId, DateTime updatedAt)`
+    - [ ] `RecordProcessedEvent(string topic, long eCommerceId, DateTime updatedAt)`
     - [ ] `CleanupOldEvents()` - remove events older than 24 hours
   - [ ] Implement deduplication strategy:
-    - [ ] Use combination of topic + shopifyId + updated_at as key
+    - [ ] Use combination of topic + eCommerceId + updated_at as key
     - [ ] Store processed events in Redis or database table
     - [ ] Set TTL of 24 hours for deduplication records
   - [ ] Handle edge cases:
-    - [ ] Multiple webhooks for same event (Shopify retry)
+    - [ ] Multiple webhooks for same event (e-commerce platform retry)
     - [ ] Out-of-order webhook delivery
     - [ ] Webhook replay scenarios
   - [ ] Add monitoring:
@@ -1493,7 +1569,7 @@ Implement comprehensive order data synchronization between Shopify and local dat
     - [ ] Test product deletion handling
     - [ ] Test variant update processing
   - [ ] Create test data fixtures:
-    - [ ] Sample Shopify product webhook payloads
+    - [ ] Sample e-commerce product webhook payloads
     - [ ] Mock product entities for database testing
     - [ ] Test scenarios for edge cases
   - [ ] Test error scenarios:
@@ -1524,22 +1600,48 @@ Implement comprehensive order data synchronization between Shopify and local dat
     - [ ] Track recovery success rates
     - [ ] Monitor processing latency
   - [ ] Add data consistency checks:
-    - [ ] Compare local data with Shopify API
+    - [ ] Compare local data with e-commerce platform API
     - [ ] Identify and fix data discrepancies
     - [ ] Implement periodic reconciliation jobs
 
 ### [ ] TASK-014: Order Webhook Handlers
 **Priority**: High | **Effort**: 6h | **Dependencies**: TASK-010, TASK-012
 
+#### Objective:
+Implement comprehensive order webhook handlers for real-time order processing, ensuring immediate synchronization of order creation, updates, payments, and cancellations while maintaining financial accuracy and compliance requirements.
+
+#### Expected Outcomes:
+- Real-time order synchronization with complete financial data
+- Accurate order status tracking and payment processing
+- Comprehensive customer association and guest order handling
+- Secure payment data processing with PCI-DSS compliance
+- Automated inventory adjustments based on order changes
+- Complete order audit trail and financial reconciliation
+
+#### Constraints & Considerations:
+- PCI-DSS compliance for payment data handling
+- GDPR requirements for customer data protection
+- Financial accuracy and currency conversion complexities
+- Order status synchronization timing and dependencies
+- Customer privacy settings and marketing consent
+- High-volume order processing performance requirements
+
+#### Risk Factors:
+- **Critical**: Financial data inconsistency affecting revenue tracking
+- **High**: Payment data security vulnerabilities
+- **High**: Order duplication from webhook replay attacks
+- **Medium**: Customer data privacy compliance violations
+- **Low**: Currency conversion accuracy issues
+
 #### Sub-tasks:
 - [ ] **Implement order create webhook handler**
   - [ ] Create `Services/Webhooks/OrderCreateWebhookHandler.cs` implementing `IWebhookHandler`:
     - [ ] `HandleAsync(OrderWebhookPayload payload)` method
-    - [ ] Map Shopify order payload to local Order entity
+    - [ ] Map e-commerce platform order payload to local Order entity
     - [ ] Handle order line items, shipping, and billing addresses
     - [ ] Validate required fields: email, total_price, currency
   - [ ] Implement order creation logic:
-    - [ ] Check for existing order by ShopifyOrderId
+    - [ ] Check for existing order by ECommerceOrderId
     - [ ] Create new Order entity with mapped fields
     - [ ] Process order line items and create OrderLineItem entities
     - [ ] Handle shipping and billing addresses
@@ -1550,7 +1652,7 @@ Implement comprehensive order data synchronization between Shopify and local dat
     - [ ] Handle shipping_address and billing_address objects
     - [ ] Process discount_codes and tax_lines arrays
   - [ ] Handle customer association:
-    - [ ] Link order to existing customer by email/ShopifyId
+    - [ ] Link order to existing customer by email/ECommerceId
     - [ ] Create guest customer record if customer doesn't exist
     - [ ] Handle customer privacy settings (accepts_marketing)
   - [ ] Process financial data:
@@ -1566,7 +1668,7 @@ Implement comprehensive order data synchronization between Shopify and local dat
 - [ ] **Implement order update webhook handler**
   - [ ] Create `Services/Webhooks/OrderUpdateWebhookHandler.cs` implementing `IWebhookHandler`:
     - [ ] `HandleAsync(OrderWebhookPayload payload)` method
-    - [ ] Find existing order by ShopifyOrderId
+    - [ ] Find existing order by ECommerceOrderId
     - [ ] Compare updated_at timestamps to prevent stale updates
     - [ ] Update order fields selectively
   - [ ] Implement update logic:
@@ -1692,7 +1794,7 @@ Implement comprehensive order data synchronization between Shopify and local dat
     - [ ] Test fulfillment handling
     - [ ] Test order cancellation
   - [ ] Create test data fixtures:
-    - [ ] Sample Shopify order webhook payloads
+    - [ ] Sample e-commerce order webhook payloads
     - [ ] Mock order entities for database testing
     - [ ] Test scenarios for different order states
   - [ ] Test error scenarios:
@@ -1714,11 +1816,37 @@ Implement comprehensive order data synchronization between Shopify and local dat
 ### [ ] TASK-015: Inventory Webhook Handlers
 **Priority**: High | **Effort**: 4h | **Dependencies**: TASK-011, TASK-012
 
+#### Objective:
+Implement real-time inventory webhook handlers to maintain accurate stock levels across all locations, ensuring immediate inventory updates, automated alerting, and prevention of overselling scenarios through precise inventory tracking.
+
+#### Expected Outcomes:
+- Real-time inventory level synchronization across all locations
+- Automated low stock and out-of-stock alerting system
+- Accurate inventory tracking with audit trail capabilities
+- Prevention of overselling through immediate stock updates
+- Multi-location inventory management and reporting
+- Comprehensive inventory discrepancy detection and resolution
+
+#### Constraints & Considerations:
+- Real-time inventory accuracy requirements for sales channels
+- Multi-location inventory complexity and location hierarchies
+- Inventory reservation timing and concurrent order processing
+- High-frequency inventory update performance requirements
+- Inventory audit trail and compliance tracking needs
+- Integration with existing inventory management systems
+
+#### Risk Factors:
+- **Critical**: Overselling due to delayed inventory updates
+- **High**: Inventory data inconsistency across locations
+- **Medium**: Performance degradation with high-volume inventory changes
+- **Medium**: False inventory alerts affecting operations
+- **Low**: Location mapping errors in multi-location setups
+
 #### Sub-tasks:
 - [ ] **Implement inventory level update webhook handler**
   - [ ] Create `Services/Webhooks/InventoryLevelUpdateWebhookHandler.cs` implementing `IWebhookHandler`:
     - [ ] `HandleAsync(InventoryLevelWebhookPayload payload)` method
-    - [ ] Map Shopify inventory level payload to local InventoryLevel entity
+    - [ ] Map e-commerce platform inventory level payload to local InventoryLevel entity
     - [ ] Handle inventory quantity updates for specific locations
     - [ ] Validate inventory data integrity
   - [ ] Implement inventory update logic:
@@ -1745,11 +1873,11 @@ Implement comprehensive order data synchronization between Shopify and local dat
 - [ ] **Implement location update webhook handler**
   - [ ] Create `Services/Webhooks/LocationUpdateWebhookHandler.cs` implementing `IWebhookHandler`:
     - [ ] `HandleAsync(LocationWebhookPayload payload)` method
-    - [ ] Map Shopify location payload to local Location entity
+    - [ ] Map e-commerce platform location payload to local Location entity
     - [ ] Handle location status and configuration changes
     - [ ] Update location-specific settings
   - [ ] Implement location update logic:
-    - [ ] Find existing location by ShopifyLocationId
+    - [ ] Find existing location by ECommerceLocationId
     - [ ] Update location name, address, and contact information
     - [ ] Handle location status changes (active/inactive)
     - [ ] Update location type and fulfillment settings
@@ -1785,7 +1913,7 @@ Implement comprehensive order data synchronization between Shopify and local dat
     - [ ] Handle reservation conflicts during checkout
     - [ ] Update available quantity considering reservations
   - [ ] Implement inventory reconciliation:
-    - [ ] Compare local inventory with Shopify API periodically
+    - [ ] Compare local inventory with e-commerce platform API periodically
     - [ ] Identify and resolve inventory discrepancies
     - [ ] Generate reconciliation reports
     - [ ] Handle bulk inventory adjustments
@@ -1798,7 +1926,7 @@ Implement comprehensive order data synchronization between Shopify and local dat
 - [ ] **Implement inventory adjustment webhooks**
   - [ ] Create `Services/Webhooks/InventoryAdjustmentWebhookHandler.cs`:
     - [ ] Handle `inventory_levels/update` webhooks for adjustments
-    - [ ] Process manual inventory adjustments from Shopify admin
+    - [ ] Process manual inventory adjustments from e-commerce platform admin
     - [ ] Handle bulk inventory import adjustments
   - [ ] Implement adjustment tracking:
     - [ ] Create InventoryAdjustment entity to track changes
@@ -1834,6 +1962,31 @@ Implement comprehensive order data synchronization between Shopify and local dat
 
 ### [ ] TASK-016: Product Management APIs
 **Priority**: High | **Effort**: 8h | **Dependencies**: TASK-002
+
+#### Objective:
+Develop comprehensive RESTful APIs for product management, enabling full CRUD operations, advanced search capabilities, and efficient product catalog management with proper validation, pagination, and performance optimization.
+
+#### Expected Outcomes:
+- Complete RESTful API endpoints for product management
+- Advanced product search with full-text indexing and filtering
+- Efficient pagination and data transfer optimization
+- Comprehensive input validation and error handling
+- Product variant and image management capabilities
+- High-performance product catalog operations
+
+#### Constraints & Considerations:
+- API response time requirements for large product catalogs
+- Full-text search performance and indexing strategies
+- Data transfer optimization for product images and variants
+- API versioning and backward compatibility requirements
+- Rate limiting and API security considerations
+- Integration with existing authentication and authorization
+
+#### Risk Factors:
+- **Medium**: Performance degradation with large product datasets
+- **Medium**: Search functionality accuracy and relevance issues
+- **Low**: API versioning conflicts with client applications
+- **Low**: Data validation bypass leading to data integrity issues
 
 #### Sub-tasks:
 - [ ] Create `Controllers/ProductsController.cs` with methods:
@@ -1920,6 +2073,32 @@ Implement comprehensive order data synchronization between Shopify and local dat
 
 ### [ ] TASK-017: Customer Management APIs
 **Priority**: High | **Effort**: 6h | **Dependencies**: TASK-002
+
+#### Objective:
+Develop comprehensive customer management APIs with GDPR compliance, enabling secure customer data operations, advanced search capabilities, customer analytics, and privacy-compliant data handling for effective customer relationship management.
+
+#### Expected Outcomes:
+- Complete RESTful API endpoints for customer management
+- GDPR-compliant customer data handling and soft deletion
+- Advanced customer search and segmentation capabilities
+- Customer analytics and lifetime value calculations
+- Secure customer address and order history management
+- Privacy-first customer data operations with audit trails
+
+#### Constraints & Considerations:
+- GDPR compliance for EU customer data protection
+- Customer data privacy and consent management
+- Secure handling of personally identifiable information (PII)
+- Customer segmentation and analytics performance
+- Data retention policies and right to be forgotten
+- Integration with marketing and CRM systems
+
+#### Risk Factors:
+- **Critical**: GDPR compliance violations and privacy breaches
+- **High**: Unauthorized access to customer personal data
+- **Medium**: Customer data inconsistency across systems
+- **Medium**: Performance issues with large customer databases
+- **Low**: Customer segmentation accuracy affecting marketing
 
 #### Sub-tasks:
 - [ ] Create `Controllers/CustomersController.cs` with methods:
@@ -2012,6 +2191,32 @@ Implement comprehensive order data synchronization between Shopify and local dat
 
 ### [ ] TASK-018: Order Management APIs
 **Priority**: High | **Effort**: 8h | **Dependencies**: TASK-002
+
+#### Objective:
+Develop comprehensive order management APIs with financial accuracy, enabling secure order operations, payment processing, fulfillment tracking, and compliance with financial regulations while maintaining data integrity and audit trails.
+
+#### Expected Outcomes:
+- Complete RESTful API endpoints for order lifecycle management
+- Secure financial transaction handling with PCI-DSS compliance
+- Advanced order search and filtering capabilities
+- Real-time order status tracking and fulfillment management
+- Comprehensive order analytics and reporting features
+- Robust order cancellation and refund processing
+
+#### Constraints & Considerations:
+- PCI-DSS compliance for payment data handling
+- Financial accuracy and currency conversion requirements
+- Order state management and business rule enforcement
+- High-volume order processing performance needs
+- Integration with payment gateways and fulfillment systems
+- Audit trail requirements for financial transactions
+
+#### Risk Factors:
+- **Critical**: Financial data inconsistency affecting revenue tracking
+- **High**: Payment security vulnerabilities and data breaches
+- **High**: Order state corruption leading to fulfillment errors
+- **Medium**: Performance degradation with large order volumes
+- **Low**: Currency conversion accuracy affecting international orders
 
 #### Sub-tasks:
 - [ ] Create `Controllers/OrdersController.cs` with methods:
@@ -2130,6 +2335,32 @@ Implement comprehensive order data synchronization between Shopify and local dat
 ### [ ] TASK-019: Inventory Management APIs
 **Priority**: High | **Effort**: 6h | **Dependencies**: TASK-002
 
+#### Objective:
+Develop comprehensive inventory management APIs enabling real-time stock tracking, multi-location inventory control, automated adjustments, and prevention of overselling through accurate inventory reservation and movement tracking.
+
+#### Expected Outcomes:
+- Complete RESTful API endpoints for inventory management
+- Real-time inventory tracking across multiple locations
+- Automated low stock alerting and inventory optimization
+- Comprehensive inventory movement audit trails
+- Bulk inventory update capabilities for operational efficiency
+- Accurate inventory reservation system preventing overselling
+
+#### Constraints & Considerations:
+- Real-time inventory accuracy requirements across all channels
+- Multi-location inventory complexity and synchronization
+- High-frequency inventory update performance requirements
+- Inventory reservation timing and concurrent order processing
+- Integration with warehouse management systems
+- Inventory audit trail and compliance tracking needs
+
+#### Risk Factors:
+- **Critical**: Overselling due to inaccurate inventory tracking
+- **High**: Inventory data inconsistency across locations
+- **Medium**: Performance degradation with high-volume inventory operations
+- **Medium**: Inventory reservation conflicts in concurrent scenarios
+- **Low**: Inventory adjustment errors affecting stock accuracy
+
 #### Sub-tasks:
 - [ ] Create `Controllers/InventoryController.cs` with methods:
     - [ ] `GetInventoryLevels()` - GET /api/inventory with filtering, pagination
@@ -2239,7 +2470,7 @@ Implement comprehensive order data synchronization between Shopify and local dat
     - [ ] Test concurrent inventory updates
 - [ ] Integration tests in `Tests/Integration/InventoryApiTests.cs`:
     - [ ] End-to-end inventory lifecycle testing
-    - [ ] Test inventory synchronization with Shopify
+    - [ ] Test inventory synchronization with e-commerce platform
     - [ ] Test order fulfillment inventory integration
     - [ ] Test notification system integration
     - [ ] Test reporting and analytics integration
@@ -2249,6 +2480,32 @@ Implement comprehensive order data synchronization between Shopify and local dat
 
 ### [ ] TASK-020: B2B Commerce APIs
 **Priority**: Medium | **Effort**: 6h | **Dependencies**: TASK-004
+
+#### Objective:
+Develop comprehensive B2B commerce APIs enabling company management, user hierarchies, payment terms, credit limits, and specialized B2B ordering workflows to support business-to-business commerce operations.
+
+#### Expected Outcomes:
+- Complete B2B company management system with hierarchical structures
+- User role and permission management within company contexts
+- Flexible payment terms and credit limit enforcement
+- B2B-specific ordering workflows and approval processes
+- Company-based pricing and discount management
+- Comprehensive B2B analytics and reporting capabilities
+
+#### Constraints & Considerations:
+- Complex company hierarchy and subsidiary relationships
+- Multi-level user permissions and approval workflows
+- Credit limit monitoring and payment term enforcement
+- B2B-specific pricing and discount structures
+- Integration with existing customer management systems
+- Compliance with B2B commerce regulations and tax requirements
+
+#### Risk Factors:
+- **High**: Credit limit breaches and payment default risks
+- **Medium**: Complex permission conflicts in company hierarchies
+- **Medium**: B2B pricing calculation errors affecting margins
+- **Low**: User role assignment conflicts within companies
+- **Low**: Payment term misconfiguration impacting cash flow
 
 #### Sub-tasks:
 - [ ] Create CompaniesController for B2B management
@@ -2399,6 +2656,33 @@ Implement comprehensive order data synchronization between Shopify and local dat
 
 ### [ ] TASK-021: Authentication and Authorization
 **Priority**: High | **Effort**: 8h | **Dependencies**: TASK-001
+
+#### Objective:
+Implement robust authentication and authorization system using JWT tokens with role-based access control, secure token management, and comprehensive security measures to protect API endpoints and user data.
+
+#### Expected Outcomes:
+- Secure JWT-based authentication with RS256 algorithm
+- Role-based authorization with granular permissions
+- Secure token refresh mechanism with proper expiry handling
+- Rate limiting and brute force protection
+- Multi-factor authentication support for enhanced security
+- Comprehensive audit logging for authentication events
+
+#### Constraints & Considerations:
+- OWASP authentication security guidelines compliance
+- Token security and proper key management requirements
+- Performance impact of authorization checks on API endpoints
+- Session management and concurrent login handling
+- Integration with existing user management systems
+- Compliance with data protection regulations (GDPR, CCPA)
+
+#### Risk Factors:
+- **Critical**: JWT token compromise leading to unauthorized access
+- **High**: Brute force attacks on authentication endpoints
+- **High**: Privilege escalation through role manipulation
+- **Medium**: Token replay attacks and session hijacking
+- **Medium**: Weak password policies enabling account compromise
+- **Low**: Authorization bypass through improper permission checks
 
 #### Sub-tasks:
 - [ ] Implement JWT token authentication
@@ -2593,6 +2877,35 @@ Implement comprehensive order data synchronization between Shopify and local dat
 ### [ ] TASK-022: Data Encryption and Security
 **Priority**: High | **Effort**: 6h | **Dependencies**: TASK-001
 
+#### Objective:
+Implement comprehensive data encryption strategies to protect sensitive customer and business data both at rest and in transit, ensuring compliance with PCI-DSS, GDPR, and industry security standards while maintaining system performance and operational efficiency.
+
+#### Expected Outcomes:
+- **Security Compliance**: Achieve PCI-DSS Level 1 compliance for payment data handling
+- **Data Protection**: All sensitive data encrypted using AES-256 encryption standards
+- **Regulatory Compliance**: Meet GDPR requirements for data protection and privacy
+- **Performance Maintenance**: Encryption overhead kept below 5% of baseline performance
+- **Key Management**: Secure, automated key rotation and management system
+- **Audit Trail**: Complete logging of all encryption/decryption operations
+- **Certificate Management**: Automated SSL/TLS certificate lifecycle management
+
+#### Constraints & Considerations:
+- **Performance Impact**: Encryption operations must not exceed 100ms latency for API calls
+- **Key Storage**: All encryption keys must be stored in Azure Key Vault, never in code
+- **Compliance Requirements**: Must support data residency requirements for EU customers
+- **Backup Security**: Encrypted backups must be restorable within 4-hour RTO
+- **Legacy Support**: Maintain backward compatibility during encryption migration
+- **Cost Management**: Key Vault operations budget limited to $200/month
+- **Monitoring**: Real-time alerting for encryption failures or key rotation issues
+
+#### Risk Factors:
+- **High Risk**: Improper key management could lead to permanent data loss
+- **Medium Risk**: Performance degradation during initial encryption of existing data
+- **Medium Risk**: Certificate expiration causing service outages
+- **Low Risk**: Increased complexity in debugging encrypted data issues
+- **Compliance Risk**: Non-compliance could result in regulatory fines up to 4% of revenue
+- **Operational Risk**: Manual key rotation processes prone to human error
+
 #### Sub-tasks:
 - [ ] Implement data encryption at rest
     - [ ] Configure SQL Server Transparent Data Encryption (TDE):
@@ -2747,6 +3060,36 @@ Implement comprehensive order data synchronization between Shopify and local dat
 
 ### [ ] TASK-023: API Security and Rate Limiting
 **Priority**: High | **Effort**: 4h | **Dependencies**: TASK-021
+
+#### Objective:
+Implement robust API security measures including rate limiting, request throttling, and API key management to protect against abuse, DDoS attacks, and unauthorized access while ensuring legitimate users maintain optimal service performance and availability.
+
+#### Expected Outcomes:
+- **Attack Prevention**: Block 99.9% of automated attacks and bot traffic
+- **Service Availability**: Maintain 99.95% uptime during traffic spikes
+- **Performance Protection**: Prevent API abuse from degrading response times
+- **Fair Usage**: Ensure equitable resource distribution among all users
+- **Security Compliance**: Meet OWASP API Security Top 10 requirements
+- **Monitoring**: Real-time visibility into API usage patterns and threats
+- **Scalability**: Rate limiting system scales with application growth
+
+#### Constraints & Considerations:
+- **Performance Overhead**: Rate limiting checks must complete within 10ms
+- **Redis Dependency**: Distributed rate limiting requires Redis availability
+- **User Experience**: Rate limits should not impact normal user workflows
+- **Configuration Flexibility**: Rate limits must be adjustable without deployment
+- **Memory Usage**: In-memory rate limiting data limited to 100MB per instance
+- **Network Latency**: Distributed rate limiting adds 5-15ms latency
+- **Cost Impact**: Redis operations budget limited to $150/month
+
+#### Risk Factors:
+- **High Risk**: Overly restrictive rate limits could block legitimate users
+- **High Risk**: DDoS attacks could overwhelm rate limiting infrastructure
+- **Medium Risk**: Redis failure could disable distributed rate limiting
+- **Medium Risk**: Misconfigured rate limits could impact business operations
+- **Low Risk**: Rate limiting bypass vulnerabilities in implementation
+- **Operational Risk**: Complex rate limiting rules difficult to troubleshoot
+- **Business Risk**: Aggressive throttling could reduce user engagement
 
 #### Sub-tasks:
 - [ ] Implement API rate limiting
@@ -2922,6 +3265,36 @@ Implement comprehensive order data synchronization between Shopify and local dat
 
 ### [ ] TASK-024: Caching Implementation
 **Priority**: Medium | **Effort**: 6h | **Dependencies**: TASK-001
+
+#### Objective:
+Implement a comprehensive multi-layer caching strategy using Redis and in-memory caching to significantly improve application performance, reduce database load, and enhance user experience while maintaining data consistency and cache coherence across distributed instances.
+
+#### Expected Outcomes:
+- **Performance Improvement**: Reduce API response times by 60-80% for cached data
+- **Database Load Reduction**: Decrease database queries by 70% through effective caching
+- **Scalability Enhancement**: Support 10x more concurrent users with same infrastructure
+- **Cost Optimization**: Reduce database compute costs by 40-50%
+- **User Experience**: Sub-100ms response times for frequently accessed data
+- **Cache Hit Ratio**: Achieve 85%+ cache hit ratio for read operations
+- **System Resilience**: Graceful degradation when cache is unavailable
+
+#### Constraints & Considerations:
+- **Memory Limitations**: Redis memory usage capped at 4GB for cost management
+- **Cache Coherence**: Ensure data consistency across multiple application instances
+- **TTL Management**: Balance between data freshness and cache efficiency
+- **Serialization Overhead**: JSON serialization adds 10-20ms for large objects
+- **Network Latency**: Redis operations add 5-15ms network overhead
+- **Cache Warming**: Initial cache population may impact startup performance
+- **Monitoring Requirements**: Real-time cache performance metrics needed
+
+#### Risk Factors:
+- **High Risk**: Cache invalidation bugs could serve stale data to users
+- **High Risk**: Redis failure could cause significant performance degradation
+- **Medium Risk**: Memory pressure could cause cache evictions and performance drops
+- **Medium Risk**: Cache stampede during high traffic could overwhelm database
+- **Low Risk**: Serialization vulnerabilities in cached data
+- **Operational Risk**: Complex cache invalidation logic difficult to debug
+- **Business Risk**: Over-caching could mask underlying performance issues
 
 #### Sub-tasks:
 - [ ] Implement Redis caching
@@ -3105,6 +3478,36 @@ Implement comprehensive order data synchronization between Shopify and local dat
 ### [ ] TASK-025: Performance Optimization
 **Priority**: Medium | **Effort**: 8h | **Dependencies**: TASK-002
 
+#### Objective:
+Implement comprehensive performance optimization strategies across database queries, application code, and infrastructure to achieve sub-200ms API response times, support high concurrent user loads, and ensure optimal resource utilization while maintaining system reliability and data integrity.
+
+#### Expected Outcomes:
+- **Response Time**: Achieve 95th percentile API response times under 200ms
+- **Throughput**: Support 1000+ concurrent users with current infrastructure
+- **Database Performance**: Reduce query execution times by 70-80%
+- **Resource Efficiency**: Optimize CPU and memory usage by 40-50%
+- **Scalability**: Linear performance scaling with horizontal scaling
+- **User Experience**: Eliminate performance-related user complaints
+- **Cost Optimization**: Reduce infrastructure costs through efficiency gains
+
+#### Constraints & Considerations:
+- **Backward Compatibility**: Optimizations must not break existing functionality
+- **Index Maintenance**: Additional indexes increase write operation overhead
+- **Memory Usage**: Query optimization may increase memory consumption
+- **Deployment Impact**: Index creation may require maintenance windows
+- **Monitoring Overhead**: Performance profiling adds 2-5% CPU overhead
+- **Cache Dependencies**: Performance gains dependent on cache hit ratios
+- **Database Size**: Optimization strategies must scale with data growth
+
+#### Risk Factors:
+- **High Risk**: Aggressive optimizations could introduce data consistency issues
+- **High Risk**: Index changes could cause temporary performance degradation during deployment
+- **Medium Risk**: Over-optimization could make code complex and hard to maintain
+- **Medium Risk**: Performance testing may not reflect real-world usage patterns
+- **Low Risk**: Profiling tools could impact production performance
+- **Operational Risk**: Complex optimization logic difficult to troubleshoot
+- **Business Risk**: Performance regressions could impact user satisfaction
+
 #### Sub-tasks:
 - [ ] Optimize database queries and indexes
     - [ ] Install performance analysis packages:
@@ -3230,7 +3633,7 @@ Implement comprehensive order data synchronization between Shopify and local dat
         - [ ] Optimize DateTime and decimal serialization
         - [ ] Use JsonIgnore for unnecessary properties
 - [ ] Implement lazy loading for related data
-    - [ ] Configure lazy loading in `Data/ShopifyDbContext.cs`:
+    - [ ] Configure lazy loading in `Data/ECommerceDbContext.cs`:
         - [ ] Enable lazy loading proxies
         - [ ] Configure lazy loading for navigation properties
         - [ ] Implement selective lazy loading
@@ -3326,6 +3729,36 @@ Implement comprehensive order data synchronization between Shopify and local dat
 
 ### [ ] TASK-026: Monitoring and Observability
 **Priority**: High | **Effort**: 6h | **Dependencies**: TASK-001
+
+#### Objective:
+Implement comprehensive monitoring and observability infrastructure to provide real-time visibility into application performance, business metrics, and system health, enabling proactive issue detection, rapid troubleshooting, and data-driven optimization decisions across the entire application stack.
+
+#### Expected Outcomes:
+- **Proactive Monitoring**: Detect and alert on issues before they impact users
+- **Complete Visibility**: 360-degree view of application performance and health
+- **Fast Resolution**: Reduce mean time to resolution (MTTR) to under 15 minutes
+- **Business Intelligence**: Real-time insights into business metrics and KPIs
+- **Performance Optimization**: Data-driven performance improvement decisions
+- **Compliance Monitoring**: Automated compliance and SLA monitoring
+- **Operational Efficiency**: Reduce manual monitoring effort by 80%
+
+#### Constraints & Considerations:
+- **Data Volume**: Telemetry data limited to 5GB per month to control costs
+- **Performance Impact**: Monitoring overhead must be under 3% of total CPU usage
+- **Data Retention**: Log retention limited to 90 days for cost management
+- **Privacy Compliance**: Monitoring must comply with GDPR and data privacy laws
+- **Alert Fatigue**: Alert thresholds tuned to minimize false positives
+- **Network Bandwidth**: Telemetry transmission limited to 100MB per day
+- **Storage Costs**: Application Insights costs capped at $300 per month
+
+#### Risk Factors:
+- **High Risk**: Monitoring system failure could mask critical application issues
+- **High Risk**: Excessive telemetry could impact application performance
+- **Medium Risk**: Alert misconfiguration could cause missed incidents or alert fatigue
+- **Medium Risk**: Sensitive data could be inadvertently logged and exposed
+- **Low Risk**: Monitoring dependencies could introduce additional failure points
+- **Operational Risk**: Complex monitoring setup difficult to maintain and troubleshoot
+- **Business Risk**: Poor monitoring could lead to undetected revenue-impacting issues
 
 #### Sub-tasks:
 - [ ] Implement Application Insights integration
@@ -3614,6 +4047,36 @@ Implement comprehensive order data synchronization between Shopify and local dat
 ### [ ] TASK-027: Error Handling and Resilience
 **Priority**: High | **Effort**: 4h | **Dependencies**: TASK-001
 
+#### Objective:
+Implement comprehensive error handling and resilience patterns to ensure system stability, graceful failure recovery, and optimal user experience during various failure scenarios while providing detailed diagnostics for rapid issue resolution and system monitoring.
+
+#### Expected Outcomes:
+- **System Stability**: 99.95% uptime even during partial system failures
+- **Graceful Degradation**: Non-critical failures don't impact core functionality
+- **Fast Recovery**: Automatic recovery from transient failures within 30 seconds
+- **Error Visibility**: Complete error tracking and correlation for debugging
+- **User Experience**: Meaningful error messages without exposing system internals
+- **Operational Efficiency**: Automated alerting and escalation for critical errors
+- **Compliance**: Error handling meets security and audit requirements
+
+#### Constraints & Considerations:
+- **Performance Impact**: Error handling overhead must be under 5ms per request
+- **Memory Usage**: Error logging and correlation data limited to 50MB per instance
+- **Security Requirements**: Error responses must not leak sensitive information
+- **Logging Volume**: Error logs capped at 1GB per day to manage costs
+- **Recovery Time**: Circuit breakers must reset within 60 seconds of service recovery
+- **User Privacy**: Error logs must comply with GDPR data protection requirements
+- **Monitoring Integration**: Must integrate with existing APM and alerting systems
+
+#### Risk Factors:
+- **High Risk**: Unhandled exceptions could cause application crashes
+- **High Risk**: Information disclosure through detailed error messages
+- **Medium Risk**: Circuit breaker false positives could block legitimate requests
+- **Medium Risk**: Excessive error logging could impact system performance
+- **Low Risk**: Error handling logic itself could introduce bugs
+- **Operational Risk**: Complex error scenarios difficult to test and reproduce
+- **Business Risk**: Poor error handling could damage user trust and retention
+
 #### Sub-tasks:
 - [ ] Implement global exception handling
     - [ ] Install exception handling packages:
@@ -3829,6 +4292,32 @@ Implement comprehensive order data synchronization between Shopify and local dat
 ### [ ] TASK-028: Unit Testing
 **Priority**: High | **Effort**: 12h | **Dependencies**: All previous tasks
 
+#### Objective:
+Implement comprehensive unit testing suite covering all service classes, controllers, and business logic with high code coverage, automated test execution, and quality gates to ensure code reliability and maintainability.
+
+#### Expected Outcomes:
+- Minimum 90% code coverage across all business logic layers
+- Automated unit test execution in CI/CD pipeline
+- Comprehensive test suite for all service classes and controllers
+- Mock-based testing for external dependencies and integrations
+- Performance benchmarking tests for critical operations
+- Quality gates preventing deployment of untested code
+
+#### Constraints & Considerations:
+- Test execution time must remain under 5 minutes for CI/CD efficiency
+- Test isolation requirements preventing cross-test dependencies
+- Mock strategy for external services and database interactions
+- Test data management and cleanup between test runs
+- Parallel test execution capabilities for faster feedback
+- Integration with code coverage reporting tools
+
+#### Risk Factors:
+- **High**: Insufficient test coverage leading to production bugs
+- **Medium**: Flaky tests causing CI/CD pipeline instability
+- **Medium**: Test maintenance overhead with code changes
+- **Low**: Test execution performance impacting development velocity
+- **Low**: Mock configuration complexity affecting test reliability
+
 #### Sub-tasks:
 - [ ] Create unit tests for all service classes
     - [ ] Install testing packages:
@@ -3857,7 +4346,7 @@ Implement comprehensive order data synchronization between Shopify and local dat
             - [ ] `UpdateProductAsync_ValidProduct_ReturnsUpdatedProduct()` - test product updates
             - [ ] `UpdateProductAsync_NonExistentProduct_ThrowsNotFoundException()` - test not found
             - [ ] `DeleteProductAsync_ValidId_DeletesProduct()` - test product deletion
-            - [ ] `SyncWithShopifyAsync_ValidData_UpdatesProducts()` - test Shopify sync
+            - [ ] `SyncWithECommerceAsync_ValidData_UpdatesProducts()` - test e-commerce sync
     - [ ] Test OrderService class:
         - [ ] `Tests/Unit/Services/OrderServiceTests.cs`:
             - [ ] `CreateOrderAsync_ValidOrder_ReturnsCreatedOrder()` - test order creation
@@ -3882,7 +4371,7 @@ Implement comprehensive order data synchronization between Shopify and local dat
             - [ ] `ReserveStockAsync_InsufficientStock_ThrowsInsufficientStockException()` - test stock shortage
             - [ ] `ReleaseStockAsync_ValidReservation_ReleasesStock()` - test stock release
             - [ ] `UpdateStockLevelAsync_ValidLevel_UpdatesStock()` - test stock updates
-            - [ ] `SyncInventoryWithShopifyAsync_ValidData_UpdatesInventory()` - test Shopify sync
+            - [ ] `SyncInventoryWithECommerceAsync_ValidData_UpdatesInventory()` - test e-commerce sync
     - [ ] Test PaymentService class:
         - [ ] `Tests/Unit/Services/PaymentServiceTests.cs`:
             - [ ] `ProcessPaymentAsync_ValidPayment_ReturnsSuccessResult()` - test payment processing
@@ -3919,8 +4408,8 @@ Implement comprehensive order data synchronization between Shopify and local dat
             - [ ] `ResetPassword_ValidEmail_ReturnsOk()` - test password reset
     - [ ] Test WebhooksController:
         - [ ] `Tests/Unit/Controllers/WebhooksControllerTests.cs`:
-            - [ ] `HandleShopifyWebhook_ValidPayload_ReturnsOk()` - test webhook handling
-            - [ ] `HandleShopifyWebhook_InvalidSignature_ReturnsUnauthorized()` - test signature validation
+            - [ ] `HandleECommerceWebhook_ValidPayload_ReturnsOk()` - test webhook handling
+    - [ ] `HandleECommerceWebhook_InvalidSignature_ReturnsUnauthorized()` - test signature validation
             - [ ] `HandleOrderWebhook_ValidOrder_ProcessesCorrectly()` - test order webhooks
             - [ ] `HandleProductWebhook_ValidProduct_ProcessesCorrectly()` - test product webhooks
             - [ ] `HandleInventoryWebhook_ValidInventory_ProcessesCorrectly()` - test inventory webhooks
@@ -3974,8 +4463,8 @@ Implement comprehensive order data synchronization between Shopify and local dat
             - [ ] `CalculateTax_ValidLocation_ReturnsCorrectTax()` - test tax calculations
             - [ ] `CalculateShipping_ValidOrder_ReturnsCorrectShipping()` - test shipping calculations
 - [ ] Implement unit tests for webhook handlers
-    - [ ] Test ShopifyWebhookHandler:
-        - [ ] `Tests/Unit/Handlers/ShopifyWebhookHandlerTests.cs`:
+    - [ ] Test ECommerceWebhookHandler:
+    - [ ] `Tests/Unit/Handlers/ECommerceWebhookHandlerTests.cs`:
             - [ ] `HandleOrderCreated_ValidPayload_ProcessesOrder()` - test order creation webhook
             - [ ] `HandleOrderUpdated_ValidPayload_UpdatesOrder()` - test order update webhook
             - [ ] `HandleProductCreated_ValidPayload_CreatesProduct()` - test product creation webhook
@@ -4032,6 +4521,32 @@ Implement comprehensive order data synchronization between Shopify and local dat
 
 ### [ ] TASK-029: Integration Testing
 **Priority**: High | **Effort**: 10h | **Dependencies**: TASK-028
+
+#### Objective:
+Implement comprehensive integration testing suite covering API endpoints, database interactions, external service integrations, and end-to-end workflows to ensure system components work correctly together in realistic environments.
+
+#### Expected Outcomes:
+- Complete integration test coverage for all API endpoints
+- Automated testing of database operations and data consistency
+- Mock-based testing for external service integrations (e-commerce API)
+- Container-based test environments for realistic testing scenarios
+- Performance and load testing for critical integration points
+- Automated integration test execution in CI/CD pipeline
+
+#### Constraints & Considerations:
+- Test environment isolation and data cleanup requirements
+- Container orchestration for test dependencies (PostgreSQL, Redis)
+- Test execution time optimization for CI/CD efficiency
+- External service mocking and test data management
+- Authentication and authorization testing across different user roles
+- Database migration and schema validation in test environments
+
+#### Risk Factors:
+- **High**: Integration test failures masking production issues
+- **Medium**: Test environment configuration drift from production
+- **Medium**: External service dependency failures affecting test reliability
+- **Low**: Test data conflicts between parallel test executions
+- **Low**: Container resource constraints impacting test performance
 
 #### Sub-tasks:
 - [ ] Create integration tests for API endpoints
@@ -4093,8 +4608,8 @@ Implement comprehensive order data synchronization between Shopify and local dat
             - [ ] `VerifyEmail_WithValidToken_ReturnsSuccess()` - test email verification
     - [ ] Test Webhooks API endpoints:
         - [ ] `Tests/Integration/Controllers/WebhooksControllerIntegrationTests.cs`:
-            - [ ] `HandleShopifyWebhook_WithValidSignature_ReturnsOk()` - test webhook processing
-            - [ ] `HandleShopifyWebhook_WithInvalidSignature_ReturnsUnauthorized()` - test signature validation
+            - [ ] `HandleECommerceWebhook_WithValidSignature_ReturnsOk()` - test webhook processing
+    - [ ] `HandleECommerceWebhook_WithInvalidSignature_ReturnsUnauthorized()` - test signature validation
             - [ ] `HandleOrderWebhook_WithValidPayload_ProcessesOrder()` - test order webhook
             - [ ] `HandleProductWebhook_WithValidPayload_ProcessesProduct()` - test product webhook
             - [ ] `HandleInventoryWebhook_WithValidPayload_ProcessesInventory()` - test inventory webhook
@@ -4129,22 +4644,22 @@ Implement comprehensive order data synchronization between Shopify and local dat
             - [ ] `ChangeTracking_WithComplexEntities_TracksCorrectly()` - test change tracking
             - [ ] `LazyLoading_WithNavigationProperties_LoadsCorrectly()` - test lazy loading
             - [ ] `Migrations_WithSchemaChanges_AppliesCorrectly()` - test migrations
-- [ ] Add Shopify API integration tests
-    - [ ] Set up Shopify API test infrastructure:
-        - [ ] Configure WireMock for Shopify API simulation
-        - [ ] Create Shopify API response mocks
+- [ ] Add e-commerce API integration tests
+- [ ] Set up e-commerce API test infrastructure:
+- [ ] Configure WireMock for e-commerce API simulation
+- [ ] Create e-commerce API response mocks
         - [ ] Set up webhook signature validation
         - [ ] Configure rate limiting simulation
         - [ ] Implement error scenario testing
-    - [ ] Test Shopify service integration:
-        - [ ] `Tests/Integration/Services/ShopifyServiceIntegrationTests.cs`:
-            - [ ] `SyncProducts_WithShopifyAPI_UpdatesLocalDatabase()` - test product sync
-            - [ ] `SyncOrders_WithShopifyAPI_UpdatesLocalDatabase()` - test order sync
-            - [ ] `SyncInventory_WithShopifyAPI_UpdatesLocalDatabase()` - test inventory sync
+    - [ ] Test e-commerce service integration:
+        - [ ] `Tests/Integration/Services/ECommerceServiceIntegrationTests.cs`:
+            - [ ] `SyncProducts_WithECommerceAPI_UpdatesLocalDatabase()` - test product sync
+            - [ ] `SyncOrders_WithECommerceAPI_UpdatesLocalDatabase()` - test order sync
+            - [ ] `SyncInventory_WithECommerceAPI_UpdatesLocalDatabase()` - test inventory sync
             - [ ] `HandleRateLimit_WithThrottling_RetriesAppropriately()` - test rate limiting
             - [ ] `HandleAPIError_WithFailure_LogsAndRetries()` - test error handling
-            - [ ] `ValidateWebhookSignature_WithShopifySignature_ValidatesCorrectly()` - test signature validation
-        - [ ] `Tests/Integration/Services/ShopifyWebhookIntegrationTests.cs`:
+            - [ ] `ValidateWebhookSignature_WithECommerceSignature_ValidatesCorrectly()` - test signature validation
+        - [ ] `Tests/Integration/Services/ECommerceWebhookIntegrationTests.cs`:
             - [ ] `ProcessOrderWebhook_WithValidPayload_UpdatesOrder()` - test order webhook processing
             - [ ] `ProcessProductWebhook_WithValidPayload_UpdatesProduct()` - test product webhook processing
             - [ ] `ProcessInventoryWebhook_WithValidPayload_UpdatesInventory()` - test inventory webhook processing
@@ -4183,7 +4698,7 @@ Implement comprehensive order data synchronization between Shopify and local dat
     - [ ] Test inventory management workflows:
         - [ ] `Tests/Integration/Workflows/InventoryWorkflowIntegrationTests.cs`:
             - [ ] `StockReservationToRelease_EndToEnd_CompletesSuccessfully()` - test stock management
-            - [ ] `InventorySyncFromShopify_EndToEnd_UpdatesCorrectly()` - test sync workflow
+            - [ ] `InventorySyncFromECommerce_EndToEnd_UpdatesCorrectly()` - test sync workflow
             - [ ] `LowStockAlertToReorder_EndToEnd_TriggersCorrectly()` - test reorder workflow
             - [ ] `StockAdjustmentToAudit_EndToEnd_TracksCorrectly()` - test audit workflow
 - [ ] Add performance integration tests
@@ -4246,13 +4761,41 @@ Implement comprehensive order data synchronization between Shopify and local dat
             - [ ] `ConcurrentOrderCreation_WithSameProduct_HandlesCorrectly()` - test concurrent access
     - [ ] Test data synchronization:
         - [ ] `Tests/Integration/Consistency/DataSyncIntegrationTests.cs`:
-            - [ ] `ShopifySync_WithLocalChanges_ResolvesConflictsCorrectly()` - test conflict resolution
+            - [ ] `ECommerceSync_WithLocalChanges_ResolvesConflictsCorrectly()` - test conflict resolution
             - [ ] `WebhookProcessing_WithDuplicateEvents_MaintainsIdempotency()` - test idempotency
             - [ ] `CacheInvalidation_WithDataChanges_SynchronizesCorrectly()` - test cache consistency
             - [ ] `EventualConsistency_WithAsyncOperations_ConvergesCorrectly()` - test eventual consistency
 
 ### [ ] TASK-030: Load and Performance Testing
 **Priority**: Medium | **Effort**: 8h | **Dependencies**: TASK-029
+
+#### Objective:
+Implement comprehensive load and performance testing to validate system scalability, identify performance bottlenecks, and ensure the application meets performance requirements under various load conditions including normal traffic, peak loads, and stress scenarios.
+
+#### Expected Outcomes:
+- Comprehensive load testing suite covering all critical API endpoints and workflows
+- Performance benchmarks establishing baseline metrics for system components
+- Stress testing scenarios identifying system breaking points and recovery capabilities
+- Scalability validation for both horizontal and vertical scaling approaches
+- Database performance analysis with query optimization recommendations
+- Resource usage profiling for memory, CPU, disk I/O, and network utilization
+- Concurrent user testing simulating realistic user behavior and session management
+- Performance regression detection and automated performance monitoring
+
+#### Constraints & Considerations:
+- **Testing Environment**: Load tests must run in production-like environment with realistic data volumes
+- **Resource Requirements**: Adequate infrastructure needed to generate meaningful load without affecting production
+- **Test Data**: Large datasets required for realistic performance testing scenarios
+- **Monitoring**: Comprehensive monitoring setup needed to capture detailed performance metrics
+- **Network Conditions**: Tests must account for various network conditions and latencies
+- **Third-party Dependencies**: E-commerce platform API rate limits and external service dependencies must be considered
+- **Test Duration**: Long-running tests needed to identify memory leaks and performance degradation
+
+#### Risk Factors:
+- **High**: Inadequate load testing may miss critical performance issues in production
+- **Medium**: Resource-intensive tests may impact development environment stability
+- **Medium**: Unrealistic test scenarios may provide false confidence in system performance
+- **Low**: Test data generation may expose sensitive information if not properly anonymized
 
 #### Sub-tasks:
 - [ ] Create load testing scenarios
@@ -4346,7 +4889,7 @@ Implement comprehensive order data synchronization between Shopify and local dat
             - [ ] `[Benchmark] ProductUpdate_BulkUpdate()` - bulk update benchmark
     - [ ] Create service performance benchmarks:
         - [ ] `Tests/LoadTesting/Benchmarks/ServiceBenchmarks.cs`:
-            - [ ] `[Benchmark] ShopifySync_ProductSync()` - Shopify sync benchmark
+            - [ ] `[Benchmark] ECommerceSync_ProductSync()` - E-commerce platform sync benchmark
             - [ ] `[Benchmark] EmailService_SendEmail()` - email service benchmark
             - [ ] `[Benchmark] CacheService_GetSet()` - cache operations benchmark
             - [ ] `[Benchmark] ValidationService_ValidateProduct()` - validation benchmark
@@ -4477,6 +5020,32 @@ Implement comprehensive order data synchronization between Shopify and local dat
 
 ### [ ] TASK-031: Containerization and Docker
 **Priority**: High | **Effort**: 4h | **Dependencies**: TASK-001
+
+#### Objective:
+Create optimized Docker containers for the e-commerce application with multi-stage builds, security hardening, and efficient layer caching to enable consistent deployment across development, staging, and production environments.
+
+#### Expected Outcomes:
+- Optimized multi-stage Dockerfile with minimal attack surface
+- Docker Compose setup for local development and testing
+- Container security best practices implementation
+- Efficient build caching and layer optimization
+- Health checks and monitoring integration
+- Container registry integration for CI/CD pipeline
+
+#### Constraints & Considerations:
+- Container image size optimization for faster deployments
+- Security scanning and vulnerability management requirements
+- Multi-architecture support (AMD64, ARM64) for cloud deployment
+- Resource limits and performance optimization in containers
+- Secrets management and environment variable handling
+- Container networking and service discovery configuration
+
+#### Risk Factors:
+- **High**: Security vulnerabilities in base images or dependencies
+- **Medium**: Container resource exhaustion affecting application performance
+- **Medium**: Image size bloat impacting deployment speed
+- **Low**: Build cache invalidation causing slow CI/CD pipelines
+- **Low**: Container networking issues in orchestrated environments
 
 #### Sub-tasks:
 - [ ] Create optimized Dockerfile
@@ -4697,6 +5266,32 @@ Implement comprehensive order data synchronization between Shopify and local dat
 
 ### [ ] TASK-032: CI/CD Pipeline
 **Priority**: High | **Effort**: 8h | **Dependencies**: TASK-031
+
+#### Objective:
+Implement comprehensive CI/CD pipeline using GitHub Actions with automated testing, security scanning, quality gates, and deployment automation to ensure reliable and secure software delivery across multiple environments.
+
+#### Expected Outcomes:
+- Automated build, test, and deployment pipeline
+- Quality gates preventing deployment of failing or insecure code
+- Multi-environment deployment with approval workflows
+- Automated security scanning and vulnerability assessment
+- Performance testing and monitoring integration
+- Rollback capabilities and deployment tracking
+
+#### Constraints & Considerations:
+- Pipeline execution time optimization for developer productivity
+- Resource usage and cost management for CI/CD runners
+- Security scanning integration without blocking development velocity
+- Multi-environment configuration and secrets management
+- Deployment approval workflows for production releases
+- Integration with monitoring and alerting systems
+
+#### Risk Factors:
+- **Critical**: Pipeline failures blocking critical production deployments
+- **High**: Security vulnerabilities bypassing automated scanning
+- **Medium**: Deployment rollback failures causing extended downtime
+- **Medium**: Pipeline resource exhaustion affecting team productivity
+- **Low**: Configuration drift between pipeline and production environments
 
 #### Sub-tasks:
 - [ ] Create GitHub Actions workflow
@@ -5006,6 +5601,38 @@ Implement comprehensive order data synchronization between Shopify and local dat
 
 ### [ ] TASK-033: Kubernetes Deployment
 **Priority**: Medium | **Effort**: 10h | **Dependencies**: TASK-032
+
+#### Objective:
+Deploy the E-Commerce Database Replication system to Kubernetes clusters with production-ready configurations, ensuring high availability, scalability, and security across development, staging, and production environments.
+
+#### Expected Outcomes:
+- **Infrastructure as Code**: Complete Kubernetes manifests for all application components
+- **Multi-Environment Support**: Separate configurations for dev, staging, and production
+- **High Availability**: Redundant deployments with automatic failover capabilities
+- **Security Compliance**: Pod security policies, network policies, and secret management
+- **Monitoring Integration**: Service mesh integration with observability tools
+- **Auto-scaling**: Horizontal Pod Autoscaler (HPA) and Vertical Pod Autoscaler (VPA) configurations
+- **Resource Optimization**: Proper resource requests, limits, and quality of service classes
+- **Zero-Downtime Deployments**: Rolling update strategies with health checks
+
+#### Constraints & Considerations:
+- **Kubernetes Version**: Target Kubernetes 1.28+ for latest security features
+- **Resource Limits**: Must operate within cluster resource quotas and budget constraints
+- **Network Policies**: Implement least-privilege network access between services
+- **Storage Classes**: Use appropriate storage classes for different data persistence needs
+- **Image Security**: All container images must pass security scanning
+- **Compliance**: Meet SOC 2, PCI-DSS requirements for production deployments
+- **Backup Strategy**: Integrate with cluster backup solutions (Velero, etc.)
+- **Cost Optimization**: Implement resource requests/limits to prevent over-provisioning
+
+#### Risk Factors:
+- **Cluster Compatibility**: Different cloud providers may have specific requirements
+- **Resource Contention**: Insufficient cluster resources could impact performance
+- **Network Latency**: Cross-zone communication may affect database replication
+- **Storage Performance**: Persistent volume performance could bottleneck database operations
+- **Security Vulnerabilities**: Container images or cluster configurations may have security gaps
+- **Configuration Drift**: Manual changes to cluster could conflict with IaC deployments
+- **Backup/Recovery**: Inadequate backup strategies could lead to data loss scenarios
 
 #### Sub-tasks:
 - [ ] Create Kubernetes deployment manifests
@@ -5390,6 +6017,39 @@ Implement comprehensive order data synchronization between Shopify and local dat
 ### [ ] TASK-034: Production Deployment
 **Priority**: High | **Effort**: 12h | **Dependencies**: TASK-033
 
+#### Objective:
+Deploy the E-Commerce Database Replication system to production environment with enterprise-grade security, monitoring, and operational excellence, ensuring 99.9% uptime, data integrity, and compliance with industry standards.
+
+#### Expected Outcomes:
+- **Production-Ready Infrastructure**: Fully configured production environment with redundancy
+- **Security Hardening**: Complete security implementation with encryption, authentication, and monitoring
+- **High Availability**: Multi-zone deployment with automatic failover and disaster recovery
+- **Performance Optimization**: Production-tuned configurations for optimal performance
+- **Monitoring & Alerting**: Comprehensive observability with proactive alerting
+- **Compliance Readiness**: SOC 2, PCI-DSS, GDPR compliance configurations
+- **Operational Excellence**: Automated deployment pipelines, rollback procedures, and maintenance windows
+- **Documentation**: Complete runbooks, incident response procedures, and operational guides
+
+#### Constraints & Considerations:
+- **Downtime Requirements**: Zero-downtime deployment with blue-green or canary strategies
+- **Data Migration**: Safe migration of existing data without corruption or loss
+- **Performance SLAs**: Must meet or exceed current system performance benchmarks
+- **Security Standards**: Compliance with SOC 2 Type II, PCI-DSS Level 1, GDPR requirements
+- **Budget Constraints**: Optimize costs while maintaining performance and reliability
+- **Regulatory Compliance**: Meet data residency and privacy requirements
+- **Backup & Recovery**: RTO < 4 hours, RPO < 15 minutes for critical data
+- **Scalability**: Support 10x current load with horizontal scaling capabilities
+
+#### Risk Factors:
+- **Data Loss**: Potential data corruption during migration or deployment
+- **Service Disruption**: Extended downtime during production cutover
+- **Performance Degradation**: Production environment may perform differently than staging
+- **Security Vulnerabilities**: Misconfigurations could expose sensitive data
+- **Compliance Violations**: Inadequate controls could result in regulatory penalties
+- **Operational Complexity**: Increased system complexity may impact maintainability
+- **Vendor Dependencies**: Third-party service outages could affect system availability
+- **Cost Overruns**: Production infrastructure costs may exceed budget projections
+
 #### Sub-tasks:
 - [ ] Set up production environment
     - [ ] Create production infrastructure:
@@ -5701,6 +6361,39 @@ Implement comprehensive order data synchronization between Shopify and local dat
 ### [ ] TASK-035: API Documentation
 **Priority**: Medium | **Effort**: 10h | **Dependencies**: TASK-016, TASK-017, TASK-018, TASK-019
 
+#### Objective:
+Create comprehensive, interactive, and developer-friendly API documentation that enables seamless integration with the E-Commerce Database Replication system, reducing integration time and support overhead while ensuring API adoption and proper usage.
+
+#### Expected Outcomes:
+- **Interactive Documentation**: Swagger/OpenAPI 3.0 specification with live testing capabilities
+- **Complete API Coverage**: Documentation for all endpoints, parameters, and response formats
+- **Developer Experience**: Clear examples, use cases, and integration guides
+- **Automated Generation**: Documentation automatically updated with code changes
+- **Multi-Format Support**: OpenAPI, Postman collections, and SDK documentation
+- **Version Management**: Versioned documentation with migration guides
+- **Authentication Guides**: Complete authentication and authorization documentation
+- **Error Handling**: Comprehensive error codes, messages, and troubleshooting guides
+
+#### Constraints & Considerations:
+- **API Versioning**: Support multiple API versions with backward compatibility documentation
+- **Security Sensitivity**: Avoid exposing internal implementation details or security vulnerabilities
+- **Performance Impact**: Documentation generation should not impact API performance
+- **Maintenance Overhead**: Documentation must stay synchronized with API changes
+- **Accessibility**: Documentation must be accessible to developers with varying skill levels
+- **Internationalization**: Consider multi-language support for global developer community
+- **Mobile Responsiveness**: Documentation must be usable on mobile devices
+- **Search Functionality**: Implement effective search and navigation capabilities
+
+#### Risk Factors:
+- **Documentation Drift**: API changes may not be reflected in documentation
+- **Incomplete Coverage**: Missing or outdated documentation could frustrate developers
+- **Security Exposure**: Overly detailed documentation might reveal attack vectors
+- **Performance Impact**: Heavy documentation sites could slow down developer experience
+- **Version Confusion**: Multiple API versions could confuse developers
+- **Integration Complexity**: Poor documentation could increase support requests
+- **Competitive Disadvantage**: Inadequate documentation could drive developers to competitors
+- **Maintenance Burden**: Manual documentation updates could become resource-intensive
+
 #### Sub-tasks:
 - [ ] Create comprehensive OpenAPI/Swagger documentation
     - [ ] Set up documentation infrastructure:
@@ -5779,7 +6472,7 @@ Implement comprehensive order data synchronization between Shopify and local dat
                 - [ ] Inventory management workflow
                 - [ ] Customer data synchronization
             - [ ] Create integration examples:
-                - [ ] Shopify to database sync
+                - [ ] E-commerce platform to database sync
                 - [ ] Real-time webhook processing
                 - [ ] Batch data processing
                 - [ ] Error recovery scenarios
@@ -6047,6 +6740,39 @@ Implement comprehensive order data synchronization between Shopify and local dat
 
 ### [ ] TASK-036: System Documentation
 **Priority**: Medium | **Effort**: 8h | **Dependencies**: All previous tasks
+
+#### Objective:
+Create comprehensive system documentation that enables effective system maintenance, troubleshooting, and knowledge transfer, ensuring operational continuity and reducing time-to-resolution for system issues while facilitating onboarding of new team members.
+
+#### Expected Outcomes:
+- **Architecture Documentation**: Complete system architecture with diagrams and component descriptions
+- **Operational Runbooks**: Step-by-step procedures for common operational tasks
+- **Troubleshooting Guides**: Comprehensive problem diagnosis and resolution procedures
+- **Knowledge Base**: Centralized repository of system knowledge and best practices
+- **Onboarding Materials**: Documentation to accelerate new team member productivity
+- **Change Management**: Procedures for system updates, deployments, and configuration changes
+- **Disaster Recovery**: Complete disaster recovery and business continuity documentation
+- **Compliance Documentation**: Evidence and procedures for regulatory compliance
+
+#### Constraints & Considerations:
+- **Information Security**: Sensitive system details must be properly classified and protected
+- **Documentation Maintenance**: Must establish processes for keeping documentation current
+- **Accessibility**: Documentation must be accessible to team members with varying technical backgrounds
+- **Version Control**: Documentation must be versioned and synchronized with system changes
+- **Search and Discovery**: Implement effective search and categorization for quick information retrieval
+- **Multi-Format Support**: Support various documentation formats (text, diagrams, videos)
+- **Collaboration**: Enable collaborative editing and review processes
+- **Backup and Recovery**: Documentation itself must be backed up and recoverable
+
+#### Risk Factors:
+- **Knowledge Loss**: Inadequate documentation could result in knowledge loss when team members leave
+- **Operational Delays**: Poor documentation could slow down incident response and troubleshooting
+- **Security Risks**: Overly detailed documentation could expose system vulnerabilities if compromised
+- **Maintenance Overhead**: Extensive documentation could become a maintenance burden
+- **Information Overload**: Too much documentation could make it difficult to find relevant information
+- **Outdated Information**: Stale documentation could lead to incorrect operational procedures
+- **Compliance Gaps**: Inadequate documentation could result in compliance violations
+- **Training Inefficiency**: Poor documentation could slow down team member onboarding and training
 
 #### Sub-tasks:
 - [ ] Create system architecture documentation
@@ -6443,6 +7169,39 @@ Implement comprehensive order data synchronization between Shopify and local dat
 
 ### [ ] TASK-037: User Training and Support
 **Priority**: Low | **Effort**: 10h | **Dependencies**: TASK-035, TASK-036
+
+#### Objective:
+Develop comprehensive training programs and support materials that enable users to effectively utilize the E-Commerce Database Replication system, minimizing support requests, maximizing user adoption, and ensuring optimal system utilization across all user roles and skill levels.
+
+#### Expected Outcomes:
+- **Multi-Modal Training**: Comprehensive training materials in various formats (written, video, interactive)
+- **Role-Based Content**: Tailored training materials for different user roles and skill levels
+- **Self-Service Support**: Comprehensive knowledge base and FAQ system
+- **Onboarding Programs**: Structured onboarding for new users and administrators
+- **Continuous Learning**: Ongoing training programs for new features and best practices
+- **Support Infrastructure**: Efficient support ticket system and escalation procedures
+- **User Competency**: Measurable improvement in user proficiency and system adoption
+- **Reduced Support Load**: Significant reduction in basic support requests through effective training
+
+#### Constraints & Considerations:
+- **Learning Styles**: Accommodate different learning preferences and accessibility needs
+- **Skill Levels**: Support users with varying technical backgrounds and experience levels
+- **Time Constraints**: Training materials must be concise and respect users' time limitations
+- **Language Support**: Consider multi-language support for global user base
+- **Technology Requirements**: Ensure training materials work across different devices and platforms
+- **Update Frequency**: Training materials must stay current with system updates and changes
+- **Resource Allocation**: Balance comprehensive training with available resources and budget
+- **Measurement**: Implement metrics to assess training effectiveness and user satisfaction
+
+#### Risk Factors:
+- **Low Adoption**: Poor training could result in low system adoption and user frustration
+- **Support Overload**: Inadequate training could overwhelm support teams with basic questions
+- **User Errors**: Insufficient training could lead to user errors and system misuse
+- **Feature Underutilization**: Poor training could result in users not leveraging system capabilities
+- **Training Obsolescence**: Outdated training materials could confuse users and reduce effectiveness
+- **Resource Drain**: Extensive training programs could consume significant resources
+- **Accessibility Issues**: Inaccessible training materials could exclude certain user groups
+- **Knowledge Gaps**: Incomplete training coverage could leave critical knowledge gaps
 
 #### Sub-tasks:
 - [ ] Create user training materials

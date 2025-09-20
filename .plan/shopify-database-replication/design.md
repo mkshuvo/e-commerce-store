@@ -1,8 +1,8 @@
-# Shopify Database Replication - System Design
+# E-Commerce Platform - System Design
 
 ## Project Overview
 
-This document outlines the comprehensive system design for replicating Shopify's database functionality using .NET 8, Entity Framework Core 8, and SQL Server. The design follows enterprise-grade patterns and ensures scalability, security, and maintainability.
+This document outlines the comprehensive system design for building a modern e-commerce platform using .NET 8, Entity Framework Core 8, and SQL Server. The design follows enterprise-grade patterns and ensures scalability, security, and maintainability.
 
 ## Architecture Overview
 
@@ -1393,7 +1393,7 @@ CREATE TABLE SmartCollections (
     INDEX IX_SmartCollections_SortOrder (SortOrder)
 );
 
--- Enhanced transactions table with latest Shopify features
+-- Enhanced transactions table with latest e-commerce features
 CREATE TABLE TransactionsEnhanced (
     Id BIGINT IDENTITY(1,1) PRIMARY KEY,
     OrderId BIGINT NOT NULL,
@@ -1468,7 +1468,7 @@ CREATE TABLE FulfillmentLineItems (
     INDEX IX_FulfillmentLineItems_LineItemId (LineItemId)
 );
 
--- Enhanced abandoned checkouts with complete Shopify fields
+-- Enhanced abandoned checkouts with complete e-commerce fields
 CREATE TABLE AbandonedCheckoutsEnhanced (
     Id BIGINT IDENTITY(1,1) PRIMARY KEY,
     Token NVARCHAR(255) NOT NULL UNIQUE,
@@ -2395,7 +2395,7 @@ public class CustomHealthCheck : IHealthCheck
 
 ## Conclusion
 
-This comprehensive design document provides the foundation for building a production-ready e-commerce platform with Shopify-compatible functionality. The architecture emphasizes:
+This comprehensive design document provides the foundation for building a production-ready e-commerce platform with modern e-commerce functionality. The architecture emphasizes:
 
 - **Scalability**: Horizontal scaling with load balancing and caching
 - **Security**: Multi-layered security with encryption and authorization

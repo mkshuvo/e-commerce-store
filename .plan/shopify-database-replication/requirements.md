@@ -1,14 +1,14 @@
-# Shopify Database Schema Replication - Requirements
+# E-Commerce Platform Database Schema - Requirements
 
 ## Project Overview
 
-This project aims to create a complete replication of Shopify's database schema and data model using .NET 8, Entity Framework Core, and SQL Server. The goal is to build a comprehensive e-commerce platform that mirrors Shopify's core functionality and data structures.
+This project aims to create a comprehensive e-commerce database schema and data model using .NET 8, Entity Framework Core, and SQL Server. The goal is to build a modern e-commerce platform that provides robust functionality and scalable data structures.
 
 ## Functional Requirements
 
 ### Core Entities and Data Models
 
-Based on Shopify's official API documentation and data model analysis, the following core entities must be implemented:
+Based on modern e-commerce platform analysis and industry best practices, the following core entities must be implemented:
 
 #### 1. Product Management
 - **Products**: Core product information with new product model support
@@ -53,32 +53,32 @@ Based on Shopify's official API documentation and data model analysis, the follo
   - Business Rules: Tag normalization, case-insensitive uniqueness per product
   - Indexing: ProductId, Tag
 
-- **SmartCollections**: Automated collections based on rules and metafields <mcreference link="https://help.shopify.com/en/manual/custom-data/metafields/smart-collections" index="1">1</mcreference>
+- **SmartCollections**: Automated collections based on rules and metafields
   - Fields: Id, Title, Handle, Rules (JSON), DisjunctiveRules, SortOrder, TemplateSuffix, PublishedAt, UpdatedAt
   - Relationships: Uses rules to automatically include products
   - Business Rules: Up to 60 selection conditions, metafield-based conditions supported
   - Indexing: Handle, PublishedAt, UpdatedAt
 
-- **Metafields**: Custom data storage for products, customers, orders, and other resources <mcreference link="https://help.shopify.com/en/manual/custom-data/metafields" index="2">2</mcreference>
+- **Metafields**: Custom data storage for products, customers, orders, and other resources
   - Fields: Id, OwnerId, OwnerResource, Namespace, Key, Value, Type, Description, CreatedAt, UpdatedAt
   - Relationships: Polymorphic association with various entities
   - Business Rules: Namespace.Key uniqueness per owner, type validation, smart collection capability
   - Indexing: OwnerId, OwnerResource, Namespace, Key
 
-- **MetafieldDefinitions**: Schema definitions for structured metafields <mcreference link="https://shopify.dev/docs/apps/build/custom-data" index="4">4</mcreference>
+- **MetafieldDefinitions**: Schema definitions for structured metafields
   - Fields: Id, OwnerType, Namespace, Key, Name, Type, Description, Validations (JSON), Access (JSON), Capabilities (JSON)
   - Relationships: One-to-Many with Metafields
   - Business Rules: Type consistency, validation rules, admin filterable capability
   - Indexing: OwnerType, Namespace, Key
 
 #### 2. Financial Management
-- **Transactions**: Payment and refund records <mcreference link="https://shopify.dev/docs/api/admin-rest/2024-01/resources/transaction" index="3">3</mcreference>
+- **Transactions**: Payment and refund records
   - Fields: Id, OrderId, Kind, Gateway, Status, Message, CreatedAt, Test, Authorization, LocationId, UserId, ParentId, ProcessedAt, DeviceId, ErrorCode, SourceName, PaymentDetails (JSON), Receipt (JSON), CurrencyExchangeAdjustment (JSON)
   - Relationships: Many-to-One with Order, Many-to-One with Location, Many-to-One with User
   - Business Rules: Kind enum (authorization, capture, sale, void, refund), Status validation
   - Indexing: OrderId, Kind, Status, Gateway, CreatedAt
 
-- **Refunds**: Product return and refund management <mcreference link="https://help.shopify.com/en/manual/orders/refund-cancel-order" index="5">5</mcreference>
+- **Refunds**: Product return and refund management
   - Fields: Id, OrderId, CreatedAt, Note, UserId, ProcessedAt, Restock, Duties (JSON), AdditionalFees (JSON), TotalDutiesSet (JSON)
   - Relationships: Many-to-One with Order, One-to-Many with RefundLineItems, One-to-Many with Transactions
   - Business Rules: Refund amount validation, restock logic
@@ -90,20 +90,20 @@ Based on Shopify's official API documentation and data model analysis, the follo
   - Business Rules: Quantity <= original quantity, restock validation
   - Indexing: RefundId, LineItemId
 
-- **GiftCards**: Digital gift card management <mcreference link="https://shopify.dev/docs/api/admin-rest/2024-10/resources/gift-card" index="6">6</mcreference>
+- **GiftCards**: Digital gift card management
   - Fields: Id, Balance, CreatedAt, UpdatedAt, Currency, CustomerId, InitialValue, Note, OrderId, TemplateSuffix, LastCharacters, ExpiresOn, DisabledAt, UserId
   - Relationships: Many-to-One with Customer, Many-to-One with Order
   - Business Rules: Balance validation, expiration logic, unique last characters
   - Indexing: CustomerId, OrderId, LastCharacters, ExpiresOn
 
-- **DiscountCodes**: Promotional discount codes <mcreference link="https://help.shopify.com/en/manual/discounts/discount-types" index="7">7</mcreference>
+- **DiscountCodes**: Promotional discount codes
   - Fields: Id, Code, Type, Value, MinimumAmount, UsageLimit, UsedCount, StartsAt, EndsAt, CreatedAt, UpdatedAt, OncePerCustomer, PrerequisiteCustomerIds (JSON), PrerequisiteProductIds (JSON), PrerequisiteCollectionIds (JSON)
   - Relationships: Many-to-Many with Orders through OrderDiscounts
   - Business Rules: Code uniqueness, usage limit validation, date range validation
   - Indexing: Code, Type, StartsAt, EndsAt, UsedCount
 
 #### 3. Fulfillment and Shipping
-- **Fulfillments**: Order fulfillment tracking <mcreference link="https://shopify.dev/docs/api/admin-rest/2024-10/resources/fulfillment" index="6">6</mcreference>
+- **Fulfillments**: Order fulfillment tracking
   - Fields: Id, OrderId, Status, CreatedAt, UpdatedAt, TrackingCompany, TrackingNumbers (JSON), TrackingUrls (JSON), Receipt (JSON), Name, LocationId, Shipment_Status, Service, VariantInventoryManagement, Origin_Address (JSON), Destination (JSON)
   - Relationships: Many-to-One with Order, One-to-Many with FulfillmentLineItems
   - Business Rules: Status enum validation, tracking number format, fulfillment constraints
@@ -127,7 +127,7 @@ Based on Shopify's official API documentation and data model analysis, the follo
   - Business Rules: Price validation, weight/order range validation
   - Indexing: ShippingZoneId, WeightLow, WeightHigh
 
-- **AbandonedCheckouts**: Incomplete purchase tracking <mcreference link="https://help.shopify.com/en/manual/orders/abandoned-checkouts" index="8">8</mcreference>
+- **AbandonedCheckouts**: Incomplete purchase tracking
   - Fields: Id, Token, CartToken, Email, Gateway, BuyerAcceptsMarketing, CreatedAt, UpdatedAt, LandingSite, Note, ReferringSite, ShippingAddress (JSON), BillingAddress (JSON), Currency, CompletedAt, ClosedAt, UserId, LocationId, SourceIdentifier, SourceUrl, DeviceId, Phone, CustomerLocale, LineItems (JSON), Name, Source, AbandonedCheckoutUrl, DiscountCodes (JSON), TaxLines (JSON), SourceName, PresentmentCurrency, BuyerAcceptsSmsMarketing, SmsMarketingPhone, TotalDiscounts, TotalLineItemsPrice, TotalPrice, TotalTax, TotalWeight, TaxesIncluded, TotalDuties, SubtotalPrice, TaxExempt, AppliedDiscount (JSON), ShippingLine (JSON)
   - Relationships: Many-to-One with Customer, Many-to-One with Location
   - Business Rules: Token uniqueness, email validation, completion tracking
@@ -278,10 +278,10 @@ Based on Shopify's official API documentation and data model analysis, the follo
 
 #### 7. Administrative
 - **Shop**: Store configuration and settings
-  - Fields: Id, Name, Email, Domain, Province, Country, Address1, Address2, City, Zip, Phone, Latitude, Longitude, PrimaryLocale, PrimaryLocationId, Currency, IanaTimezone, MoneyFormat, MoneyWithCurrencyFormat, WeightUnit, ProvinceCode, TaxesIncluded, TaxShipping, CountyTaxes, PlanDisplayName, PlanName, HasDiscounts, HasGiftCards, MyshopifyDomain, GoogleAppsDomain, GoogleAppsLoginEnabled, MoneyInEmailsFormat, MoneyWithCurrencyInEmailsFormat, EligibleForCardReaderGiveaway, RequiresExtraPaymentsAgreement, PasswordEnabled, HasStorefront, EligibleForPayments, CheckoutApiSupported, MultiLocationEnabled, SetupRequired, PreLaunchEnabled, EnabledPresentmentCurrencies, AdminGraphqlApiId
+  - Fields: Id, Name, Email, Domain, Province, Country, Address1, Address2, City, Zip, Phone, Latitude, Longitude, PrimaryLocale, PrimaryLocationId, Currency, IanaTimezone, MoneyFormat, MoneyWithCurrencyFormat, WeightUnit, ProvinceCode, TaxesIncluded, TaxShipping, CountyTaxes, PlanDisplayName, PlanName, HasDiscounts, HasGiftCards, StoreDomain, GoogleAppsDomain, GoogleAppsLoginEnabled, MoneyInEmailsFormat, MoneyWithCurrencyInEmailsFormat, EligibleForCardReaderGiveaway, RequiresExtraPaymentsAgreement, PasswordEnabled, HasStorefront, EligibleForPayments, CheckoutApiSupported, MultiLocationEnabled, SetupRequired, PreLaunchEnabled, EnabledPresentmentCurrencies, AdminGraphqlApiId
   - Relationships: One-to-One with PrimaryLocation, One-to-Many with Locations
   - Business Rules: Domain uniqueness, Email format validation, Currency validation
-  - Indexing: Domain, MyshopifyDomain, Country, Province
+  - Indexing: Domain, StoreDomain, Country, Province
 
 - **Users**: Admin user management
   - Fields: Id, FirstName, LastName, Email, Url, Im, ScreenName, Phone, AccountOwner, ReceiveAnnouncements, Bio, Permissions, Locale, UserType, AdminGraphqlApiId, TfaEnabled
@@ -329,7 +329,7 @@ Based on Shopify's official API documentation and data model analysis, the follo
   - Handle 10,000+ database connections via connection pooling
   - Process 100+ orders per minute during peak times
   - Support 50+ simultaneous product imports
-  - Support for 100+ product variants per product (new Shopify limit)
+  - Support for 100+ product variants per product (enterprise-grade limit)
   - Efficient querying for large product catalogs (10,000+ products)
   - Optimized inventory tracking for real-time updates
   - Fast order processing and checkout flows
@@ -517,7 +517,7 @@ POST   /api/v1/collections                 # Create collection
   - Relationships: Many-to-many with products, one-to-many with subscriptions
   - Business Rules: Billing cycle validation, inventory allocation
   - Indexing: name, status, created_at
-  - Shopify Reference: Selling Plans API for subscription commerce
+  - Industry Standard: Subscription commerce functionality
 
 - **SellingPlanGroups**: Grouping of related selling plans
   - Fields: name, description, merchant_code, summary
@@ -531,7 +531,7 @@ POST   /api/v1/collections                 # Create collection
   - Relationships: One-to-many with market regions, currencies
   - Business Rules: Currency validation, locale compliance
   - Indexing: name, primary_locale, status
-  - Shopify Reference: Markets API for global commerce
+  - Industry Standard: Global commerce functionality
 
 - **MarketRegions**: Geographic regions within markets
   - Fields: market_id, country_code, currency, tax_inclusive_pricing
@@ -678,7 +678,7 @@ POST   /api/v1/locations                   # Create location
 ## Acceptance Criteria
 
 ### Database Schema
-- [ ] All core Shopify entities are properly modeled with detailed field specifications
+- [ ] All core e-commerce entities are properly modeled with detailed field specifications
 - [ ] Relationships between entities are correctly established with proper foreign keys
 - [ ] Database supports the new product model with increased variant limits (100+ variants)
 - [ ] Proper indexing for performance optimization on frequently queried fields
@@ -779,7 +779,7 @@ POST   /api/v1/locations                   # Create location
 - No GraphQL implementation (sticking to .NET defaults)
 
 ### Business Constraints
-- Complete feature parity with Shopify's core functionality
+- Complete modern e-commerce platform functionality
 - Support for multi-currency operations
 - Multi-language content support
 - Timezone-aware operations
@@ -1207,12 +1207,12 @@ POST   /api/v1/locations                   # Create location
 ## References
 
 ### Technical Documentation
-- [Shopify GraphQL Admin API Documentation](https://shopify.dev/docs/admin-api/graphql)
-- [Shopify REST Admin API Documentation](https://shopify.dev/docs/admin-api/rest)
-- [Shopify Product Model Components](https://shopify.dev/docs/admin-api/rest/reference/products)
 - [Entity Framework Core Documentation](https://docs.microsoft.com/en-us/ef/core/)
 - [.NET 8 Documentation](https://docs.microsoft.com/en-us/dotnet/)
 - [SQL Server Best Practices](https://docs.microsoft.com/en-us/sql/sql-server/)
+- [E-Commerce Architecture Patterns](https://martinfowler.com/eaaCatalog/)
+- [RESTful API Design Best Practices](https://restfulapi.net/)
+- [Domain-Driven Design Patterns](https://domainlanguage.com/)
 
 ### Compliance & Security
 - [GDPR Compliance Guide](https://gdpr.eu/)
@@ -1228,4 +1228,4 @@ POST   /api/v1/locations                   # Create location
 
 ---
 
-*This comprehensive requirements document is based on extensive research of Shopify's official API documentation, industry best practices, and enterprise-grade system design principles as of 2024. It provides a complete foundation for building a production-ready e-commerce platform with Shopify-compatible functionality.*
+*This comprehensive requirements document is based on extensive research of modern e-commerce platforms, industry best practices, and enterprise-grade system design principles as of 2024. It provides a complete foundation for building a production-ready e-commerce platform with modern functionality.*

@@ -1,11 +1,11 @@
-# Shopify Database Replication - Feature Sequence Diagram
+# E-Commerce Platform Database Schema - Feature Sequence Diagram
 
 ```mermaid
 sequenceDiagram
     participant Dev as Developer
     participant Sys as System
     participant DB as PostgreSQL
-    participant Shop as Shopify API
+    participant API as E-Commerce API
     participant WH as Webhook Handler
     participant Cache as Redis Cache
     participant Mon as Monitoring
@@ -27,39 +27,39 @@ sequenceDiagram
     DB->>DB: Create Compliance Entities (GDPR, PCI DSS)
     DB->>DB: Apply Migrations & Indexes
     
-    Note over Dev,CI: Phase 2: Shopify API Integration
-    Dev->>Shop: Setup OAuth 2.0 Authentication
-    Shop-->>Sys: Return Access Token
+    Note over Dev,CI: Phase 2: E-Commerce API Integration
+    Dev->>API: Setup OAuth 2.0 Authentication
+    API-->>Sys: Return Access Token
     Sys->>Sys: Configure Rate Limiting (40 req/sec REST, 1000 pts/sec GraphQL)
     Sys->>Sys: Implement Circuit Breaker & Retry Logic
     
     loop Product Synchronization
-        Sys->>Shop: Fetch Products (REST API)
-        Shop-->>Sys: Return Product Data
+        Sys->>API: Fetch Products (REST API)
+        API-->>Sys: Return Product Data
         Sys->>DB: Transform & Store Products
         Sys->>DB: Store Variants, Options, Images
         Sys->>Cache: Cache Product Data
     end
     
     loop Customer Synchronization
-        Sys->>Shop: Fetch Customers (REST API)
-        Shop-->>Sys: Return Customer Data
+        Sys->>API: Fetch Customers (REST API)
+        API-->>Sys: Return Customer Data
         Sys->>Sys: Apply GDPR Compliance Rules
         Sys->>DB: Store Customer Data
         Sys->>DB: Store Customer Addresses
     end
     
     loop Order Synchronization
-        Sys->>Shop: Fetch Orders (REST API)
-        Shop-->>Sys: Return Order Data
+        Sys->>API: Fetch Orders (REST API)
+        API-->>Sys: Return Order Data
         Sys->>DB: Store Orders & Line Items
         Sys->>DB: Store Fulfillments & Transactions
         Sys->>DB: Store Refunds & Financial Data
     end
     
     loop Inventory Synchronization
-        Sys->>Shop: Fetch Inventory Levels (REST API)
-        Shop-->>Sys: Return Inventory Data
+        Sys->>API: Fetch Inventory Levels (REST API)
+        API-->>Sys: Return Inventory Data
         Sys->>DB: Update Inventory Levels
         Sys->>DB: Track Location-based Inventory
         Sys->>Sys: Check Low Stock Alerts
@@ -68,20 +68,20 @@ sequenceDiagram
     Note over Dev,CI: Phase 3: Webhook Integration
     Dev->>Sys: Create Webhook Endpoints
     Sys->>Sys: Implement Signature Verification
-    Sys->>Shop: Register Webhook Subscriptions
+    Sys->>API: Register Webhook Subscriptions
     
     loop Real-time Updates
-        Shop->>WH: Send Product Update Webhook
+        API->>WH: Send Product Update Webhook
         WH->>WH: Verify Signature & Validate Payload
         WH->>DB: Update Product Data
         WH->>Cache: Invalidate Product Cache
         
-        Shop->>WH: Send Order Update Webhook
+        API->>WH: Send Order Update Webhook
         WH->>WH: Verify Signature & Route Event
         WH->>DB: Update Order Status
         WH->>Mon: Log Webhook Event
         
-        Shop->>WH: Send Inventory Update Webhook
+        API->>WH: Send Inventory Update Webhook
         WH->>WH: Process Inventory Change
         WH->>DB: Update Inventory Levels
         WH->>Sys: Trigger Low Stock Alert (if needed)
@@ -153,7 +153,7 @@ sequenceDiagram
     
     Dev->>Sys: Create Integration Tests
     Sys->>DB: Test Database Integration
-    Sys->>Shop: Test Shopify API Integration
+    Sys->>API: Test E-Commerce API Integration
     Sys->>WH: Test Webhook Integration
     Sys->>Sys: Test End-to-End Workflows
     
@@ -194,7 +194,7 @@ sequenceDiagram
     
     Note over Dev,CI: System Ready for Production Use
     Mon->>Mon: Continuous Monitoring Active
-    Sys->>Shop: Real-time Synchronization Running
+    Sys->>API: Real-time Synchronization Running
     DB->>DB: Data Replication Complete
     Cache->>Cache: Performance Optimization Active
 ```

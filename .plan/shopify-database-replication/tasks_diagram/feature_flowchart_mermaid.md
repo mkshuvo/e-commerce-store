@@ -1,4 +1,4 @@
-# Shopify Database Replication - Feature Flowchart Diagram
+# E-Commerce Platform Database Schema - Feature Flowchart Diagram
 
 ```mermaid
 flowchart TD
@@ -17,7 +17,7 @@ flowchart TD
     IntlEntities --> ComplianceEntities[Create Compliance Entities]
     ComplianceEntities --> Migrations[Apply Migrations & Indexes]
     
-    Migrations --> APIIntegration[Phase 2: Shopify API Integration]
+    Migrations --> APIIntegration[Phase 2: E-Commerce API Integration]
     APIIntegration --> OAuth[Setup OAuth 2.0 Authentication]
     OAuth --> RateLimit[Configure Rate Limiting]
     RateLimit --> CircuitBreaker[Implement Circuit Breaker]
@@ -28,7 +28,7 @@ flowchart TD
     SyncDecision -->|Orders| OrderSync[Order Synchronization]
     SyncDecision -->|Inventory| InventorySync[Inventory Synchronization]
     
-    ProductSync --> ProductAPI[Fetch from Shopify REST API]
+    ProductSync --> ProductAPI[Fetch from E-Commerce REST API]
     ProductAPI --> ProductTransform[Transform & Validate Data]
     ProductTransform --> ProductStore[Store in PostgreSQL]
     ProductStore --> ProductCache[Cache Product Data]
